@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { EncodedColumnSchema, IsoDateSchema } from './columns';
+import { BYTE_ORDER, IdColumnSchema, IsoDateSchema } from './columns';
 import { PROVINCE_CODES } from './mesh';
 
 /**
@@ -43,6 +43,7 @@ export const RegionPackMetaSchema = z
     meshVersion: z.string().regex(/^v\d+$/),
     scope: ScopeSchema,
     date: IsoDateSchema.nullable().describe('Atlas date the split was made against; null = present day'),
+    byteOrder: z.literal(BYTE_ORDER).describe('Byte order of every encoded column in the pack'),
   })
   .meta({ id: 'RegionPackMeta' });
 
@@ -61,16 +62,13 @@ export const RegionPackSchema = z
     format: z.literal('meridian.regionPack'),
     version: z.literal(1),
     meta: RegionPackMetaSchema,
-    assignment: EncodedColumnSchema.describe(
+    assignment: IdColumnSchema.describe(
       'int32, length = mesh cell count; region id per cell, -1 = outside scope',
     ),
     regions: z.array(RegionSchema),
     setAnalysis: z.record(z.string(), z.unknown()).describe('Filled in Phase 4'),
   })
   .superRefine((pack, ctx) => {
-    if (pack.assignment.dtype !== 'int32') {
-      ctx.addIssue({ code: 'custom', path: ['assignment', 'dtype'], message: 'assignment must be int32' });
-    }
     const seen = new Set<number>();
     pack.regions.forEach((region, i) => {
       if (seen.has(region.id)) {

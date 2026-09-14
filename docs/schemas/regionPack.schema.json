@@ -18,7 +18,7 @@
         },
         "assignment": {
           "description": "int32, length = mesh cell count; region id per cell, -1 = outside scope",
-          "$ref": "#/$defs/EncodedColumn"
+          "$ref": "#/$defs/IdColumn"
         },
         "regions": {
           "type": "array",
@@ -90,6 +90,11 @@
             }
           ],
           "description": "Atlas date the split was made against; null = present day"
+        },
+        "byteOrder": {
+          "type": "string",
+          "const": "le",
+          "description": "Byte order of every encoded column in the pack"
         }
       },
       "required": [
@@ -98,7 +103,8 @@
         "params",
         "meshVersion",
         "scope",
-        "date"
+        "date",
+        "byteOrder"
       ],
       "additionalProperties": false
     },
@@ -234,15 +240,21 @@
       "format": "date",
       "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
     },
-    "EncodedColumn": {
+    "IdColumn": {
       "type": "object",
       "properties": {
+        "kind": {
+          "type": "string",
+          "const": "id"
+        },
         "dtype": {
           "type": "string",
-          "enum": [
-            "float32",
-            "int32"
-          ]
+          "const": "int32"
+        },
+        "byteOrder": {
+          "type": "string",
+          "const": "le",
+          "description": "Byte order of data; always little-endian"
         },
         "length": {
           "type": "integer",
@@ -255,7 +267,7 @@
           "format": "base64",
           "contentEncoding": "base64",
           "pattern": "^$|^(?:[0-9a-zA-Z+/]{4})*(?:(?:[0-9a-zA-Z+/]{2}==)|(?:[0-9a-zA-Z+/]{3}=))?$",
-          "description": "Base64 of little-endian element bytes"
+          "description": "Base64 of the element bytes in byteOrder"
         },
         "method": {
           "description": "How the values were produced, e.g. \"allocation_v1\" for estimated GDP",
@@ -269,7 +281,9 @@
         }
       },
       "required": [
+        "kind",
         "dtype",
+        "byteOrder",
         "length",
         "data"
       ],

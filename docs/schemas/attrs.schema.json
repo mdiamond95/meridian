@@ -1,33 +1,29 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$ref": "#/$defs/MeshFile",
+  "$ref": "#/$defs/AttrsFile",
   "$defs": {
-    "MeshFile": {
+    "AttrsFile": {
       "type": "object",
       "properties": {
         "format": {
           "type": "string",
-          "const": "meridian.mesh"
+          "const": "meridian.attrs"
         },
         "version": {
           "type": "string",
-          "pattern": "^v\\d+$",
-          "description": "Mesh version; matches the artefact filename, e.g. \"v1\" for mesh.v1.json.gz"
+          "pattern": "^v\\d+$"
         },
-        "h3Resolution": {
+        "meshVersion": {
+          "type": "string",
+          "pattern": "^v\\d+$"
+        },
+        "cellCount": {
           "type": "integer",
           "minimum": 0,
-          "maximum": 15
+          "maximum": 9007199254740991
         },
         "meta": {
           "$ref": "#/$defs/FileMeta"
-        },
-        "cells": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/MeshCell"
-          },
-          "description": "Sorted by id as a string (codepoint order); array index is the cell index"
         },
         "columns": {
           "type": "object",
@@ -36,20 +32,45 @@
           },
           "additionalProperties": {
             "$ref": "#/$defs/EncodedColumn"
+          }
+        },
+        "lookups": {
+          "description": "Labels for id columns: column name → code → label",
+          "type": "object",
+          "propertyNames": {
+            "$ref": "#/$defs/ColumnName"
           },
-          "description": "Per-cell columns, each of length cells.length"
+          "additionalProperties": {
+            "type": "object",
+            "propertyNames": {
+              "type": "string",
+              "pattern": "^-?\\d+$"
+            },
+            "additionalProperties": {
+              "type": "string"
+            }
+          }
+        },
+        "sideTables": {
+          "type": "object",
+          "propertyNames": {
+            "$ref": "#/$defs/ColumnName"
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/SideTable"
+          }
         }
       },
       "required": [
         "format",
         "version",
-        "h3Resolution",
+        "meshVersion",
+        "cellCount",
         "meta",
-        "cells",
         "columns"
       ],
       "additionalProperties": false,
-      "title": "Meridian MeshFile"
+      "title": "Meridian AttrsFile"
     },
     "FileMeta": {
       "type": "object",
@@ -70,91 +91,6 @@
         ]
       },
       "description": "byteOrder plus free-form provenance, e.g. gdp_method"
-    },
-    "MeshCell": {
-      "type": "object",
-      "properties": {
-        "id": {
-          "$ref": "#/$defs/H3CellId"
-        },
-        "centroid": {
-          "type": "array",
-          "prefixItems": [
-            {
-              "type": "number",
-              "minimum": -180,
-              "maximum": 180
-            },
-            {
-              "type": "number",
-              "minimum": -90,
-              "maximum": 90
-            }
-          ],
-          "items": false,
-          "minItems": 2,
-          "maxItems": 2,
-          "description": "[lon, lat] in WGS84, GeoJSON axis order"
-        },
-        "area": {
-          "type": "number",
-          "exclusiveMinimum": 0,
-          "description": "Cell area in km²"
-        },
-        "province": {
-          "type": "string",
-          "enum": [
-            "NL",
-            "PE",
-            "NS",
-            "NB",
-            "QC",
-            "ON",
-            "MB",
-            "SK",
-            "AB",
-            "BC",
-            "YT",
-            "NT",
-            "NU"
-          ],
-          "description": "Province/territory by largest area overlap"
-        },
-        "cd": {
-          "type": "string",
-          "pattern": "^\\d{4}$",
-          "description": "StatCan census division CDUID"
-        },
-        "csd": {
-          "type": "string",
-          "pattern": "^\\d{7}$",
-          "description": "StatCan census subdivision CSDUID"
-        },
-        "neighbours": {
-          "type": "array",
-          "items": {
-            "type": "integer",
-            "minimum": 0,
-            "maximum": 9007199254740991
-          },
-          "description": "Indices into cells[] of adjacent cells in the mesh, ascending"
-        }
-      },
-      "required": [
-        "id",
-        "centroid",
-        "area",
-        "province",
-        "cd",
-        "csd",
-        "neighbours"
-      ],
-      "additionalProperties": false
-    },
-    "H3CellId": {
-      "type": "string",
-      "pattern": "^8[0-9a-f]{14}$",
-      "description": "H3 cell index as lowercase hex (mode 1, so it starts with 8); never a number"
     },
     "ColumnName": {
       "type": "string",
@@ -380,6 +316,73 @@
           "additionalProperties": false
         }
       ]
+    },
+    "SideTable": {
+      "type": "object",
+      "properties": {
+        "offsets": {
+          "description": "int32, length cellCount + 1; values for cell i are values[offsets[i]:offsets[i+1]]",
+          "$ref": "#/$defs/IdColumn"
+        },
+        "values": {
+          "$ref": "#/$defs/IdColumn"
+        }
+      },
+      "required": [
+        "offsets",
+        "values"
+      ],
+      "additionalProperties": false,
+      "description": "Variable-length per-cell id lists in CSR form, e.g. Native Land territory ids"
+    },
+    "IdColumn": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "type": "string",
+          "const": "id"
+        },
+        "dtype": {
+          "type": "string",
+          "const": "int32"
+        },
+        "byteOrder": {
+          "type": "string",
+          "const": "le",
+          "description": "Byte order of data; always little-endian"
+        },
+        "length": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991,
+          "description": "Element count, not byte count"
+        },
+        "data": {
+          "type": "string",
+          "format": "base64",
+          "contentEncoding": "base64",
+          "pattern": "^$|^(?:[0-9a-zA-Z+/]{4})*(?:(?:[0-9a-zA-Z+/]{2}==)|(?:[0-9a-zA-Z+/]{3}=))?$",
+          "description": "Base64 of the element bytes in byteOrder"
+        },
+        "method": {
+          "description": "How the values were produced, e.g. \"allocation_v1\" for estimated GDP",
+          "type": "string"
+        },
+        "confidence": {
+          "description": "0–1; present on any estimated column so the UI can label it",
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      },
+      "required": [
+        "kind",
+        "dtype",
+        "byteOrder",
+        "length",
+        "data"
+      ],
+      "additionalProperties": false
     }
   }
 }

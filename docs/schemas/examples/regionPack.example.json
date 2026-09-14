@@ -1,0 +1,46 @@
+{
+  "format": "meridian.regionPack",
+  "version": 1,
+  "meta": {
+    "seed": 42,
+    "method": "balanced",
+    "params": {
+      "n": 2
+    },
+    "meshVersion": "v1",
+    "scope": {
+      "kind": "province",
+      "province": "AB"
+    },
+    "date": null,
+    "byteOrder": "le"
+  },
+  "assignment": {
+    "kind": "id",
+    "dtype": "int32",
+    "byteOrder": "le",
+    "length": 7,
+    "data": "AAAAAAAAAAABAAAAAQAAAAAAAAABAAAA/////w=="
+  },
+  "regions": [
+    {
+      "id": 0,
+      "name": "North",
+      "capital": "Edmonton",
+      "stats": {
+        "population": 503000
+      },
+      "dossier": {}
+    },
+    {
+      "id": 1,
+      "name": "South",
+      "capital": "Calgary",
+      "stats": {
+        "population": 288500
+      },
+      "dossier": {}
+    }
+  ],
+  "setAnalysis": {}
+}

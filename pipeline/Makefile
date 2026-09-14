@@ -1,5 +1,5 @@
 # Meridian pipeline. Run from pipeline/ or via the root Makefile.
-.PHONY: install dry-run lint test
+.PHONY: install dry-run lint test validate examples
 
 install:
 	uv sync --frozen
@@ -13,3 +13,9 @@ lint:
 
 test:
 	uv run --frozen pytest
+
+validate:
+	uv run --frozen python validate.py
+
+examples:
+	uv run --frozen python make_examples.py

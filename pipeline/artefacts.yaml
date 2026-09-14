@@ -3,8 +3,9 @@
 #
 # Rules (docs/plan.md, running rules):
 #   - outputs live under data/build/ and carry their version in the filename (.v<N>.)
+#   - every output names the JSON Schema it must pass (exported from app/src/schema);
+#     `make validate` and pytest check each file in data/build/ against it
 #   - inputs are source ids from the table in docs/data-sources.md
-#   - schema, when set, is a JSON Schema exported from app/src/schema
 
 plan_version: 1
 
@@ -13,9 +14,9 @@ artefacts:
     phase: 1
     step: pipeline/mesh.py
     description: H3 res-5 cells over Canada with province/CD/CSD and neighbour graph
-    schema: docs/schemas/mesh.schema.json
     inputs: [statcan_pr_2021, statcan_cd_2021, statcan_csd_2021]
-    outputs: [data/build/mesh.v1.json.gz]
+    outputs:
+      - { path: data/build/mesh.v1.json.gz, schema: docs/schemas/mesh.schema.json }
 
   - id: attrs
     phase: 1
@@ -37,7 +38,8 @@ artefacts:
       - elections_fed_2023
       - elections_results_latest
       - native_land_territories
-    outputs: [data/build/attrs.v1.json.gz]
+    outputs:
+      - { path: data/build/attrs.v1.json.gz, schema: docs/schemas/attrs.schema.json }
 
   - id: layers
     phase: 1
@@ -54,19 +56,20 @@ artefacts:
       - nrcan_rivers
       - elections_fed_2023
     outputs:
-      - data/build/layers/provinces.v1.topojson
-      - data/build/layers/cd.v1.topojson
-      - data/build/layers/csd.v1.topojson
-      - data/build/layers/treaties.v1.topojson
-      - data/build/layers/ecozones.v1.topojson
-      - data/build/layers/basins.v1.topojson
-      - data/build/layers/rivers.v1.topojson
-      - data/build/layers/ridings.v1.topojson
+      - { path: data/build/layers/provinces.v1.topojson, schema: docs/schemas/topojson.schema.json }
+      - { path: data/build/layers/cd.v1.topojson, schema: docs/schemas/topojson.schema.json }
+      - { path: data/build/layers/csd.v1.topojson, schema: docs/schemas/topojson.schema.json }
+      - { path: data/build/layers/treaties.v1.topojson, schema: docs/schemas/topojson.schema.json }
+      - { path: data/build/layers/ecozones.v1.topojson, schema: docs/schemas/topojson.schema.json }
+      - { path: data/build/layers/basins.v1.topojson, schema: docs/schemas/topojson.schema.json }
+      - { path: data/build/layers/rivers.v1.topojson, schema: docs/schemas/topojson.schema.json }
+      - { path: data/build/layers/ridings.v1.topojson, schema: docs/schemas/topojson.schema.json }
 
   - id: atlas
     phase: 2
     step: pipeline/atlas/build.py
     description: Historical event list resolved to first-order unit polygons
-    schema: docs/schemas/atlas.schema.json
     inputs: [statcan_pr_2021, nrcan_rivers, nrcan_drainage_areas, native_land_territories, native_land_languages]
-    outputs: [data/build/atlas.v1.json, data/build/atlas.v1.topojson]
+    outputs:
+      - { path: data/build/atlas.v1.json, schema: docs/schemas/atlas.schema.json }
+      - { path: data/build/atlas.v1.topojson, schema: docs/schemas/topojson.schema.json }

@@ -40,3 +40,4 @@ the in-app licences page (Phase 7).
 | Layer | url | licence | attribution | refresh |
 |---|---|---|---|---|
 | CARTO Positron basemap | https://basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png | CARTO basemaps free tier (API key required; see decisions.md) | © OpenStreetMap contributors © CARTO | Live tiles |
+| OpenStreetMap standard tiles (fallback when no CARTO key at build time; not used on Pages) | https://tile.openstreetmap.org/{z}/{x}/{y}.png | ODbL data; tiles under the OSMF Tile Usage Policy (light development use only) | © OpenStreetMap contributors | Live tiles |

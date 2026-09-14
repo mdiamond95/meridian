@@ -1,131 +1,193 @@
 import { describe, expect, it } from 'vitest';
-import { decodeColumn, encodeColumn } from './columns';
-import { AtlasFileSchema, type AtlasFile } from './atlas';
-import { MeshFileSchema, type MeshFileWire } from './mesh';
-import { RegionPackSchema, type RegionPackWire } from './regionPack';
+// Shared fixtures written by pipeline/make_examples.py and validated by pytest with jsonschema too.
+import attrsExample from '../../../docs/schemas/examples/attrs.example.json';
+import atlasExample from '../../../docs/schemas/examples/atlas.example.json';
+import columnVectors from '../../../docs/schemas/examples/column-vectors.json';
+import meshExample from '../../../docs/schemas/examples/mesh.example.json';
+import regionPackExample from '../../../docs/schemas/examples/regionPack.example.json';
+import topologyExample from '../../../docs/schemas/examples/topojson.example.json';
+import { AtlasFileSchema } from './atlas';
+import { AttrsFileSchema } from './attrs';
+import {
+  decodeColumn,
+  dtypeForKind,
+  encodeColumn,
+  EncodedColumnSchema,
+  type ColumnKind,
+  type EncodedColumn,
+} from './columns';
+import { MeshFileSchema } from './mesh';
+import { RegionPackSchema } from './regionPack';
+import { TopologySchema } from './topojson';
 
-describe('column codec', () => {
-  it('round-trips float32 and int32 bit-exactly', () => {
-    const floats = new Float32Array([0, -1.5, 3.4028234663852886e38, Number.NaN, 1e-45]);
-    const ints = new Int32Array([0, -1, 2147483647, -2147483648]);
-    expect(decodeColumn(encodeColumn(floats))).toEqual(floats);
-    expect(decodeColumn(encodeColumn(ints))).toEqual(ints);
+const clone = <T>(value: T): T => structuredClone(value);
+const ok = (schema: { safeParse: (v: unknown) => { success: boolean } }, value: unknown) =>
+  schema.safeParse(value).success;
+
+describe('column encoding', () => {
+  for (const vector of columnVectors.vectors) {
+    const kind = vector.kind as ColumnKind;
+    const typed =
+      dtypeForKind(kind) === 'int32' ? Int32Array.from(vector.values) : Float32Array.from(vector.values);
+
+    it(`matches the Python writer byte for byte: ${vector.name}`, () => {
+      expect(encodeColumn(typed, { kind }).data).toBe(vector.column.data);
+      expect(Array.from(decodeColumn(EncodedColumnSchema.parse(vector.column)))).toEqual(vector.values);
+    });
+  }
+
+  it('is explicitly little-endian: 0x01020304 is stored as 04 03 02 01', () => {
+    const column = encodeColumn(new Int32Array([0x01020304]), { kind: 'id' });
+    expect(column.byteOrder).toBe('le');
+    const bytes = Uint8Array.from(atob(column.data), (c) => c.charCodeAt(0));
+    expect(Array.from(bytes)).toEqual([0x04, 0x03, 0x02, 0x01]);
+    // Reading the same bytes big-endian gives a different number, so order genuinely matters.
+    expect(new DataView(bytes.buffer).getInt32(0, false)).toBe(0x04030201);
+    expect(decodeColumn(column)[0]).toBe(0x01020304);
   });
 
-  it('encodes little-endian so Python numpy "<f4"/"<i4" bytes match', () => {
-    // int32 1 → bytes 01 00 00 00 → base64 AQAAAA==
-    expect(encodeColumn(new Int32Array([1])).data).toBe('AQAAAA==');
+  it('round-trips float32 edge values bit-exactly', () => {
+    const floats = new Float32Array([0, -1.5, 3.4028234663852886e38, Number.NaN, 1e-45]);
+    expect(decodeColumn(encodeColumn(floats, { kind: 'rate' }))).toEqual(floats);
+  });
+
+  it('enforces the dtype rule', () => {
+    expect(() => encodeColumn(new Float32Array([1]), { kind: 'count' })).toThrow(/int32/);
+    expect(() => encodeColumn(new Int32Array([1]), { kind: 'share' })).toThrow(/float32/);
+    expect(() => encodeColumn(new Float32Array([1]), { kind: 'money' })).toThrow();
+    expect(() => encodeColumn(new Float32Array([1]), { kind: 'money', unit: 'cad' })).toThrow();
+    expect(() => encodeColumn(new Float32Array([1]), { kind: 'measure' })).toThrow();
+    expect(encodeColumn(new Float32Array([1]), { kind: 'money', unit: 'cad_millions' }).dtype).toBe(
+      'float32',
+    );
+
+    const count = encodeColumn(new Int32Array([1]), { kind: 'count' });
+    expect(ok(EncodedColumnSchema, { ...count, dtype: 'float32' })).toBe(false);
+    expect(ok(EncodedColumnSchema, { ...count, byteOrder: 'be' })).toBe(false);
+    expect(ok(EncodedColumnSchema, { ...count, unit: 'people' })).toBe(false);
   });
 
   it('rejects a byte length that disagrees with length', () => {
-    expect(() => decodeColumn({ dtype: 'int32', length: 2, data: 'AQAAAA==' })).toThrow();
+    const column: EncodedColumn = {
+      kind: 'id',
+      dtype: 'int32',
+      byteOrder: 'le',
+      length: 2,
+      data: 'AQAAAA==',
+    };
+    expect(() => decodeColumn(column)).toThrow();
   });
 });
-
-const cell = (id: string, neighbours: number[]) => ({
-  id,
-  centroid: [-113.49, 53.54] as [number, number],
-  area: 252.9,
-  province: 'AB' as const,
-  cd: '4811',
-  csd: '4811061',
-  neighbours,
-});
-
-const mesh: MeshFileWire = {
-  format: 'meridian.mesh',
-  version: 'v1',
-  h3Resolution: 5,
-  cells: [cell('85126e5bfffffff', [1]), cell('85126e5ffffffff', [0])],
-  columns: { population: encodeColumn(new Float32Array([1200, 34])) },
-};
 
 describe('MeshFile', () => {
-  it('accepts a valid mesh', () => {
-    expect(MeshFileSchema.safeParse(mesh).success).toBe(true);
+  it('accepts the shared example', () => {
+    expect(MeshFileSchema.safeParse(meshExample).error).toBeUndefined();
   });
 
-  it('rejects a column whose length differs from the cell count', () => {
-    const bad = { ...mesh, columns: { population: encodeColumn(new Float32Array([1])) } };
-    expect(MeshFileSchema.safeParse(bad).success).toBe(false);
+  it('requires cell ids as lowercase hex strings, never JSON numbers', () => {
+    const numeric = clone(meshExample) as { cells: { id: unknown }[] };
+    numeric.cells[0].id = Number.parseInt(meshExample.cells[0].id, 16);
+    expect(ok(MeshFileSchema, numeric)).toBe(false);
+
+    const upper = clone(meshExample);
+    upper.cells[0].id = upper.cells[0].id.toUpperCase();
+    expect(ok(MeshFileSchema, upper)).toBe(false);
   });
 
-  it('rejects unsorted cells and out-of-range neighbours', () => {
-    expect(MeshFileSchema.safeParse({ ...mesh, cells: [...mesh.cells].reverse() }).success).toBe(false);
-    expect(MeshFileSchema.safeParse({ ...mesh, cells: [cell('85126e5bfffffff', [5])] }).success).toBe(false);
+  it('requires cells strictly sorted by id string and at the declared resolution', () => {
+    const unsorted = clone(meshExample);
+    unsorted.cells.reverse();
+    expect(ok(MeshFileSchema, unsorted)).toBe(false);
+    expect(ok(MeshFileSchema, { ...clone(meshExample), h3Resolution: 6 })).toBe(false);
+  });
+
+  it('requires meta.byteOrder, snake_case column names, and full-length columns', () => {
+    const noMeta: Partial<typeof meshExample> = clone(meshExample);
+    delete noMeta.meta;
+    expect(ok(MeshFileSchema, noMeta)).toBe(false);
+
+    const population = encodeColumn(new Int32Array(meshExample.cells.length), { kind: 'count' });
+    expect(ok(MeshFileSchema, { ...clone(meshExample), columns: { population } })).toBe(true);
+    expect(ok(MeshFileSchema, { ...clone(meshExample), columns: { totalPop: population } })).toBe(false);
+    expect(ok(MeshFileSchema, { ...clone(meshExample), columns: { pop__2021: population } })).toBe(false);
+    const short = encodeColumn(new Int32Array(1), { kind: 'count' });
+    expect(ok(MeshFileSchema, { ...clone(meshExample), columns: { population: short } })).toBe(false);
+  });
+
+  it('rejects out-of-range neighbours', () => {
+    const bad = clone(meshExample);
+    bad.cells[0].neighbours = [99];
+    expect(ok(MeshFileSchema, bad)).toBe(false);
+  });
+});
+
+describe('AttrsFile', () => {
+  it('accepts the shared example and decodes columns the Python writer encoded', () => {
+    const attrs = AttrsFileSchema.parse(attrsExample);
+    expect(Array.from(decodeColumn(attrs.columns.population))).toEqual([
+      412000, 58000, 91000, 120500, 33000, 77000, 1500,
+    ]);
+    expect(decodeColumn(attrs.columns.gdp_estimate)[0]).toBe(31250.5);
+    expect(decodeColumn(attrs.columns.french_share)[0]).toBeCloseTo(0.021, 6);
+    expect(attrs.meta.byteOrder).toBe('le');
+  });
+
+  it('rejects wrong lengths, lookups on non-id columns, and a money column without its unit', () => {
+    expect(ok(AttrsFileSchema, { ...clone(attrsExample), cellCount: 8 })).toBe(false);
+
+    const lookup = clone(attrsExample) as { lookups: Record<string, Record<string, string>> };
+    lookup.lookups.population = { '0': 'none' };
+    expect(ok(AttrsFileSchema, lookup)).toBe(false);
+
+    const money = clone(attrsExample) as { columns: { gdp_estimate: Record<string, unknown> } };
+    delete money.columns.gdp_estimate.unit;
+    expect(ok(AttrsFileSchema, money)).toBe(false);
   });
 });
 
 describe('AtlasFile', () => {
-  const atlas: AtlasFile = {
-    format: 'meridian.atlas',
-    version: 'v1',
-    events: [
-      {
-        date: '1905-09-01',
-        title: 'Alberta and Saskatchewan',
-        note: 'Two provinces are carved from the North-West Territories. Their northern limit is 60°N.',
-        changes: [{ unit: 'alberta', kind: 'create' }],
-      },
-    ],
-    units: [
-      {
-        id: 'alberta',
-        name: 'Alberta',
-        status: 'province',
-        sovereign: 'Canada',
-        capital: 'Edmonton',
-        validFrom: '1905-09-01',
-        validTo: null,
-        truth: 'dejure',
-        geometryRef: 'alberta_1905',
-      },
-    ],
-  };
-
-  it('accepts a valid atlas, including pre-1500 dates', () => {
-    expect(AtlasFileSchema.safeParse(atlas).success).toBe(true);
-    const early = { ...atlas, units: [{ ...atlas.units[0], validFrom: '1000-01-01' }] };
-    expect(AtlasFileSchema.safeParse(early).success).toBe(true);
+  it('accepts the shared example, including pre-1500 dates', () => {
+    expect(ok(AtlasFileSchema, atlasExample)).toBe(true);
+    const early = clone(atlasExample);
+    early.units[0].validFrom = '1000-01-01';
+    expect(ok(AtlasFileSchema, early)).toBe(true);
   });
 
   it('rejects an unknown truth layer and an inverted validity range', () => {
-    expect(
-      AtlasFileSchema.safeParse({ ...atlas, units: [{ ...atlas.units[0], truth: 'claimed' }] }).success,
-    ).toBe(false);
-    const inverted = { ...atlas, units: [{ ...atlas.units[0], validTo: '1900-01-01' }] };
-    expect(AtlasFileSchema.safeParse(inverted).success).toBe(false);
+    const truth = clone(atlasExample);
+    truth.units[0].truth = 'claimed';
+    expect(ok(AtlasFileSchema, truth)).toBe(false);
+    const inverted = clone(atlasExample) as { units: { validTo: string | null }[] };
+    inverted.units[0].validTo = '1900-01-01';
+    expect(ok(AtlasFileSchema, inverted)).toBe(false);
   });
 });
 
 describe('RegionPack', () => {
-  const pack: RegionPackWire = {
-    format: 'meridian.regionPack',
-    version: 1,
-    meta: {
-      seed: 42,
-      method: 'balanced',
-      params: { n: 2 },
-      meshVersion: 'v1',
-      scope: { kind: 'province', province: 'AB' },
-      date: null,
-    },
-    assignment: encodeColumn(new Int32Array([0, 1])),
-    regions: [
-      { id: 0, name: 'North', capital: 'Edmonton', stats: { population: 1200 }, dossier: {} },
-      { id: 1, name: 'South', capital: 'Calgary', stats: { population: 34 }, dossier: {} },
-    ],
-    setAnalysis: {},
-  };
-
-  it('accepts a valid pack', () => {
-    expect(RegionPackSchema.safeParse(pack).success).toBe(true);
+  it('accepts the shared example', () => {
+    expect(RegionPackSchema.safeParse(regionPackExample).error).toBeUndefined();
   });
 
-  it('rejects float assignments and duplicate region ids', () => {
-    const floatAssignment = { ...pack, assignment: encodeColumn(new Float32Array([0, 1])) };
-    expect(RegionPackSchema.safeParse(floatAssignment).success).toBe(false);
-    const dupes = { ...pack, regions: [pack.regions[0], { ...pack.regions[1], id: 0 }] };
-    expect(RegionPackSchema.safeParse(dupes).success).toBe(false);
+  it('rejects non-id assignments, a missing byteOrder, and duplicate region ids', () => {
+    const floatAssignment = {
+      ...clone(regionPackExample),
+      assignment: encodeColumn(new Float32Array([0, 1]), { kind: 'index' }),
+    };
+    expect(ok(RegionPackSchema, floatAssignment)).toBe(false);
+
+    const noOrder = clone(regionPackExample) as { meta: { byteOrder?: string } };
+    delete noOrder.meta.byteOrder;
+    expect(ok(RegionPackSchema, noOrder)).toBe(false);
+
+    const dupes = clone(regionPackExample);
+    dupes.regions[1].id = 0;
+    expect(ok(RegionPackSchema, dupes)).toBe(false);
+  });
+});
+
+describe('Topology', () => {
+  it('accepts the shared example and rejects non-topologies', () => {
+    expect(ok(TopologySchema, topologyExample)).toBe(true);
+    expect(ok(TopologySchema, { ...clone(topologyExample), type: 'FeatureCollection' })).toBe(false);
   });
 });

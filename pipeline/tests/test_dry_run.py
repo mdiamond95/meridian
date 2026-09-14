@@ -20,7 +20,8 @@ artefacts:
     phase: 1
     step: pipeline/mesh.py
     inputs: [statcan_pr_2021]
-    outputs: [data/build/mesh.v1.json.gz]
+    outputs:
+      - { path: data/build/mesh.v1.json.gz, schema: docs/schemas/mesh.schema.json }
 """
 
 
@@ -47,3 +48,18 @@ def test_unversioned_output_is_an_error(tmp_path, capsys):
 def test_invalid_or_empty_yaml_is_an_error(tmp_path):
     assert dry_run.run(*write(tmp_path, "artefacts: [unclosed", "| `x` | X | | | | |\n")) == 1
     assert dry_run.run(*write(tmp_path, "", "| `x` | X | | | | |\n")) == 1
+
+
+def test_output_without_existing_schema_is_an_error(tmp_path, capsys):
+    plan = PLAN.replace("docs/schemas/mesh.schema.json", "docs/schemas/nope.schema.json")
+    assert dry_run.run(*write(tmp_path, plan, "| `statcan_pr_2021` | StatCan | | | | |\n")) == 1
+    assert "does not exist" in capsys.readouterr().err
+
+
+def test_bare_string_output_is_an_error(tmp_path, capsys):
+    plan = PLAN.replace(
+        "      - { path: data/build/mesh.v1.json.gz, schema: docs/schemas/mesh.schema.json }",
+        "      - data/build/mesh.v1.json.gz",
+    )
+    assert dry_run.run(*write(tmp_path, plan, "| `statcan_pr_2021` | StatCan | | | | |\n")) == 1
+    assert "must be {path, schema}" in capsys.readouterr().err
