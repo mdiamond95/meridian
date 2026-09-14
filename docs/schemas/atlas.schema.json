@@ -1,0 +1,185 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "#/$defs/AtlasFile",
+  "$defs": {
+    "AtlasFile": {
+      "type": "object",
+      "properties": {
+        "format": {
+          "type": "string",
+          "const": "meridian.atlas"
+        },
+        "version": {
+          "type": "string",
+          "pattern": "^v\\d+$"
+        },
+        "events": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/AtlasEvent"
+          },
+          "description": "Sorted by date ascending"
+        },
+        "units": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/AtlasUnit"
+          }
+        }
+      },
+      "required": [
+        "format",
+        "version",
+        "events",
+        "units"
+      ],
+      "additionalProperties": false,
+      "title": "Meridian AtlasFile"
+    },
+    "AtlasEvent": {
+      "type": "object",
+      "properties": {
+        "date": {
+          "$ref": "#/$defs/IsoDate"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "note": {
+          "type": "string",
+          "description": "Two plain sentences"
+        },
+        "changes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/AtlasChange"
+          }
+        }
+      },
+      "required": [
+        "date",
+        "title",
+        "note",
+        "changes"
+      ],
+      "additionalProperties": false
+    },
+    "IsoDate": {
+      "type": "string",
+      "format": "date",
+      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+    },
+    "AtlasChange": {
+      "type": "object",
+      "properties": {
+        "unit": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$",
+          "description": "Stable snake_case id, e.g. \"ruperts_land\""
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "create",
+            "alter",
+            "rename",
+            "dissolve"
+          ]
+        }
+      },
+      "required": [
+        "unit",
+        "kind"
+      ],
+      "additionalProperties": false
+    },
+    "AtlasUnit": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$",
+          "description": "Unique per (id, validFrom); a unit whose boundary changes gets a new row"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "colony",
+            "province",
+            "territory",
+            "district",
+            "hbc_charter",
+            "unorganized",
+            "foreign",
+            "disputed"
+          ]
+        },
+        "sovereign": {
+          "type": "string",
+          "minLength": 1,
+          "description": "e.g. \"Britain\", \"France\", \"HBC\", \"Canada\""
+        },
+        "capital": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "validFrom": {
+          "description": "Inclusive",
+          "$ref": "#/$defs/IsoDate"
+        },
+        "validTo": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/IsoDate"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Exclusive; null means still valid"
+        },
+        "truth": {
+          "type": "string",
+          "enum": [
+            "dejure",
+            "defacto",
+            "disputed"
+          ]
+        },
+        "geometryRef": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Object key in the atlas TopoJSON; shared by unchanged units"
+        },
+        "note": {
+          "type": "string"
+        },
+        "confidence": {
+          "description": "Present on approximate polygons (de facto extents, pre-contact)",
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "status",
+        "sovereign",
+        "capital",
+        "validFrom",
+        "validTo",
+        "truth",
+        "geometryRef"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

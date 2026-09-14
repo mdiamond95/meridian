@@ -1,0 +1,72 @@
+# The artefact plan: every file the pipeline writes to data/build/, what it is built from,
+# and which contract it conforms to. `make dry-run` validates this file and prints the plan.
+#
+# Rules (docs/plan.md, running rules):
+#   - outputs live under data/build/ and carry their version in the filename (.v<N>.)
+#   - inputs are source ids from the table in docs/data-sources.md
+#   - schema, when set, is a JSON Schema exported from app/src/schema
+
+plan_version: 1
+
+artefacts:
+  - id: mesh
+    phase: 1
+    step: pipeline/mesh.py
+    description: H3 res-5 cells over Canada with province/CD/CSD and neighbour graph
+    schema: docs/schemas/mesh.schema.json
+    inputs: [statcan_pr_2021, statcan_cd_2021, statcan_csd_2021]
+    outputs: [data/build/mesh.v1.json.gz]
+
+  - id: attrs
+    phase: 1
+    step: pipeline/attrs.py
+    description: Per-cell attribute columns (population, language, industry, GDP allocation, treaties, ...)
+    inputs:
+      - statcan_da_2021
+      - statcan_cmaca_2021
+      - statcan_profile_da_2021
+      - statcan_profile_csd_2021
+      - statcan_gdp_36100402
+      - cirnac_pre1975_treaties
+      - cirnac_modern_treaties
+      - cirnac_reserves
+      - ab_metis_settlements
+      - itk_inuit_nunangat
+      - nrcan_ecozones
+      - nrcan_drainage_areas
+      - elections_fed_2023
+      - elections_results_latest
+      - native_land_territories
+    outputs: [data/build/attrs.v1.json.gz]
+
+  - id: layers
+    phase: 1
+    step: pipeline/polygons.py
+    description: Simplified TopoJSON overlay and snap layers (mapshaper, three zoom tiers where noted)
+    inputs:
+      - statcan_pr_2021
+      - statcan_cd_2021
+      - statcan_csd_2021
+      - cirnac_pre1975_treaties
+      - cirnac_modern_treaties
+      - nrcan_ecozones
+      - nrcan_drainage_areas
+      - nrcan_rivers
+      - elections_fed_2023
+    outputs:
+      - data/build/layers/provinces.v1.topojson
+      - data/build/layers/cd.v1.topojson
+      - data/build/layers/csd.v1.topojson
+      - data/build/layers/treaties.v1.topojson
+      - data/build/layers/ecozones.v1.topojson
+      - data/build/layers/basins.v1.topojson
+      - data/build/layers/rivers.v1.topojson
+      - data/build/layers/ridings.v1.topojson
+
+  - id: atlas
+    phase: 2
+    step: pipeline/atlas/build.py
+    description: Historical event list resolved to first-order unit polygons
+    schema: docs/schemas/atlas.schema.json
+    inputs: [statcan_pr_2021, nrcan_rivers, nrcan_drainage_areas, native_land_territories, native_land_languages]
+    outputs: [data/build/atlas.v1.json, data/build/atlas.v1.topojson]

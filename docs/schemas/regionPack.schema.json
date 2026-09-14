@@ -1,0 +1,324 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "#/$defs/RegionPack",
+  "$defs": {
+    "RegionPack": {
+      "type": "object",
+      "properties": {
+        "format": {
+          "type": "string",
+          "const": "meridian.regionPack"
+        },
+        "version": {
+          "type": "number",
+          "const": 1
+        },
+        "meta": {
+          "$ref": "#/$defs/RegionPackMeta"
+        },
+        "assignment": {
+          "description": "int32, length = mesh cell count; region id per cell, -1 = outside scope",
+          "$ref": "#/$defs/EncodedColumn"
+        },
+        "regions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Region"
+          }
+        },
+        "setAnalysis": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string"
+          },
+          "additionalProperties": {},
+          "description": "Filled in Phase 4"
+        }
+      },
+      "required": [
+        "format",
+        "version",
+        "meta",
+        "assignment",
+        "regions",
+        "setAnalysis"
+      ],
+      "additionalProperties": false,
+      "title": "Meridian RegionPack v1"
+    },
+    "RegionPackMeta": {
+      "type": "object",
+      "properties": {
+        "seed": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 4294967295,
+          "description": "uint32 seed for mulberry32"
+        },
+        "method": {
+          "type": "string",
+          "enum": [
+            "lens",
+            "balanced",
+            "seeded",
+            "random",
+            "template"
+          ]
+        },
+        "params": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string"
+          },
+          "additionalProperties": {},
+          "description": "Solver parameters; shape owned by the engine"
+        },
+        "meshVersion": {
+          "type": "string",
+          "pattern": "^v\\d+$"
+        },
+        "scope": {
+          "$ref": "#/$defs/Scope"
+        },
+        "date": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/IsoDate"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Atlas date the split was made against; null = present day"
+        }
+      },
+      "required": [
+        "seed",
+        "method",
+        "params",
+        "meshVersion",
+        "scope",
+        "date"
+      ],
+      "additionalProperties": false
+    },
+    "Scope": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "canada"
+            }
+          },
+          "required": [
+            "kind"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "province"
+            },
+            "province": {
+              "type": "string",
+              "enum": [
+                "NL",
+                "PE",
+                "NS",
+                "NB",
+                "QC",
+                "ON",
+                "MB",
+                "SK",
+                "AB",
+                "BC",
+                "YT",
+                "NT",
+                "NU"
+              ]
+            }
+          },
+          "required": [
+            "kind",
+            "province"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "atlasUnit"
+            },
+            "unit": {
+              "type": "string",
+              "description": "AtlasUnit id, resolved at meta.date"
+            }
+          },
+          "required": [
+            "kind",
+            "unit"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "region"
+            },
+            "pack": {
+              "type": "string",
+              "description": "Source pack URL or library id"
+            },
+            "region": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            }
+          },
+          "required": [
+            "kind",
+            "pack",
+            "region"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "polygon"
+            },
+            "geometry": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "Polygon",
+                    "MultiPolygon"
+                  ]
+                },
+                "coordinates": {
+                  "type": "array",
+                  "items": {}
+                }
+              },
+              "required": [
+                "type",
+                "coordinates"
+              ],
+              "additionalProperties": false,
+              "description": "GeoJSON geometry in WGS84"
+            }
+          },
+          "required": [
+            "kind",
+            "geometry"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "IsoDate": {
+      "type": "string",
+      "format": "date",
+      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+    },
+    "EncodedColumn": {
+      "type": "object",
+      "properties": {
+        "dtype": {
+          "type": "string",
+          "enum": [
+            "float32",
+            "int32"
+          ]
+        },
+        "length": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991,
+          "description": "Element count, not byte count"
+        },
+        "data": {
+          "type": "string",
+          "format": "base64",
+          "contentEncoding": "base64",
+          "pattern": "^$|^(?:[0-9a-zA-Z+/]{4})*(?:(?:[0-9a-zA-Z+/]{2}==)|(?:[0-9a-zA-Z+/]{3}=))?$",
+          "description": "Base64 of little-endian element bytes"
+        },
+        "method": {
+          "description": "How the values were produced, e.g. \"allocation_v1\" for estimated GDP",
+          "type": "string"
+        },
+        "confidence": {
+          "description": "0–1; present on any estimated column so the UI can label it",
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      },
+      "required": [
+        "dtype",
+        "length",
+        "data"
+      ],
+      "additionalProperties": false
+    },
+    "Region": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991,
+          "description": "Value used for this region in assignment"
+        },
+        "name": {
+          "type": "string"
+        },
+        "capital": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "stats": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string"
+          },
+          "additionalProperties": {
+            "type": "number"
+          }
+        },
+        "dossier": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string"
+          },
+          "additionalProperties": {},
+          "description": "Filled in Phase 4"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "capital",
+        "stats",
+        "dossier"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "name": "meridian",
+  "private": true,
+  "description": "A boundary generator for Canada",
+  "license": "MIT",
+  "workspaces": [
+    "app"
+  ],
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "dev": "npm run dev -w app",
+    "lint": "npm run lint -w app",
+    "typecheck": "npm run typecheck -w app",
+    "test": "npm test -w app",
+    "build": "npm run build -w app",
+    "smoke": "npm run smoke -w app",
+    "schemas": "npm run schemas -w app"
+  }
+}

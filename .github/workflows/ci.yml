@@ -1,0 +1,58 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  app:
+    name: App — lint, test, build, smoke
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - name: Lint (ESLint + Prettier)
+        run: npm run lint
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Unit tests (Vitest)
+        run: npm test
+      - name: JSON Schemas up to date
+        run: npm run schemas:check -w app
+      - name: Build
+        run: npm run build
+      - name: Install Playwright Chromium
+        run: npx -w app playwright install --with-deps chromium
+      - name: Smoke (Playwright on built site)
+        run: npm run smoke
+
+  pipeline:
+    name: Pipeline — lint, test, dry run
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: pipeline
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10.1.0 # setup-uv publishes no moving major tag
+        with:
+          version: '0.12.13'
+          enable-cache: true
+          cache-dependency-glob: pipeline/uv.lock
+      - run: make install
+      - run: make lint
+      - run: make test
+      - name: Dry run (validate YAML, print artefact plan)
+        run: make dry-run
