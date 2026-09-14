@@ -38,3 +38,31 @@ test('panel sits right on desktop and collapses to a sheet on iPad', async ({ pa
     expect(box.width).toBeLessThan(viewport.width / 2);
   }
 });
+
+test('basemap matches the build-time key: CARTO with a key, OpenStreetMap without', async ({ page }) => {
+  const warnings: string[] = [];
+  page.on('console', (msg) => {
+    if (msg.type() === 'warning') warnings.push(msg.text());
+  });
+  await page.goto('./');
+
+  const withKey = Boolean(process.env.CARTO_BASEMAPS_KEY?.trim());
+  const tile = page.locator('.leaflet-tile-pane img').first();
+  await expect(tile).toBeAttached();
+  const src = (await tile.getAttribute('src')) ?? '';
+  const attribution = page.locator('.leaflet-control-attribution');
+
+  await expect(page.getByTestId('map')).toHaveAttribute(
+    'data-basemap',
+    withKey ? 'carto-positron' : 'osm-standard',
+  );
+  await expect(attribution).toContainText('OpenStreetMap');
+  if (withKey) {
+    expect(new URL(src).hostname).toMatch(/basemaps\.cartocdn\.com$/);
+    await expect(attribution).toContainText('CARTO');
+    expect(warnings.filter((w) => w.includes('CARTO_BASEMAPS_KEY'))).toEqual([]);
+  } else {
+    expect(new URL(src).hostname).toBe('tile.openstreetmap.org');
+    expect(warnings.some((w) => w.includes('CARTO_BASEMAPS_KEY was not set'))).toBe(true);
+  }
+});

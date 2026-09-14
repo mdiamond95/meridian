@@ -95,7 +95,7 @@ def validate_plan(plan: object, sources: dict[str, Source], report: Report) -> l
         if not isinstance(artefact, dict):
             report.error(f"{where}: must be a mapping")
             continue
-        unknown = set(artefact) - {"id", "phase", "step", "description", "schema", "inputs", "outputs"}
+        unknown = set(artefact) - {"id", "phase", "step", "description", "inputs", "outputs"}
         if unknown:
             report.error(f"{where}: unknown keys {sorted(unknown)}")
 
@@ -113,10 +113,6 @@ def validate_plan(plan: object, sources: dict[str, Source], report: Report) -> l
         if not isinstance(artefact.get("step"), str) or not artefact["step"].startswith("pipeline/"):
             report.error(f"{where}: step must be a path under pipeline/")
 
-        schema = artefact.get("schema")
-        if schema is not None and not (ROOT / str(schema)).is_file():
-            report.error(f"{where}: schema {schema} does not exist (run npm run schemas)")
-
         inputs = artefact.get("inputs")
         if not isinstance(inputs, list) or not inputs:
             report.error(f"{where}: inputs must be a non-empty list of source ids")
@@ -129,7 +125,11 @@ def validate_plan(plan: object, sources: dict[str, Source], report: Report) -> l
         if not isinstance(outputs, list) or not outputs:
             report.error(f"{where}: outputs must be a non-empty list")
         else:
-            for out in outputs:
+            for entry in outputs:
+                if not isinstance(entry, dict) or set(entry) != {"path", "schema"}:
+                    report.error(f"{where}: each output must be {{path, schema}}, got {entry!r}")
+                    continue
+                out, schema = entry["path"], entry["schema"]
                 if not isinstance(out, str) or not out.startswith("data/build/"):
                     report.error(f"{where}: output {out!r} must be under data/build/")
                 elif not VERSIONED_RE.search(Path(out).name):
@@ -138,6 +138,8 @@ def validate_plan(plan: object, sources: dict[str, Source], report: Report) -> l
                     report.error(f"{where}: output {out!r} is written by more than one artefact")
                 else:
                     seen_outputs.add(out)
+                if not isinstance(schema, str) or not (ROOT / schema).is_file():
+                    report.error(f"{where}: schema {schema!r} for {out} does not exist (run npm run schemas)")
         valid.append(artefact)
     return valid
 
@@ -148,10 +150,9 @@ def print_plan(artefacts: list[dict], sources: dict[str, Source]) -> None:
         print(f"[phase {artefact.get('phase')}] {artefact.get('id')} ← {artefact.get('step')}")
         if artefact.get("description"):
             print(f"    {artefact['description']}")
-        if artefact.get("schema"):
-            print(f"    schema  {artefact['schema']}")
-        for out in artefact.get("outputs") or []:
-            print(f"    writes  {out}")
+        for entry in artefact.get("outputs") or []:
+            if isinstance(entry, dict):
+                print(f"    writes  {entry.get('path')}  (schema {entry.get('schema')})")
         for sid in artefact.get("inputs") or []:
             source = sources.get(sid)
             status = (

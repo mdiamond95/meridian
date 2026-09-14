@@ -1,0 +1,78 @@
+{
+  "format": "meridian.attrs",
+  "version": "v1",
+  "meshVersion": "v1",
+  "cellCount": 7,
+  "meta": {
+    "byteOrder": "le",
+    "gdp_method": "allocation_v1",
+    "census_year": 2021
+  },
+  "columns": {
+    "population": {
+      "kind": "count",
+      "dtype": "int32",
+      "byteOrder": "le",
+      "length": 7,
+      "data": "YEkGAJDiAAB4YwEAtNYBAOiAAADILAEA3AUAAA=="
+    },
+    "french_share": {
+      "kind": "share",
+      "dtype": "float32",
+      "byteOrder": "le",
+      "length": 7,
+      "data": "MQisPLx0kzzNzMw8CtejPKabRDyPwvU8AAAAAA=="
+    },
+    "gdp_estimate": {
+      "kind": "money",
+      "dtype": "float32",
+      "byteOrder": "le",
+      "length": 7,
+      "data": "ACX0RgAigEUAgNRFAGsNRgCICUUAAK9FAEC0Qg==",
+      "unit": "cad_millions",
+      "method": "allocation_v1",
+      "confidence": 0.6
+    },
+    "distance_to_capital_km": {
+      "kind": "measure",
+      "dtype": "float32",
+      "byteOrder": "le",
+      "length": 7,
+      "data": "AAAAAAAArEFmZqZBzcywQTMzr0HNzKRBMzOzQQ==",
+      "unit": "km"
+    },
+    "urban_class": {
+      "kind": "id",
+      "dtype": "int32",
+      "byteOrder": "le",
+      "length": 7,
+      "data": "AwAAAAMAAAADAAAAAwAAAAIAAAADAAAAAQAAAA=="
+    }
+  },
+  "lookups": {
+    "urban_class": {
+      "0": "remote",
+      "1": "rural",
+      "2": "small urban",
+      "3": "CMA"
+    }
+  },
+  "sideTables": {
+    "native_land_territory_ids": {
+      "offsets": {
+        "kind": "id",
+        "dtype": "int32",
+        "byteOrder": "le",
+        "length": 8,
+        "data": "AAAAAAEAAAACAAAAAwAAAAQAAAAFAAAABgAAAAgAAAA="
+      },
+      "values": {
+        "kind": "id",
+        "dtype": "int32",
+        "byteOrder": "le",
+        "length": 8,
+        "data": "ZQAAAGUAAABlAAAAZQAAAGUAAABlAAAAZQAAAM0AAAA="
+      }
+    }
+  }
+}

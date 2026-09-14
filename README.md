@@ -25,8 +25,8 @@ make dry-run      # validate pipeline/artefacts.yaml and print the artefact plan
 ```
 
 Also available: `npm run dev`, `npm run lint`, `npm run schemas` (re-export
-`docs/schemas/*.json` after changing `app/src/schema`), and `make lint` / `make test` for
-the pipeline.
+`docs/schemas/*.json` after changing `app/src/schema`), `make validate` (check every file in
+`data/build/` against its JSON Schema), `make examples`, and `make lint` / `make test`.
 
 ## Layout
 
@@ -40,10 +40,11 @@ docs/         vision, plan, decisions, data sources, exported JSON Schemas
 
 ## Basemap key
 
-CARTO watermarks Positron tiles requested without a key. Get a free key at
-<https://carto.com/basemaps/apikey>, then add it as the repository **variable**
-`CARTO_BASEMAPS_KEY` (Settings → Secrets and variables → Actions → Variables) and re-run
-the Pages workflow. For local builds, put `VITE_CARTO_KEY=...` in `app/.env.local`.
+Pages uses CARTO Positron, which needs a free key from <https://carto.com/basemaps/apikey>.
+Set it as the repository **variable** `CARTO_BASEMAPS_KEY` (Settings → Secrets and variables
+→ Actions → Variables). The Pages workflow fails without it. Local builds and CI without a
+key fall back to OpenStreetMap standard tiles and log a console warning. To use CARTO
+locally, run `CARTO_BASEMAPS_KEY=... npm run build`, or put the line in `app/.env.local`.
 
 ## Licence
 

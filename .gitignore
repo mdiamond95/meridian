@@ -23,3 +23,8 @@ data/raw/*
 
 # Local env (Vite convention)
 *.local
+
+# Local key files; never commit (Pages reads CARTO from a repo variable, the pipeline reads env)
+CARTO_BASEMAPS_KEY
+NATIVE_LAND_API_KEY
+*.key

@@ -15,7 +15,17 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      # Public CARTO basemaps key from the repository variable (not a secret: it ships in the bundle).
+      # Used by the build and by the smoke test, which asserts the deployed bundle uses CARTO.
+      CARTO_BASEMAPS_KEY: ${{ vars.CARTO_BASEMAPS_KEY }}
     steps:
+      - name: Pages keeps CARTO — require the basemap key
+        run: |
+          if [ -z "${CARTO_BASEMAPS_KEY// /}" ]; then
+            echo "::error::Repository variable CARTO_BASEMAPS_KEY is not set; Pages must build with CARTO Positron."
+            exit 1
+          fi
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
         with:
@@ -24,9 +34,6 @@ jobs:
       - run: npm ci
       - name: Build
         run: npm run build
-        env:
-          # Public CARTO basemaps key, set as a repository variable (not a secret: it ships in the bundle).
-          VITE_CARTO_KEY: ${{ vars.CARTO_BASEMAPS_KEY }}
       - name: Install Playwright Chromium
         run: npx -w app playwright install --with-deps chromium
       - name: Smoke the exact bundle being deployed

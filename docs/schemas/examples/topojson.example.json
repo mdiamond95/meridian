@@ -1,0 +1,55 @@
+{
+  "type": "Topology",
+  "transform": {
+    "scale": [
+      0.001,
+      0.001
+    ],
+    "translate": [
+      -120.0,
+      49.0
+    ]
+  },
+  "objects": {
+    "provinces": {
+      "type": "GeometryCollection",
+      "geometries": [
+        {
+          "type": "Polygon",
+          "arcs": [
+            [
+              0
+            ]
+          ],
+          "properties": {
+            "code": "AB"
+          }
+        }
+      ]
+    }
+  },
+  "arcs": [
+    [
+      [
+        0,
+        0
+      ],
+      [
+        10000,
+        0
+      ],
+      [
+        0,
+        11000
+      ],
+      [
+        -10000,
+        0
+      ],
+      [
+        0,
+        -11000
+      ]
+    ]
+  ]
+}

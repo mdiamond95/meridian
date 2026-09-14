@@ -1,0 +1,30 @@
+{
+  "format": "meridian.atlas",
+  "version": "v1",
+  "events": [
+    {
+      "date": "1905-09-01",
+      "title": "Alberta and Saskatchewan",
+      "note": "Two provinces are carved from the North-West Territories. Their northern limit is 60°N.",
+      "changes": [
+        {
+          "unit": "alberta",
+          "kind": "create"
+        }
+      ]
+    }
+  ],
+  "units": [
+    {
+      "id": "alberta",
+      "name": "Alberta",
+      "status": "province",
+      "sovereign": "Canada",
+      "capital": "Edmonton",
+      "validFrom": "1905-09-01",
+      "validTo": null,
+      "truth": "dejure",
+      "geometryRef": "alberta_1905"
+    }
+  ]
+}

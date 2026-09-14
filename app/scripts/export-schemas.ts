@@ -9,16 +9,20 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { z } from 'zod';
 import { AtlasFileSchema } from '../src/schema/atlas';
+import { AttrsFileSchema } from '../src/schema/attrs';
 import { MeshFileSchema } from '../src/schema/mesh';
 import { RegionPackSchema } from '../src/schema/regionPack';
+import { TopologySchema } from '../src/schema/topojson';
 
 const outDir = resolve(dirname(fileURLToPath(import.meta.url)), '../../docs/schemas');
 const check = process.argv.includes('--check');
 
 const contracts = {
   'mesh.schema.json': MeshFileSchema,
+  'attrs.schema.json': AttrsFileSchema,
   'atlas.schema.json': AtlasFileSchema,
   'regionPack.schema.json': RegionPackSchema,
+  'topojson.schema.json': TopologySchema,
 };
 
 let stale = 0;

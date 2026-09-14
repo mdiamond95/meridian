@@ -54,5 +54,7 @@ jobs:
       - run: make install
       - run: make lint
       - run: make test
+      - name: Validate data/build against docs/schemas (jsonschema)
+        run: make validate
       - name: Dry run (validate YAML, print artefact plan)
         run: make dry-run
