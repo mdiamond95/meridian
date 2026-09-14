@@ -1,0 +1,33 @@
+{
+  "name": "Meridian",
+  "image": "mcr.microsoft.com/devcontainers/python:3.12-bookworm",
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": { "version": "24" },
+    "ghcr.io/devcontainers/features/github-cli:1": {}
+  },
+  "postCreateCommand": "bash .devcontainer/post-create.sh",
+  "forwardPorts": [5173, 4173],
+  "portsAttributes": {
+    "5173": { "label": "Vite dev" },
+    "4173": { "label": "Vite preview" }
+  },
+  "secrets": {
+    "NATIVE_LAND_API_KEY": {
+      "description": "Native Land Digital API key. Pipeline only; never shipped to the app.",
+      "documentationUrl": "https://native-land.ca/resources/api-docs/"
+    }
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "charliermarsh.ruff",
+        "ms-python.python",
+        "vitest.explorer",
+        "ms-playwright.playwright",
+        "redhat.vscode-yaml"
+      ]
+    }
+  }
+}

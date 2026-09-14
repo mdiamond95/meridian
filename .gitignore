@@ -1,0 +1,25 @@
+# Node
+node_modules/
+app/dist/
+app/playwright-report/
+app/test-results/
+*.tsbuildinfo
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+
+# Data: raw downloads are never committed; data/build/ is.
+data/raw/*
+!data/raw/.gitkeep
+
+# Editors / OS
+.DS_Store
+.vscode/*
+!.vscode/extensions.json
+
+# Local env (Vite convention)
+*.local
