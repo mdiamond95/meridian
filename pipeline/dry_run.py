@@ -23,6 +23,7 @@ SOURCES_PATH = ROOT / "docs" / "data-sources.md"
 ID_RE = re.compile(r"^[a-z][a-z0-9_]*$")
 VERSIONED_RE = re.compile(r"\.v\d+\.")
 SOURCE_COLUMNS = ["id", "source", "url", "licence", "attribution", "refresh"]
+PERMISSION_VALUES = {"pending", "granted", "refused"}
 
 
 @dataclass
@@ -82,6 +83,24 @@ def validate_plan(plan: object, sources: dict[str, Source], report: Report) -> l
     if not isinstance(plan, dict) or plan.get("plan_version") != 1:
         report.error("artefacts.yaml: expected a mapping with plan_version: 1")
         return []
+    unknown_top = set(plan) - {"plan_version", "permissions", "source_routes", "artefacts"}
+    if unknown_top:
+        report.error(f"artefacts.yaml: unknown top-level keys {sorted(unknown_top)}")
+    permissions = plan.get("permissions", {})
+    if (
+        not isinstance(permissions, dict)
+        or permissions.get("native_land_permission") not in PERMISSION_VALUES
+    ):
+        report.error(
+            f"artefacts.yaml: permissions.native_land_permission must be one of {sorted(PERMISSION_VALUES)}"
+        )
+    for sid, route in (plan.get("source_routes") or {}).items():
+        if sid not in sources:
+            report.error(f"artefacts.yaml: source_routes.{sid} has no row in docs/data-sources.md")
+        if not isinstance(route, dict) or not str(route.get("official_url", "")).startswith("https://"):
+            report.error(f"artefacts.yaml: source_routes.{sid} needs an https official_url")
+        elif not route.get("route"):
+            report.error(f"artefacts.yaml: source_routes.{sid} needs a route")
     artefacts = plan.get("artefacts")
     if not isinstance(artefacts, list) or not artefacts:
         report.error("artefacts.yaml: artefacts must be a non-empty list")

@@ -9,6 +9,19 @@
 
 plan_version: 1
 
+# Permission gates. download.py fetches native_land_* sources only when this is `granted`:
+# the Native Land Digital API terms forbid storing or redistributing their data without explicit
+# permission (docs/data-sources.md, docs/native-land-permission-request.md).
+permissions:
+  native_land_permission: pending # pending | granted | refused
+
+# Sources fetched by a route other than their official URL. The official URL is authoritative;
+# the route is how this repository obtains the identical file (see pipeline/README.md).
+source_routes:
+  statcan_gdp_36100711:
+    official_url: https://www150.statcan.gc.ca/n1/tbl/csv/36100711-eng.zip
+    route: github-actions .github/workflows/fetch-gdp.yml → artifact statcan-gdp-36100711
+
 artefacts:
   - id: mesh
     phase: 1

@@ -1,5 +1,5 @@
 # Meridian pipeline. Run from pipeline/ or via the root Makefile.
-.PHONY: install dry-run lint test validate examples download mesh attrs layers build verify fixture
+.PHONY: install dry-run lint test validate examples download mesh attrs layers build verify fixture spot-check
 
 install:
 	uv sync --frozen
@@ -42,3 +42,6 @@ verify:
 
 fixture:
 	uv run --frozen python make_fixture.py
+
+spot-check:
+	uv run --frozen python spot_check.py

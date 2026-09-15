@@ -2,10 +2,12 @@
 
     make mesh
 
-1. Coverage: NRCan Atlas of Canada 1:1M boundary polygons (land plus inland water, including
-   the Canadian Great Lakes). A candidate cell is kept when its centre lies in Canada or more
-   than 30% of its area does.
-2. Province: largest area overlap with the Atlas polygons.
+1. Inclusion rule: a cell is in the mesh if it is >= 30% Canadian land OR it contains the
+   representative point of any DA with population > 0. "Canadian land" is the NRCan Atlas of
+   Canada 1:1M boundary polygons: land plus inland water, including the Canadian Great Lakes.
+   DA representative points are point_on_surface of the 2021 cartographic DAs.
+2. Province: largest area overlap with the Atlas polygons; a cell kept only for a DA point with
+   no Atlas overlap (e.g. Sable Island) takes the province of that DA.
 3. CD and CSD: largest overlap with the StatCan 2021 cartographic CSDs, restricted to the
    cell's province (CD) and CD (CSD) so the three codes always nest. Cells with no CSD overlap
    (open water in the Great Lakes or large bays) take the nearest CSD in their province.
@@ -19,19 +21,17 @@ import time
 
 import geopandas as gpd
 import h3
-import pandas as pd
 import shapely
 
+from census import da_points
 from columns import file_meta
 from common import BUILD, EQUAL_AREA_CRS, H3_RESOLUTION, MESH_VERSION, WGS84, raw_file, write_json_gz
 from geo import (
-    cell_centres,
     cell_polygons,
     largest,
     list_layers,
     nearest_key,
     overlap_areas,
-    points_within,
     read_vector,
 )
 
@@ -121,26 +121,33 @@ def build() -> dict:
     log("loading StatCan CSDs")
     csds = load_csds()
 
-    candidates = candidate_cells(provinces)
+    log("populated DA representative points")
+    das = da_points()
+    populated = das[das["population"] > 0].sort_values(["cell", "pruid"], kind="stable")
+    da_province = populated.drop_duplicates("cell").set_index("cell")["pruid"].map(PRUID_TO_CODE)
+    log(f"{len(populated):,} populated DAs in {len(da_province):,} cells")
+
+    candidates = sorted(set(candidate_cells(provinces)) | set(da_province.index))
     log(f"{len(candidates):,} candidate cells")
     polys = cell_polygons(candidates)
     hex_area = polys.area.to_numpy()
 
     prov_overlap = overlap_areas(polys, provinces, "province")
     canadian = prov_overlap.groupby("cell")["area"].sum().reindex(range(len(candidates)), fill_value=0.0)
-    centre_in = points_within(cell_centres(candidates), provinces, "province")
-    keep_mask = (canadian.to_numpy() / hex_area > KEEP_SHARE) | pd.Series(range(len(candidates))).isin(
-        centre_in.index
+    by_share = canadian.to_numpy() / hex_area >= KEEP_SHARE
+    by_population = [cell in da_province.index for cell in candidates]
+    kept_positions = [i for i in range(len(candidates)) if by_share[i] or by_population[i]]
+    log(
+        f"{len(kept_positions):,} cells kept ({int(by_share.sum()):,} by land share, "
+        f"{sum(1 for i in kept_positions if not by_share[i]):,} only by populated DA point)"
     )
-    kept_positions = [i for i, keep in enumerate(keep_mask) if keep]
-    log(f"{len(kept_positions):,} cells kept")
 
-    # Province by largest overlap (a centre-only cell always overlaps its province).
     province_of = largest(prov_overlap)["key"]
-
     cells = [candidates[i] for i in kept_positions]
     kept_polys = polys.iloc[kept_positions].reset_index(drop=True)
-    provinces_kept = [province_of[i] for i in kept_positions]
+    provinces_kept = [
+        province_of[i] if i in province_of.index else da_province[candidates[i]] for i in kept_positions
+    ]
 
     log("CSD overlaps")
     csd_overlap = overlap_areas(kept_polys, csds, "csd")
@@ -196,7 +203,7 @@ def build() -> dict:
         "h3Resolution": H3_RESOLUTION,
         "meta": file_meta(
             coverage="nrcan_atlas_boundaries_1m",
-            keep_rule="centre_in_canada_or_share_gt_0.30",
+            keep_rule="canadian_share_ge_0.30_or_populated_da_point",
             csd_source="statcan_csd_2021",
             h3_version=h3.__version__,
         ),

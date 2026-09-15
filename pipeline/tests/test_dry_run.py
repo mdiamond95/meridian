@@ -15,6 +15,8 @@ def write(tmp_path: Path, plan: str, rows: str) -> tuple[Path, Path]:
 
 PLAN = """
 plan_version: 1
+permissions:
+  native_land_permission: pending
 artefacts:
   - id: mesh
     phase: 1
@@ -63,3 +65,17 @@ def test_bare_string_output_is_an_error(tmp_path, capsys):
     )
     assert dry_run.run(*write(tmp_path, plan, "| `statcan_pr_2021` | StatCan | | | | |\n")) == 1
     assert "must be {path, schema}" in capsys.readouterr().err
+
+
+def test_native_land_permission_must_be_a_known_value(tmp_path, capsys):
+    plan = PLAN.replace("native_land_permission: pending", "native_land_permission: maybe")
+    assert dry_run.run(*write(tmp_path, plan, "| `statcan_pr_2021` | StatCan | | | | |\n")) == 1
+    assert "native_land_permission" in capsys.readouterr().err
+
+
+def test_repo_gates_native_land_until_permission_is_granted(capsys):
+    import download
+
+    assert download.native_land_permission() == "pending"
+    assert download.main(["--only", "native_land_territories"]) == 0
+    assert "not fetched" in capsys.readouterr().out

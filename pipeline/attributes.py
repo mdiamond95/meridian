@@ -48,6 +48,7 @@ import numpy as np
 import pandas as pd
 import shapely
 
+from census import da_points, load_profile
 from columns import MONEY_UNIT, check_column_name, encode_column, file_meta
 from common import BUILD, EQUAL_AREA_CRS, MESH_VERSION, WGS84, load_manifest, raw_file, write_json_gz
 from geo import cell_polygons, largest, nearest_key, overlap_areas, points_within, read_vector, zip_dataset
@@ -135,13 +136,6 @@ def load_mesh() -> dict:
         return json.load(fh)
 
 
-def load_profile(source_id: str) -> pd.DataFrame:
-    """Wide table: index geo code, columns characteristic ids, NaN where suppressed."""
-    df = pd.read_csv(raw_file(source_id), dtype={"ALT_GEO_CODE": str, "CHARACTERISTIC": int, "FLAG": str})
-    df["OBS_VALUE"] = pd.to_numeric(df["OBS_VALUE"], errors="coerce")
-    return df.pivot_table(index="ALT_GEO_CODE", columns="CHARACTERISTIC", values="OBS_VALUE", aggfunc="first")
-
-
 def load_csds() -> gpd.GeoDataFrame:
     gdf = read_vector(raw_file("statcan_csd_2021"), crs=EQUAL_AREA_CRS)
     gdf["geometry"] = shapely.make_valid(gdf.geometry.to_numpy())
@@ -223,11 +217,8 @@ def cells_of_points(
 def das_to_cells(
     mesh: dict, index: dict[str, int], csds: gpd.GeoDataFrame, cma: gpd.GeoDataFrame
 ) -> pd.DataFrame:
-    das = read_vector(raw_file("statcan_da_2021"), crs=EQUAL_AREA_CRS).sort_values("DAUID", kind="stable")
-    das = das.reset_index(drop=True)
-    points = gpd.GeoSeries(
-        shapely.point_on_surface(shapely.make_valid(das.geometry.to_numpy())), crs=EQUAL_AREA_CRS
-    )
+    das = da_points()
+    points = das.geometry
     csd_of = points_within(points, csds, "csd")
     missing = [i for i in range(len(das)) if i not in csd_of.index]
     if missing:
@@ -240,7 +231,7 @@ def das_to_cells(
     cells = cells_of_points(wgs.y.to_numpy(), wgs.x.to_numpy(), mesh["cells"], index)
     return pd.DataFrame(
         {
-            "dauid": das["DAUID"].to_numpy(),
+            "dauid": das["dauid"].to_numpy(),
             "csd": [csd_of[i] for i in range(len(das))],
             "cell": cells,
             "cma_class": [int(class_of.get(i, 0)) for i in range(len(das))],
@@ -361,54 +352,67 @@ def industry_columns(mesh, csd_prof, cell_from_csd) -> tuple[dict[str, np.ndarra
     return columns, dominant, counts
 
 
-def gdp_column(mesh, labour_counts) -> np.ndarray | None:
+GDP_PROVINCES = {
+    "Newfoundland and Labrador": "NL", "Prince Edward Island": "PE", "Nova Scotia": "NS",
+    "New Brunswick": "NB", "Quebec": "QC", "Ontario": "ON", "Manitoba": "MB", "Saskatchewan": "SK",
+    "Alberta": "AB", "British Columbia": "BC", "Yukon": "YT",
+    "Northwest Territories": "NT", "Nunavut": "NU",
+}  # fmt: skip
+
+
+def gdp_column(mesh, labour_counts, population) -> tuple[np.ndarray, str] | None:
+    """allocation_v1: for each province and NAICS sector, the table's GDP is shared across the
+    province's cells in proportion to the cell's census labour force in that sector. A sector
+    with no census labour force in a province is shared by population instead, so every
+    province's cells sum to the table's provincial total."""
     if "statcan_gdp_36100711" not in load_manifest():
-        log("statcan_gdp_36100711 not present (manual download); gdp_estimate omitted")
+        log("statcan_gdp_36100711 not present; gdp_estimate omitted")
         return None
-    gdp = read_gdp_table(raw_file("statcan_gdp_36100711"))
+    gdp, year = read_gdp_table(raw_file("statcan_gdp_36100711"))
     provinces = np.array([c["province"] for c in mesh["cells"]])
     out = np.zeros(len(mesh["cells"]))
     for province in sorted(set(provinces)):
         mask = provinces == province
         prov_labour = labour_counts[mask].sum(axis=0)
         for j, sector in enumerate(NAICS_SECTORS):
-            value = gdp.get((province, sector))
-            if value is None or prov_labour[j] <= 0:
-                continue
-            out[mask] += value * labour_counts[mask, j] / prov_labour[j]
-    return out
+            value = gdp[(province, sector)]
+            if prov_labour[j] > 0:
+                out[mask] += value * labour_counts[mask, j] / prov_labour[j]
+            else:
+                weights = population[mask].astype(np.float64)
+                out[mask] += value * weights / weights.sum()
+    return out, year
 
 
-def read_gdp_table(path) -> dict[tuple[str, str], float]:
-    """(province, NAICS sector) → GDP in millions of current dollars, latest reference year."""
-    names = {
-        "Newfoundland and Labrador": "NL", "Prince Edward Island": "PE", "Nova Scotia": "NS",
-        "New Brunswick": "NB", "Quebec": "QC", "Ontario": "ON", "Manitoba": "MB", "Saskatchewan": "SK",
-        "Alberta": "AB", "British Columbia": "BC", "Yukon": "YT",
-        "Northwest Territories": "NT", "Nunavut": "NU",
-    }  # fmt: skip
+def read_gdp_table(path) -> tuple[dict[tuple[str, str], float], str]:
+    """(province, NAICS sector) → GDP at basic prices in millions of current dollars, for the latest
+    reference year in which every province and territory has all 20 sectors (current-dollar
+    values for recent years are published later than chained-dollar ones)."""
     with zipfile.ZipFile(path) as zf:
         member = next(m for m in zf.namelist() if re.fullmatch(r"\d{8}\.csv", m))
         rows = list(csv.DictReader(io.TextIOWrapper(zf.open(member), encoding="utf-8-sig")))
     naics_col = next(c for c in rows[0] if c.startswith("North American Industry Classification System"))
     prices_col = next((c for c in rows[0] if c.lower() == "prices"), None)
-    usable = [
-        r
-        for r in rows
-        if r["GEO"] in names and r["VALUE"] and (prices_col is None or "current" in r[prices_col].lower())
-    ]
-    latest = max(r["REF_DATE"] for r in usable)
-    out: dict[tuple[str, str], float] = {}
-    for r in usable:
-        code = re.search(r"\[(\d{2}(?:-\d{2})?)\]\s*$", r[naics_col])
-        if r["REF_DATE"] != latest or not code or code.group(1).replace("-", "_") not in NAICS_SECTORS:
+    by_year: dict[str, dict[tuple[str, str], float]] = defaultdict(dict)
+    for r in rows:
+        if r["GEO"] not in GDP_PROVINCES or not r["VALUE"]:
             continue
-        scale = {"units": 1e-6, "thousands": 1e-3, "millions": 1.0}.get(
-            r.get("SCALAR_FACTOR", "millions").lower(), 1.0
-        )
-        out[(names[r["GEO"]], code.group(1).replace("-", "_"))] = float(r["VALUE"]) * scale
-    log(f"GDP table: reference year {latest}, {len(out)} province × sector values")
-    return out
+        if prices_col is not None and r[prices_col] != "Current dollars":
+            continue
+        code = re.search(r"\[(\d{2}(?:-\d{2})?)\]\s*$", r[naics_col])
+        sector = code.group(1).replace("-", "_") if code else None
+        if sector not in NAICS_SECTORS:
+            continue
+        scale = {"units": 1e-6, "thousands": 1e-3, "millions": 1.0}[
+            r.get("SCALAR_FACTOR", "millions").lower()
+        ]
+        by_year[r["REF_DATE"]][(GDP_PROVINCES[r["GEO"]], sector)] = float(r["VALUE"]) * scale
+    complete = [y for y, values in by_year.items() if len(values) == len(GDP_PROVINCES) * len(NAICS_SECTORS)]
+    if not complete:
+        raise ValueError("no reference year has current-dollar GDP for every province and sector")
+    year = max(complete)
+    log(f"GDP table: reference year {year} (latest complete in current dollars)")
+    return by_year[year], year
 
 
 def treaty_columns(polys) -> tuple[np.ndarray, np.ndarray, dict]:
@@ -518,9 +522,11 @@ def build() -> dict:
     add("industry_dominant", dominant, "id", method="argmax_industry_share_v1")
     lookups["industry_dominant"] = {"0": "no data"} | {s[:2]: NAICS_LABELS[s] for s in NAICS_SECTORS}
 
-    gdp = gdp_column(mesh, labour)
+    gdp = gdp_column(mesh, labour, population)
+    gdp_year = None
     if gdp is not None:
-        add("gdp_estimate", gdp, "money", unit=MONEY_UNIT, method="allocation_v1", confidence=0.5)
+        values, gdp_year = gdp
+        add("gdp_estimate", values, "money", unit=MONEY_UNIT, method="allocation_v1", confidence=0.5)
 
     log("ecozones and drainage")
     eco, drainage = overlay_inputs()
@@ -633,7 +639,7 @@ def build() -> dict:
     )
 
     if "native_land_territories" not in load_manifest():
-        log("native_land_territories not fetched (terms); side table omitted")
+        log("native_land_territories not fetched (native_land_permission pending); side table omitted")
 
     return {
         "format": "meridian.attrs",
@@ -641,7 +647,11 @@ def build() -> dict:
         "meshVersion": mesh["version"],
         "cellCount": n,
         "meta": file_meta(
-            census_year=2021, gdp_method="allocation_v1" if gdp is not None else "omitted_no_source"
+            census_year=2021,
+            gdp_method="allocation_v1" if gdp is not None else "omitted_no_source",
+            gdp_source="statcan_gdp_36100711",
+            gdp_reference_year=gdp_year or "none",
+            gdp_prices="current_dollars_basic_prices",
         ),
         "columns": columns,
         "lookups": lookups,

@@ -10,6 +10,9 @@ The URL column of docs/data-sources.md selects a fetcher:
                                    order; the server fails often, so pages retry and shrink
     sdmx:<dataflow>:<ids>[:<n>]    StatCan Census Profile API (api.statcan.gc.ca), counts for the
                                    listed characteristic ids, n ids per request → <id>.csv
+    gha:<workflow>:<artifact>:<file>
+                                   the file from the latest successful run of a GitHub Actions
+                                   fetch workflow (for hosts that block this machine), via `gh`
     manual:<filename>              a file that cannot be fetched from here; place it at
                                    data/raw/<id>/<filename> by hand and its hash is recorded
 
@@ -55,7 +58,7 @@ def source_url(cell: str) -> str | None:
     cell = cell.strip().strip("`").strip()
     if not cell:
         return None
-    if cell.startswith(("arcgis:", "sdmx:", "manual:")):
+    if cell.startswith(("arcgis:", "sdmx:", "gha:", "manual:")):
         return cell
     md_link = re.search(r"\]\((https?://[^)\s]+)\)", cell)
     if md_link:
@@ -71,6 +74,8 @@ def filename_for(source_id: str, url: str) -> str:
         return f"{source_id}.csv"
     if url.startswith("manual:"):
         return url.removeprefix("manual:")
+    if url.startswith("gha:"):
+        return url.split(":")[3]
     name = unquote(Path(urlparse(url).path).name)
     if "{" in name or "." not in name:
         return f"{source_id}.json"
@@ -124,7 +129,7 @@ def fetch_arcgis(spec: str, dest: Path) -> None:
                     if "error" in doc:
                         raise ValueError(doc["error"])
                     break
-                except (requests.RequestException, ValueError) as exc:
+                except (requests.RequestException, ValueError, OSError) as exc:
                     if attempt >= 3 and query["resultRecordCount"] > 1:
                         query["resultRecordCount"] = max(1, query["resultRecordCount"] // 2)
                     size = query["resultRecordCount"]
@@ -179,6 +184,39 @@ def fetch_sdmx(spec: str, dest: Path) -> None:
     write_bytes(dest, out.getvalue().encode("utf-8"))
 
 
+def fetch_gha(spec: str, dest: Path) -> None:
+    """Download `file` from artifact `artifact` of the latest successful run of `workflow`."""
+    import subprocess
+    import tempfile
+
+    _, workflow, artifact, name = spec.split(":")
+    listing = subprocess.run(
+        ["gh", "run", "list", "--workflow", workflow, "--status", "success", "--limit", "1",
+         "--json", "databaseId", "--jq", ".[0].databaseId"],
+        capture_output=True, text=True, check=True, cwd=ROOT,
+    )  # fmt: skip
+    run_id = listing.stdout.strip()
+    if not run_id:
+        raise ValueError(f"no successful run of {workflow}; trigger it first (pipeline/README.md)")
+    with tempfile.TemporaryDirectory() as tmp:
+        subprocess.run(["gh", "run", "download", run_id, "-n", artifact, "-D", tmp], check=True, cwd=ROOT)
+        src = Path(tmp) / name
+        checksum = Path(tmp) / f"{name}.sha256"
+        if checksum.exists() and checksum.read_text().split()[0] != sha256_file(src):
+            raise ValueError(f"{name} does not match the checksum recorded by the workflow")
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        write_bytes(dest, src.read_bytes())
+    print(f"    from {workflow} run {run_id}")
+
+
+def native_land_permission() -> str:
+    """The Native Land Digital permission gate from pipeline/artefacts.yaml."""
+    import yaml
+
+    plan = yaml.safe_load((ROOT / "pipeline" / "artefacts.yaml").read_text(encoding="utf-8"))
+    return str((plan.get("permissions") or {}).get("native_land_permission", "pending"))
+
+
 def resolve(template: str) -> str | None:
     missing = [var for var in PLACEHOLDER.findall(template) if not os.environ.get(var)]
     if missing:
@@ -229,8 +267,14 @@ def main(argv: list[str] | None = None) -> int:
     manifest = json.loads(MANIFEST.read_text(encoding="utf-8")) if MANIFEST.exists() else {}
 
     failures = 0
+    native_land = native_land_permission()
     for sid, source in sources.items():
         if args.only and sid not in args.only:
+            continue
+        if sid.startswith("native_land_") and native_land != "granted":
+            print(
+                f"- {sid}: native_land_permission is {native_land!r} in pipeline/artefacts.yaml, not fetched"
+            )
             continue
         template = source_url(source.url)
         if template is None:
@@ -269,9 +313,11 @@ def main(argv: list[str] | None = None) -> int:
                     fetch_arcgis(url, dest)
                 elif template.startswith("sdmx:"):
                     fetch_sdmx(url, dest)
+                elif template.startswith("gha:"):
+                    fetch_gha(url, dest)
                 else:
                     fetch(url, dest)
-            except (requests.RequestException, ValueError) as exc:
+            except (requests.RequestException, ValueError, OSError) as exc:
                 print(f"✗ {sid}: {type(exc).__name__}", file=sys.stderr)
                 failures += 1
                 continue

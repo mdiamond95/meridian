@@ -14,8 +14,16 @@ make test         # pytest: contracts, units, and the Phase 1 gate checks
 
 From the repo root, `make download`, `make build` and `make verify` forward here.
 
-`make build` needs everything that `make download` fetched. `statcan_gdp_36100711` is a manual
-download (see docs/data-sources.md); without it, `attrs` is built with no `gdp_estimate` column.
+`make build` needs everything that `make download` fetched. Two sources are special:
+
+- **`statcan_gdp_36100711`**: www150.statcan.gc.ca blocks the Codespace, so a GitHub-hosted runner
+  fetches it (`.github/workflows/fetch-gdp.yml`) and `make download` pulls the workflow's artifact
+  with `gh` (the `gha:` fetcher). **Refreshing GDP** (new release each May): run the *Fetch StatCan
+  GDP table* workflow from the Actions tab, or push a change to the workflow file. Then run
+  `make download ARGS="--only statcan_gdp_36100711 --refresh"` and `make build`. Artifacts expire
+  after 14 days, so refresh and build together.
+- **`native_land_*`**: not fetched while `permissions.native_land_permission` in
+  `pipeline/artefacts.yaml` is anything but `granted` (docs/native-land-permission-request.md).
 
 ## What gets built
 
@@ -42,10 +50,12 @@ Identical raw inputs (pinned by hash in `data/raw/MANIFEST.json`) and the locked
 
 ## Confidence caveats
 
-- **GDP is an allocation, never a measurement.** `gdp_estimate` spreads provincial GDP by industry
-  over cells in proportion to census labour force by industry (`method: allocation_v1`,
-  `confidence: 0.5`). It ignores productivity differences within a province, commuting, and
-  place of work vs place of residence. Label it as an estimate everywhere.
+- **GDP is an allocation, never a measurement.** `gdp_estimate` spreads 2022 provincial GDP by industry
+  (current dollars, basic prices; the latest year StatCan publishes in current dollars for every
+  province and sector) over cells in proportion to 2021 census labour force by industry
+  (`method: allocation_v1`, `confidence: 0.5`). It ignores productivity differences within a province,
+  commuting, and place of work vs place of residence. Provincial sums reconcile to the table exactly.
+  Label it as an estimate everywhere.
 - **Population is dasymetric.** Each DA's count sits at its representative point, so a DA that
   straddles cells puts all its people in one cell. CSD totals are exact; cell values are not.
 - **Language, Indigenous identity and immigrant shares** come from the 25% sample and from
@@ -56,8 +66,10 @@ Identical raw inputs (pinned by hash in `data/raw/MANIFEST.json`) and the locked
   approximations of relationships that were never polygonal, and every layer built from them must
   say so.
 - **Treaty areas** are CIRNAC's approximate depictions, not legal boundaries.
-- **Mesh coverage** uses the Atlas of Canada 1:1M outline, and cell attribution uses 20 m-generalized
-  StatCan boundaries. Coastal and border cells can differ from finer-scale sources.
+- **Mesh inclusion:** a cell is in the mesh if it is ≥ 30% Canadian land (Atlas of Canada 1:1M land +
+  inland water) OR it contains the representative point of a DA with population > 0. Attribution uses
+  20 m-generalized StatCan boundaries, so coastal and border cells can differ from finer-scale sources,
+  and a small city CSD can lose its cell to a larger surrounding CSD.
 - **Some inputs are Internet Archive copies** of official files; see docs/data-sources.md.
 
 ## Refreshing for a new census

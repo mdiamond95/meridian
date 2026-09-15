@@ -4,6 +4,7 @@ import io
 import zipfile
 
 import numpy as np
+import pytest
 
 import attributes as attrs
 from common import write_json_gz
@@ -42,23 +43,48 @@ def test_ge45_winner_parsing(tmp_path):
     assert attrs.read_ge45_winners(path) == {10001: 1, 24001: 3, 59001: 4}
 
 
-def test_gdp_table_parsing_uses_latest_year_and_current_dollars(tmp_path):
+def test_gdp_table_uses_latest_complete_current_dollar_year(tmp_path):
     header = ["REF_DATE", "GEO", "DGUID", "Prices", "North American Industry Classification System (NAICS)",
               "UOM", "SCALAR_ID", "SCALAR_FACTOR", "VALUE"]  # fmt: skip
-    rows = [
-        ["2024", "Alberta", "", "Current dollars", "Mining, quarrying, and oil and gas extraction [21]", "Dollars", "6", "millions", "90000"],
-        ["2025", "Alberta", "", "Current dollars", "Mining, quarrying, and oil and gas extraction [21]", "Dollars", "6", "millions", "95000.5"],
-        ["2025", "Alberta", "", "Chained (2017) dollars", "Mining, quarrying, and oil and gas extraction [21]", "Dollars", "6", "millions", "1"],
-        ["2025", "Alberta", "", "Current dollars", "Manufacturing [31-33]", "Dollars", "6", "millions", "30000"],
-        ["2025", "Canada", "", "Current dollars", "Manufacturing [31-33]", "Dollars", "6", "millions", "1"],
-    ]  # fmt: skip
+    labels = {s: f"Sector {s} [{s.replace('_', '-')}]" for s in attrs.NAICS_SECTORS}
+    rows = []
+    for year, complete in (("2021", True), ("2022", True), ("2023", False)):
+        for geo in attrs.GDP_PROVINCES:
+            for sector, label in labels.items():
+                value = "" if not complete and sector == "21" else f"{int(year) + len(sector)}.5"
+                rows.append([year, geo, "", "Current dollars", label, "Dollars", "6", "millions", value])
+                rows.append([year, geo, "", "Chained (2017) dollars", label, "Dollars", "6", "millions", "1"])
+    rows.append(["2022", "Canada", "", "Current dollars", labels["11"], "Dollars", "6", "millions", "999"])
     buf = io.StringIO()
     csv.writer(buf).writerows([header, *rows])
     path = tmp_path / "36100711-eng.zip"
     with zipfile.ZipFile(path, "w") as zf:
         zf.writestr("36100711.csv", buf.getvalue())
         zf.writestr("36100711_MetaData.csv", "x")
-    assert attrs.read_gdp_table(path) == {("AB", "21"): 95000.5, ("AB", "31_33"): 30000.0}
+    values, year = attrs.read_gdp_table(path)
+    assert year == "2022"
+    assert len(values) == 13 * 20
+    assert values[("AB", "31_33")] == 2027.5
+
+
+def test_gdp_allocation_reconciles_each_province():
+    mesh = {"cells": [{"province": p} for p in ["AB", "AB", "AB", "NU"]]}
+    labour = np.zeros((4, len(attrs.NAICS_SECTORS)))
+    labour[0, 0], labour[1, 0], labour[3, 1] = 30, 10, 5  # AB: sector 11 only; NU: sector 21 only
+    population = np.array([100, 50, 50, 10])
+    gdp = {(p, s): 10.0 for p in attrs.GDP_PROVINCES.values() for s in attrs.NAICS_SECTORS}
+    original = attrs.read_gdp_table
+    attrs.read_gdp_table = lambda path: (gdp, "2022")
+    attrs.load_manifest, manifest = (lambda: {"statcan_gdp_36100711": {}}), attrs.load_manifest
+    attrs.raw_file, raw = (lambda sid: None), attrs.raw_file
+    try:
+        values, year = attrs.gdp_column(mesh, labour, population)
+    finally:
+        attrs.read_gdp_table, attrs.load_manifest, attrs.raw_file = original, manifest, raw
+    assert year == "2022"
+    assert values[:3].sum() == pytest.approx(200.0)  # 20 sectors × 10 for Alberta
+    assert values[3] == pytest.approx(200.0)
+    assert values[0] == pytest.approx(10 * 30 / 40 + 19 * 10 * 100 / 200)
 
 
 def test_haversine_edmonton_to_calgary():
