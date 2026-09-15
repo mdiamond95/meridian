@@ -24,7 +24,7 @@ ROOT = Path(__file__).resolve().parent.parent
 SCHEMAS = ROOT / "docs" / "schemas"
 BUILD = ROOT / "data" / "build"
 PLAN = ROOT / "pipeline" / "artefacts.yaml"
-IGNORED = {".gitkeep"}
+IGNORED = {".gitkeep", "SHA256SUMS"}
 
 
 def load_document(path: Path) -> Any:

@@ -1,39 +1,55 @@
 # Data sources
 
-Every external dataset Meridian reads or displays. The pipeline's dry run (`make dry-run`)
-cross-checks the `id` column against `pipeline/artefacts.yaml`, and `pipeline/download.py`
-(Phase 1) fetches each row into `data/raw/<id>/`.
+Every external dataset Meridian reads or displays. `make dry-run` cross-checks the `id` column
+against `pipeline/artefacts.yaml`. `make download` (`pipeline/download.py`) fetches each row into
+`data/raw/<id>/` and records its SHA-256 in `data/raw/MANIFEST.json`.
 
-**Phase 1 fills the empty cells.** Confirm each licence line before any artefact built from
-that source is committed (docs/plan.md, Phase 1 "You do").
+**Mark: confirm each licence line before any artefact built from that source is committed**
+(docs/plan.md, Phase 1 "You do"). Rows marked ⚠ need a decision; see the notes below the table.
 
-Code is MIT; data keeps its own licence, listed here. Every attribution string ends up on
-the in-app licences page (Phase 7).
+Code is MIT; data keeps its own licence. Every attribution string ends up on the in-app
+licences page (Phase 7).
+
+## How URLs are written
+
+The development Codespace runs in a US Microsoft datacenter. Several Government of Canada hosts
+(`www12`/`www150.statcan.gc.ca`, `*.sac-isc.gc.ca`, `www.elections.ca`, `agriculture.canada.ca`)
+drop its connections, so some rows use equivalent official services or pinned Internet Archive
+copies of the official files. The URL column selects a fetcher (see `pipeline/download.py`):
+`https://` downloads a file; `arcgis:` pages an ArcGIS REST layer to GeoJSON; `sdmx:` calls the
+StatCan Census Profile API; `manual:` is a file placed by hand.
 
 ## Pipeline inputs
 
 | id | source | url | licence | attribution | refresh |
 |---|---|---|---|---|---|
-| `statcan_pr_2021` | Statistics Canada 2021 boundary file: provinces/territories | | | | |
-| `statcan_cd_2021` | Statistics Canada 2021 boundary file: census divisions | | | | |
-| `statcan_csd_2021` | Statistics Canada 2021 boundary file: census subdivisions | | | | |
-| `statcan_cmaca_2021` | Statistics Canada 2021 boundary file: CMA/CA | | | | |
-| `statcan_da_2021` | Statistics Canada 2021 boundary file: dissemination areas | | | | |
-| `statcan_profile_da_2021` | Statistics Canada 2021 Census Profile, DA level | | | | |
-| `statcan_profile_csd_2021` | Statistics Canada 2021 Census Profile, CSD level | | | | |
-| `statcan_gdp_36100402` | Statistics Canada table 36-10-0402, provincial GDP by industry | | | | |
-| `cirnac_pre1975_treaties` | Open Government: Pre-1975 Historic Treaties | | | | |
-| `cirnac_modern_treaties` | Open Government: Modern Treaties | | | | |
-| `cirnac_reserves` | Open Government: Indian Reserves | | | | |
-| `ab_metis_settlements` | Alberta Métis Settlements | | | | |
-| `itk_inuit_nunangat` | Inuit Nunangat regions | | | | |
-| `nrcan_ecozones` | NRCan Terrestrial Ecozones | | | | |
-| `nrcan_drainage_areas` | NRCan Atlas of Canada drainage areas (incl. Saskatchewan–Nelson sub-basins) | | | | |
-| `nrcan_rivers` | NRCan rivers network | | | | |
-| `elections_fed_2023` | Elections Canada 2023 Representation Order federal electoral districts | | | | |
-| `elections_results_latest` | Elections Canada latest general election results by district | | | | |
-| `native_land_territories` | Native Land Digital API: territories | | | | |
-| `native_land_languages` | Native Land Digital API: languages | | | | |
+| `statcan_csd_2021` | Statistics Canada 2021 cartographic boundary file: census subdivisions (layer 9 of the official map service; generalized server-side to 20 m). PR and CD polygons are dissolved from it. | `arcgis:https://geo.statcan.gc.ca/geo_wa/rest/services/2021/Cartographic_boundary_files/MapServer/9?outFields=CSDUID,CSDNAME,CSDTYPE,PRUID&outSR=3347&maxAllowableOffset=20&geometryPrecision=0&pageSize=100` | Statistics Canada Open Licence, https://www.statcan.gc.ca/en/terms-conditions/open-licence | Adapted from Statistics Canada, 2021 Census – Boundary files, 2022. This does not constitute an endorsement by Statistics Canada of this product. | Every census (next: 2026 geography, released 2027) |
+| `statcan_cma_2021` | Statistics Canada 2021 cartographic boundary file: CMAs and CAs (layer 6) | `arcgis:https://geo.statcan.gc.ca/geo_wa/rest/services/2021/Cartographic_boundary_files/MapServer/6?outFields=CMAUID,CMAPUID,CMANAME,CMATYPE,PRUID&outSR=3347&maxAllowableOffset=20&geometryPrecision=0&pageSize=20` | Statistics Canada Open Licence | Adapted from Statistics Canada, 2021 Census – Boundary files, 2022. This does not constitute an endorsement by Statistics Canada of this product. | Every census |
+| `statcan_da_2021` | Statistics Canada 2021 cartographic boundary file: dissemination areas (layer 12), used for DA representative points | `arcgis:https://geo.statcan.gc.ca/geo_wa/rest/services/2021/Cartographic_boundary_files/MapServer/12?outFields=DAUID,PRUID&outSR=3347&maxAllowableOffset=20&geometryPrecision=0&pageSize=500` | Statistics Canada Open Licence | Adapted from Statistics Canada, 2021 Census – Boundary files, 2022. This does not constitute an endorsement by Statistics Canada of this product. | Every census |
+| `statcan_profile_da_2021` | Statistics Canada 2021 Census Profile (98-401-X2021), DA level, via the Census Profile SDMX API: population 2021/2016, mother tongue, Indigenous identity, immigrant status | `sdmx:DF_DA:1,2,379,382,383,384,385,704,705,706,707,708,709,1388,1389,1513,1515:1` | Statistics Canada Open Licence | Adapted from Statistics Canada, Census Profile, 2021 Census of Population, 2022. This does not constitute an endorsement by Statistics Canada of this product. | Every census |
+| `statcan_profile_csd_2021` | Statistics Canada 2021 Census Profile, CSD level: the DA characteristics plus labour force 15+ by NAICS 2017 sector (2259, 2261–2281) | `sdmx:DF_CSD:1,2,379,382,383,384,385,704,705,706,707,708,709,1388,1389,1513,1515,2259,2261,2262,2263,2264,2265,2266,2267,2268,2269,2270,2271,2272,2273,2274,2275,2276,2277,2278,2279,2280,2281:10` | Statistics Canada Open Licence | Adapted from Statistics Canada, Census Profile, 2021 Census of Population, 2022. This does not constitute an endorsement by Statistics Canada of this product. | Every census |
+| `statcan_gdp_36100711` | ⚠ Statistics Canada table 36-10-0711-01, GDP at basic prices by industry, provinces and territories. It replaces discontinued 36-10-0402-01. | `manual:36100711-eng.zip` | Statistics Canada Open Licence | Adapted from Statistics Canada, Table 36-10-0711-01, <reference year>. This does not constitute an endorsement by Statistics Canada of this product. | Annual (May) |
+| `nrcan_atlas_boundaries_1m` | NRCan Atlas of Canada 1:1M boundary polygons (land + inland water, including the Canadian Great Lakes); used for mesh coverage and province assignment | https://ftp.maps.canada.ca/pub/nrcan_rncan/vector/framework_cadre/Atlas_of_Canada_1M/boundary/AC_1M_BoundaryPolygons.gdb.zip | Open Government Licence – Canada, https://open.canada.ca/en/open-government-licence-canada | Contains information licensed under the Open Government Licence – Canada. | Static (2017) |
+| `cirnac_historic_treaties` | ⚠ CIRNAC/ISC Historic Treaties (pre-1975), Internet Archive copy of the official file captured 2025-08-07 | https://web.archive.org/web/20250807085129id_/https://data.sac-isc.gc.ca/geomatics/rest/directories/arcgisoutput/DonneesOuvertes_OpenData/Traite_historique_Historic_Treaty/Traite_historique_Historic_Treaty_SHP.zip | Open Government Licence – Canada | Contains information licensed under the Open Government Licence – Canada. | Yearly |
+| `cirnac_modern_treaties` | ⚠ CIRNAC/ISC Modern Treaties (settlement areas), Internet Archive copy captured 2025-08-07 | https://web.archive.org/web/20250807084933id_/https://data.sac-isc.gc.ca/geomatics/rest/directories/arcgisoutput/DonneesOuvertes_OpenData/Traite_moderne_Modern_Treaty/Traite_moderne_Modern_Treaty_SHP.zip | Open Government Licence – Canada | Contains information licensed under the Open Government Licence – Canada. | Yearly |
+| `nrcan_aboriginal_lands` | NRCan Aboriginal Lands of Canada Legislative Boundaries (Indian reserves: `ALTYPE = Indian Reserve`) | https://ftp.maps.canada.ca/pub/nrcan_rncan/vector/geobase_al_ta/shp_eng/AL_TA_CA_SHP_eng.zip | Open Government Licence – Canada | Contains information licensed under the Open Government Licence – Canada. | Monthly upstream; pinned by manifest hash |
+| `ab_metis_settlements` | Government of Alberta, Métis Settlements boundaries | https://geospatial.alberta.ca/titan/rest/services/boundaries/municipal_metis_settlement_public/FeatureServer/0/query?where=1%3D1&outFields=METIS_NAME,METIS_CODE&outSR=4326&f=geojson | Open Government Licence – Alberta, https://open.alberta.ca/licence | Contains information licensed under the Open Government Licence – Alberta. | Yearly |
+| `cirnac_inuit_regions` | ⚠ CIRNAC/ISC Inuit Regions (Inuit Nunangat), Internet Archive copy captured 2025-08-07 | https://web.archive.org/web/20250807085054id_/https://data.sac-isc.gc.ca/geomatics/rest/directories/arcgisoutput/DonneesOuvertes_OpenData/Region_inuite_Inuit_Region/Region_inuite_Inuit_Region_SHP.zip | Open Government Licence – Canada | Contains information licensed under the Open Government Licence – Canada. | Yearly |
+| `aafc_ecozones` | AAFC National Ecological Framework: terrestrial ecozones (AAFC's ArcGIS Online service) | https://services.arcgis.com/lGOekm0RsNxYnT3j/ArcGIS/rest/services/National_ecological_framework_of_Canada_ecozones/FeatureServer/0/query?where=1%3D1&outFields=ECOZONE_ID,ECOZONE_NAME_EN,ECOZONE_NAME_FR&outSR=4326&f=geojson | Open Government Licence – Canada | Contains information licensed under the Open Government Licence – Canada. | Static |
+| `statcan_drainage_regions` | Statistics Canada drainage regions and ocean drainage areas | https://ftp.maps.canada.ca/pub/statcan_statcan/Drainage_Drainage/drainage-regions_regions-de-drainage/Drainage_regions_Regions_de_drainage_en.gdb.zip | Open Government Licence – Canada | Contains information licensed under the Open Government Licence – Canada. | Static |
+| `nrcan_nhn_workunits` | NRCan National Hydro Network work-unit index (WSC sub-drainage areas; Saskatchewan–Nelson sub-basins) | https://ftp.maps.canada.ca/pub/nrcan_rncan/vector/geobase_nhn_rhn/index/NHN_INDEX_WORKUNIT_LIMIT_2.zip | Open Government Licence – Canada | Contains information licensed under the Open Government Licence – Canada. | Static |
+| `nrcan_c1w_strahler_arctic` | NRCan Canada1Water NHN flow network with Strahler order, arctic region (Kessel, Frey & Russell 2024, doi:10.4095/pyc51h1rm4) | https://ftp.maps.canada.ca/pub/nrcan_rncan/Hydrography_Hydrographie/canada1water/nhn-rhn/data-donnees/c1w_NHN_NLFLOW_Strahler_arctic.zip | Open Government Licence – Canada | Contains information licensed under the Open Government Licence – Canada. | As needed |
+| `nrcan_c1w_strahler_atlantic` | NRCan Canada1Water NHN flow network with Strahler order, atlantic region (Kessel, Frey & Russell 2024, doi:10.4095/pyc51h1rm4) | https://ftp.maps.canada.ca/pub/nrcan_rncan/Hydrography_Hydrographie/canada1water/nhn-rhn/data-donnees/c1w_NHN_NLFLOW_Strahler_atlantic.zip | Open Government Licence – Canada | Contains information licensed under the Open Government Licence – Canada. | As needed |
+| `nrcan_c1w_strahler_baffin` | NRCan Canada1Water NHN flow network with Strahler order, baffin region (Kessel, Frey & Russell 2024, doi:10.4095/pyc51h1rm4) | https://ftp.maps.canada.ca/pub/nrcan_rncan/Hydrography_Hydrographie/canada1water/nhn-rhn/data-donnees/c1w_NHN_NLFLOW_Strahler_baffin.zip | Open Government Licence – Canada | Contains information licensed under the Open Government Licence – Canada. | As needed |
+| `nrcan_c1w_strahler_hudson` | NRCan Canada1Water NHN flow network with Strahler order, hudson region (Kessel, Frey & Russell 2024, doi:10.4095/pyc51h1rm4) | https://ftp.maps.canada.ca/pub/nrcan_rncan/Hydrography_Hydrographie/canada1water/nhn-rhn/data-donnees/c1w_NHN_NLFLOW_Strahler_hudson.zip | Open Government Licence – Canada | Contains information licensed under the Open Government Licence – Canada. | As needed |
+| `nrcan_c1w_strahler_islands` | NRCan Canada1Water NHN flow network with Strahler order, islands region (Kessel, Frey & Russell 2024, doi:10.4095/pyc51h1rm4) | https://ftp.maps.canada.ca/pub/nrcan_rncan/Hydrography_Hydrographie/canada1water/nhn-rhn/data-donnees/c1w_NHN_NLFLOW_Strahler_islands.zip | Open Government Licence – Canada | Contains information licensed under the Open Government Licence – Canada. | As needed |
+| `nrcan_c1w_strahler_mackenzie` | NRCan Canada1Water NHN flow network with Strahler order, mackenzie region (Kessel, Frey & Russell 2024, doi:10.4095/pyc51h1rm4) | https://ftp.maps.canada.ca/pub/nrcan_rncan/Hydrography_Hydrographie/canada1water/nhn-rhn/data-donnees/c1w_NHN_NLFLOW_Strahler_mackenzie.zip | Open Government Licence – Canada | Contains information licensed under the Open Government Licence – Canada. | As needed |
+| `nrcan_c1w_strahler_nelson` | NRCan Canada1Water NHN flow network with Strahler order, nelson region (Kessel, Frey & Russell 2024, doi:10.4095/pyc51h1rm4) | https://ftp.maps.canada.ca/pub/nrcan_rncan/Hydrography_Hydrographie/canada1water/nhn-rhn/data-donnees/c1w_NHN_NLFLOW_Strahler_nelson.zip | Open Government Licence – Canada | Contains information licensed under the Open Government Licence – Canada. | As needed |
+| `nrcan_c1w_strahler_pacific` | NRCan Canada1Water NHN flow network with Strahler order, pacific region (Kessel, Frey & Russell 2024, doi:10.4095/pyc51h1rm4) | https://ftp.maps.canada.ca/pub/nrcan_rncan/Hydrography_Hydrographie/canada1water/nhn-rhn/data-donnees/c1w_NHN_NLFLOW_Strahler_pacific.zip | Open Government Licence – Canada | Contains information licensed under the Open Government Licence – Canada. | As needed |
+| `elections_fed_2023` | Elections Canada federal electoral districts, 2023 Representation Order | https://ftp.maps.canada.ca/pub/elections_elections/Electoral-districts_Circonscription-electorale/federal_electoral_districts_boundaries_2023/FED_CA_2023_EN-SHP.zip | Open Government Licence – Canada | Contains information licensed under the Open Government Licence – Canada. | New representation order |
+| `elections_results_ge45` | ⚠ Elections Canada 45th general election (2025-04-28) official results, Table 11 (elected candidate per district), Internet Archive copy | https://web.archive.org/web/20260808065310id_/https://www.elections.ca/res/rep/off/ovrGE45/62/data_donnees/table_tableau11.csv | Open Government Licence – Canada | Contains information licensed under the Open Government Licence – Canada. | After each general election |
+| `native_land_territories` | ⚠ Native Land Digital API: territories. **Not fetched** (see notes). | | Native Land Digital Data Sovereignty Treaty (API key terms) | Native Land Digital, https://native-land.ca | Weekly upstream |
+| `native_land_languages` | ⚠ Native Land Digital API: languages. **Not fetched** (see notes). | | Native Land Digital Data Sovereignty Treaty (API key terms) | Native Land Digital, https://native-land.ca | Weekly upstream |
 
 ## Displayed in the app
 
@@ -41,3 +57,10 @@ the in-app licences page (Phase 7).
 |---|---|---|---|---|
 | CARTO Positron basemap | https://basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png | CARTO basemaps free tier (API key required; see decisions.md) | © OpenStreetMap contributors © CARTO | Live tiles |
 | OpenStreetMap standard tiles (fallback when no CARTO key at build time; not used on Pages) | https://tile.openstreetmap.org/{z}/{x}/{y}.png | ODbL data; tiles under the OSMF Tile Usage Policy (light development use only) | © OpenStreetMap contributors | Live tiles |
+
+## Notes on ⚠ rows
+
+- **`statcan_gdp_36100711`: needs a manual download.** 36-10-0402 is discontinued; 36-10-0711-01 replaces it. Every copy is on www150.statcan.gc.ca, which the Codespace cannot reach. Download `https://www150.statcan.gc.ca/n1/tbl/csv/36100711-eng.zip` on another machine and put it at `data/raw/statcan_gdp_36100711/36100711-eng.zip`. Until then, `attrs.v1` is built without `gdp_estimate`.
+- **Internet Archive copies (treaties, Inuit regions, GE45 results).** These are byte copies of the official files, pinned by timestamp and hash, but not an official host. The official metadata for modern treaties (2025-10) and Inuit regions (2026-02) changed after the capture, so a newer official version may exist. Re-point these rows to the official URLs when fetching from a Canadian network.
+- **Native Land Digital.** The site says CC0, but the Data Sovereignty Treaty you accept for an API key forbids storing or distributing API data without explicit permission and limits use to non-commercial and educational purposes. Building `native_land_territory_ids` into a committed, published artefact would store and redistribute it. Neither source is fetched, and the side table is omitted, until Native Land Digital grants permission.
+- **Rivers.** Canada1Water is the only NRCan network with a Strahler order field. It comes as 8 regional files (about 10 GB); `polygons.py` keeps only the reaches it needs. On this 1:50K network, order 5 is a small stream: the Nelson region alone has 76,000 km of order ≥ 5. The layer therefore uses **order ≥ 7**, the lowest order that still includes the Bow, Red Deer, Battle and Qu'Appelle rivers. See decisions.md.
