@@ -30,8 +30,21 @@ export const TRUTH_LABELS: Record<TruthLayer, string> = {
   disputed: 'Disputed',
 };
 
+/** Below this confidence a polygon is drawn as approximate. */
+export const APPROXIMATE_BELOW = 0.75;
+
+/** NRCan's drawing: an outline only, so the atlas's own fill stays readable underneath. */
+export const REFERENCE_STYLE: PathOptions = {
+  color: '#8a1c7c',
+  weight: 2,
+  opacity: 0.95,
+  dashArray: '2 5',
+  fill: false,
+};
+
 export function unitStyle(unit: AtlasUnit, selected: boolean): PathOptions {
-  const approximate = unit.confidence !== undefined || unit.truth !== 'dejure';
+  const approximate =
+    (unit.confidence !== undefined && unit.confidence < APPROXIMATE_BELOW) || unit.truth !== 'dejure';
   return {
     color: selected ? '#1f2328' : '#4a4f57',
     weight: selected ? 2.5 : 1,

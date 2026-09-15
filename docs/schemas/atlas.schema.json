@@ -25,6 +25,13 @@
           "items": {
             "$ref": "#/$defs/AtlasUnit"
           }
+        },
+        "references": {
+          "description": "Comparison drawings; see AtlasReference",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/AtlasReference"
+          }
         }
       },
       "required": [
@@ -40,6 +47,7 @@
       "type": "object",
       "properties": {
         "date": {
+          "description": "The date the instrument took effect",
           "$ref": "#/$defs/IsoDate"
         },
         "title": {
@@ -48,7 +56,13 @@
         },
         "note": {
           "type": "string",
-          "description": "Two plain sentences"
+          "description": "Two plain sentences; an uncertain date names the alternative here"
+        },
+        "dateConfidence": {
+          "description": "Present when sources disagree on the effective date",
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
         },
         "changes": {
           "type": "array",
@@ -162,10 +176,18 @@
           "type": "string"
         },
         "confidence": {
-          "description": "Present on approximate polygons (de facto extents, pre-contact)",
+          "description": "Present on approximate polygons (de facto extents, pre-contact) and contested drawings",
           "type": "number",
           "minimum": 0,
           "maximum": 1
+        },
+        "instrument": {
+          "description": "The statute, order or treaty the boundary follows, with date and section",
+          "type": "string"
+        },
+        "rationale": {
+          "description": "Why the drawing departs from the reference map, in one sentence",
+          "type": "string"
         }
       },
       "required": [
@@ -177,6 +199,66 @@
         "validFrom",
         "validTo",
         "truth",
+        "geometryRef"
+      ],
+      "additionalProperties": false
+    },
+    "AtlasReference": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$",
+          "description": "Stable snake_case id, e.g. \"ruperts_land\""
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The polygon name on the reference map"
+        },
+        "unit": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$",
+          "description": "The atlas unit whose drawing it contrasts with"
+        },
+        "source": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Source id in docs/data-sources.md, e.g. \"nrcan_te_1895\""
+        },
+        "attribution": {
+          "type": "string",
+          "minLength": 1
+        },
+        "validFrom": {
+          "$ref": "#/$defs/IsoDate"
+        },
+        "validTo": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/IsoDate"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "geometryRef": {
+          "type": "string",
+          "minLength": 1
+        },
+        "note": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "unit",
+        "source",
+        "attribution",
+        "validFrom",
+        "validTo",
         "geometryRef"
       ],
       "additionalProperties": false

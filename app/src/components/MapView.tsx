@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import { CARTO_MISSING_WARNING, selectBasemap } from '../map/basemap';
 import { AtlasLayer } from './AtlasLayer';
+import { ReferenceLayer } from './ReferenceLayer';
 
 /** Canada's extent, south-west to north-east, including Ellesmere and Cape Spear. */
 const CANADA_BOUNDS: L.LatLngBoundsExpression = [
@@ -38,6 +39,7 @@ export function MapView() {
   return (
     <div ref={containerRef} className="map" data-testid="map" data-basemap={BASEMAP.provider}>
       {map && <AtlasLayer map={map} />}
+      {map && <ReferenceLayer map={map} />}
     </div>
   );
 }

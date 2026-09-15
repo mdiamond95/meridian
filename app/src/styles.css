@@ -212,6 +212,15 @@ button {
   line-height: 1.45;
 }
 
+.source {
+  margin: 8px 0 0;
+  line-height: 1.45;
+}
+
+.source .eyebrow {
+  display: block;
+}
+
 .unit-header {
   display: flex;
   align-items: baseline;

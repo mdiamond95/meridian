@@ -24,8 +24,8 @@ async function fetchJson(url: string, fetchImpl: typeof fetch): Promise<unknown>
 export function decodeAtlas(atlas: AtlasFile, topology: Topology): LoadedAtlas {
   const decode = topologyDecoder(topology);
   const geometries = new Map<string, Polygon | MultiPolygon>();
-  for (const unit of atlas.units) {
-    if (!geometries.has(unit.geometryRef)) geometries.set(unit.geometryRef, decode(unit.geometryRef));
+  for (const { geometryRef } of [...atlas.units, ...(atlas.references ?? [])]) {
+    if (!geometries.has(geometryRef)) geometries.set(geometryRef, decode(geometryRef));
   }
   return { atlas, geometries };
 }

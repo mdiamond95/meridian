@@ -6,7 +6,9 @@ how well the constructed polygon matches the NRCan polygon of the same name for 
 year: intersection over union, and the area that differs. The result goes into the checklist, so
 review can start with the polygons that disagree most.
 
-NRCan geometry is used only here. Nothing in data/build/ is derived from it.
+NRCan geometry is used here and, where the atlas departs from NRCan's drawing, shipped as a
+reference overlay (events.yaml `nrcan_overlay`, AtlasFile.references). No atlas unit is derived
+from it.
 """
 
 from __future__ import annotations
@@ -57,6 +59,17 @@ def nrcan_polygons(year: int) -> dict[str, shapely.Geometry]:
     gdf = gpd.read_file(raw_file(f"nrcan_te_{year}")).set_crs(WGS84, allow_override=True)
     gdf["geometry"] = shapely.make_valid(gdf.geometry.to_numpy())
     gdf = gdf.to_crs(EQUAL_AREA_CRS)
+    gdf["geometry"] = shapely.make_valid(gdf.geometry.to_numpy())
+    return {
+        name: polygonal(shapely.union_all(group.geometry.to_numpy()))
+        for name, group in gdf.groupby("PROV_NAME", sort=True)
+    }
+
+
+@cache
+def nrcan_polygons_wgs84(year: int) -> dict[str, shapely.Geometry]:
+    """PROV_NAME → dissolved polygon in lon/lat, for the reference overlays."""
+    gdf = gpd.read_file(raw_file(f"nrcan_te_{year}")).set_crs(WGS84, allow_override=True)
     gdf["geometry"] = shapely.make_valid(gdf.geometry.to_numpy())
     return {
         name: polygonal(shapely.union_all(group.geometry.to_numpy()))

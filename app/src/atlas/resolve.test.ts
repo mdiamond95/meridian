@@ -5,6 +5,7 @@ import {
   currentEvent,
   dateToYear,
   formatDate,
+  resolveReferences,
   resolveUnits,
   unitHistory,
   yearRange,
@@ -75,6 +76,26 @@ describe('resolveUnits', () => {
   it('filters by truth layer, de jure by default', () => {
     expect(resolveUnits(ATLAS, '1885-01-01').map((u) => u.id)).toEqual(['manitoba', 'keewatin']);
     expect(resolveUnits(ATLAS, '1885-01-01', ['disputed']).map((u) => u.id)).toEqual(['claim']);
+  });
+});
+
+describe('resolveReferences', () => {
+  it('resolves reference drawings by date and tolerates files without any', () => {
+    const ref = {
+      id: 'nrcan_manitoba_1870_manitoba',
+      name: 'Manitoba',
+      unit: 'manitoba',
+      source: 'nrcan_te_1870',
+      attribution: 'OGL',
+      validFrom: '1870-07-15',
+      validTo: '1881-07-01',
+      geometryRef: 'nrcan_manitoba_1870_manitoba',
+    };
+    const atlas = { references: [ref] };
+    expect(resolveReferences(atlas, '1870-07-14')).toEqual([]);
+    expect(resolveReferences(atlas, '1875-01-01')).toEqual([ref]);
+    expect(resolveReferences(atlas, '1881-07-01')).toEqual([]);
+    expect(resolveReferences({}, '1875-01-01')).toEqual([]);
   });
 });
 

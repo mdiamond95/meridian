@@ -15,6 +15,8 @@ interface AtlasState {
   date: string;
   visible: boolean;
   truth: Record<TruthLayer, boolean>;
+  /** NRCan's drawing, shown only where the atlas departs from it. */
+  nrcanVisible: boolean;
   /** Unit id. The panel shows whichever row of that unit is valid on `date`. */
   selected: string | null;
   setLoading: () => void;
@@ -23,6 +25,7 @@ interface AtlasState {
   setDate: (date: string) => void;
   setVisible: (visible: boolean) => void;
   toggleTruth: (layer: TruthLayer) => void;
+  toggleNrcan: () => void;
   select: (id: string | null) => void;
 }
 
@@ -35,6 +38,7 @@ export const initialAtlasState = {
   date: INITIAL_DATE,
   visible: true,
   truth: { dejure: true, defacto: false, disputed: false },
+  nrcanVisible: false,
   selected: null,
 };
 
@@ -57,5 +61,6 @@ export const useAtlasStore = create<AtlasState>()((set) => ({
     }),
   setVisible: (visible) => set((s) => ({ visible, selected: visible ? s.selected : null })),
   toggleTruth: (layer) => set((s) => ({ truth: { ...s.truth, [layer]: !s.truth[layer] } })),
+  toggleNrcan: () => set((s) => ({ nrcanVisible: !s.nrcanVisible })),
   select: (selected) => set({ selected }),
 }));

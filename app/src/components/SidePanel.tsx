@@ -56,10 +56,20 @@ function PanelContent() {
           <dt>Layer</dt>
           <dd>
             {TRUTH_LABELS[unit.truth]}
-            {unit.confidence !== undefined && ` · approximate (confidence ${unit.confidence})`}
+            {unit.confidence !== undefined && ` · confidence ${unit.confidence}`}
           </dd>
         </dl>
         {unit.note && <p className="note">{unit.note}</p>}
+        {unit.instrument && (
+          <p className="source">
+            <span className="eyebrow">Instrument</span> {unit.instrument}
+          </p>
+        )}
+        {unit.rationale && (
+          <p className="source" data-testid="unit-rationale">
+            <span className="eyebrow">Departs from NRCan</span> {unit.rationale}
+          </p>
+        )}
       </article>
     );
   }
@@ -68,7 +78,10 @@ function PanelContent() {
   if (!event) return <p className="placeholder">Before the first event.</p>;
   return (
     <article className="event" data-testid="event-panel">
-      <p className="eyebrow">{formatDate(event.date)}</p>
+      <p className="eyebrow">
+        {formatDate(event.date)}
+        {event.dateConfidence !== undefined && ' · date uncertain'}
+      </p>
       <h2>{event.title}</h2>
       <p className="note">{event.note}</p>
       <p className="placeholder">Tap a unit for its details.</p>

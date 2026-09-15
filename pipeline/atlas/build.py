@@ -80,8 +80,27 @@ COLLINEAR_DEG = 1e-9
 GRID_DEG = 1e-7
 # Longest edge (degrees) before reprojecting for areas and comparisons.
 PROJECT_SEGMENT_DEG = 0.02
-UNIT_FIELDS = ("name", "status", "sovereign", "capital", "truth", "note", "confidence")
+UNIT_FIELDS = (
+    "name",
+    "status",
+    "sovereign",
+    "capital",
+    "truth",
+    "note",
+    "confidence",
+    "instrument",
+    "rationale",
+)
+# Per-row annotations: they describe one drawing, so an alter does not carry them forward.
+ROW_ANNOTATIONS = ("note", "confidence", "instrument", "rationale")
+EVENT_KEYS = {"date", "title", "note", "date_confidence", "changes"}
+# Parts of a clipped reference drawing smaller than this are slivers from differing coastlines.
+REFERENCE_MIN_PART_KM2 = 20.0
 CHANGE_KINDS = ("create", "alter", "rename", "dissolve")
+NRCAN_ATTRIBUTION = (
+    "Territorial Evolution of Canada, Natural Resources Canada. Contains information licensed under the "
+    "Open Government Licence – Canada."
+)
 
 
 # ---- Geometry expressions ------------------------------------------------------------------
@@ -249,6 +268,8 @@ class Row:
     boundary: str
     ref: str = ""
     nrcan: str = ""  # the polygon name on NRCan's map, for the checklist comparison
+    # Reference drawings shipped for comparison: {id, name, source, geometry, note}.
+    references: list[dict] = field(default_factory=list)
 
 
 def change_kind(change: dict) -> tuple[str, str]:
@@ -269,6 +290,9 @@ def resolve_events(doc: dict, sources: Sources) -> tuple[list[dict], list[Row]]:
         if date < previous_date:
             raise ValueError(f"event {date} {event['title']!r} is out of order")
         previous_date = date
+        unknown = set(event) - EVENT_KEYS
+        if unknown:
+            raise ValueError(f"event {date}: unknown keys {sorted(unknown)}")
         log(f"{date} {event['title']}")
         changes_out = []
         evaluator.before = dict(evaluator.current)
@@ -282,14 +306,10 @@ def resolve_events(doc: dict, sources: Sources) -> tuple[list[dict], list[Row]]:
             if row is not None:
                 rows.append(row)
             changes_out.append({"unit": unit_id, "kind": kind})
-        events_out.append(
-            {
-                "date": date,
-                "title": event["title"],
-                "note": " ".join(event["note"].split()),
-                "changes": changes_out,
-            }
-        )
+        event_out = {"date": date, "title": event["title"], "note": " ".join(event["note"].split())}
+        if "date_confidence" in event:
+            event_out["dateConfidence"] = event["date_confidence"]
+        events_out.append({**event_out, "changes": changes_out})
     return events_out, rows
 
 
@@ -298,7 +318,7 @@ def apply_change(
 ) -> Row | None:
     """Apply one change. Everything is checked and evaluated before state is touched, so a
     geometry may refer to the unit it replaces (`unit: <itself>`)."""
-    unknown = set(change) - {kind, "geometry", "boundary", "nrcan", *UNIT_FIELDS}
+    unknown = set(change) - {kind, "geometry", "boundary", "nrcan", "nrcan_overlay", *UNIT_FIELDS}
     if unknown:
         raise ValueError(f"unknown keys {sorted(unknown)}")
     previous = open_rows.get(unit_id)
@@ -322,8 +342,8 @@ def apply_change(
             raise ValueError("a new geometry needs its boundary description")
         fields = dict(previous.fields)
         # Per-row annotations do not carry forward unless restated.
-        fields.pop("note", None)
-        fields.pop("confidence", None)
+        for annotation in ROW_ANNOTATIONS:
+            fields.pop(annotation, None)
     fields.update({k: change[k] for k in UNIT_FIELDS if k in change})
     if kind == "dissolve":
         geometry, boundary = None, ""
@@ -344,7 +364,46 @@ def apply_change(
     row = Row(unit_id, fields, date, None, geometry, boundary, nrcan=nrcan)
     open_rows[unit_id] = row
     evaluator.current[unit_id] = geometry
+    if "nrcan_overlay" in change:
+        row.references = nrcan_references(row, change["nrcan_overlay"], evaluator)
     return row
+
+
+def nrcan_references(row: Row, spec: dict, evaluator: Evaluator) -> list[dict]:
+    """NRCan's drawing where the atlas departs from it: the named polygons of NRCan's map for
+    `year`, each optionally clipped to an expression (evaluated after this change)."""
+    if set(spec) - {"year", "polygons", "until"} or not spec.get("polygons"):
+        raise ValueError("nrcan_overlay takes year, a non-empty polygons list and an optional until date")
+    year = int(spec["year"])
+    polygons = compare.nrcan_polygons_wgs84(year)
+    refs = []
+    for item in spec["polygons"]:
+        if set(item) - {"name", "clip", "note"}:
+            raise ValueError(f"nrcan_overlay polygon keys are name, clip and note: {item}")
+        if item["name"] not in polygons:
+            raise ValueError(f"NRCan {year} has no polygon named {item['name']!r}")
+        geom = polygons[item["name"]]
+        if "clip" in item:
+            geom = p.polygonal(shapely.intersection(geom, evaluator.eval(item["clip"])))
+            parts = [] if geom is None else list(getattr(geom, "geoms", [geom]))
+            areas = [a.area / 1e6 for a in equal_area(parts)] if parts else []
+            kept = [g for g, a in zip(parts, areas, strict=True) if a >= REFERENCE_MIN_PART_KM2]
+            if not kept:
+                raise ValueError(f"clipping NRCan {item['name']!r} leaves nothing")
+            geom = shapely.union_all(kept)
+        slug = re.sub(r"[^a-z0-9]+", "_", item["name"].lower()).strip("_")
+        refs.append(
+            {
+                "id": f"nrcan_{row.id}_{year}_{slug}",
+                "name": item["name"],
+                "source": f"nrcan_te_{year}",
+                "geometry": geom,
+                "note": " ".join(item.get("note", "").split()),
+                # The divergence can end before the row does (NRCan changes its drawing).
+                "until": str(spec["until"]) if "until" in spec else None,
+            }
+        )
+    return refs
 
 
 # ---- Validation ------------------------------------------------------------------------------
@@ -416,6 +475,13 @@ def assign_refs(rows: list[Row]) -> list[tuple[str, shapely.Geometry]]:
             shapes.append((ref, geom))
         row.ref = by_wkb[key]
         row.geometry = geom
+    for row in rows:
+        for ref in row.references:
+            geom = shapely.normalize(
+                shapely.set_precision(shapely.simplify(ref["geometry"], COLLINEAR_DEG), GRID_DEG)
+            )
+            ref["geometry"] = geom
+            shapes.append((ref["id"], geom))
     return shapes
 
 
@@ -482,8 +548,32 @@ def atlas_document(events: list[dict], rows: list[Row]) -> dict:
             unit["note"] = " ".join(row.fields["note"].split())
         if row.fields.get("confidence") is not None:
             unit["confidence"] = row.fields["confidence"]
+        for key in ("instrument", "rationale"):
+            if row.fields.get(key):
+                unit[key] = " ".join(row.fields[key].split())
         units.append(unit)
-    return {"format": "meridian.atlas", "version": ATLAS_VERSION, "events": events, "units": units}
+    references = []
+    for row in sorted(rows, key=lambda r: (r.id, r.valid_from)):
+        for ref in row.references:
+            entry = {
+                "id": ref["id"],
+                "name": ref["name"],
+                "unit": row.id,
+                "source": ref["source"],
+                "attribution": NRCAN_ATTRIBUTION,
+                "validFrom": row.valid_from,
+                "validTo": min(d for d in (row.valid_to, ref["until"]) if d is not None)
+                if row.valid_to or ref["until"]
+                else None,
+                "geometryRef": ref["id"],
+            }
+            if ref["note"]:
+                entry["note"] = ref["note"]
+            references.append(entry)
+    doc = {"format": "meridian.atlas", "version": ATLAS_VERSION, "events": events, "units": units}
+    if references:
+        doc["references"] = references
+    return doc
 
 
 def agreements(rows: list[Row]) -> dict[int, compare.Agreement | None]:
@@ -532,6 +622,11 @@ def checklist(events: list[dict], rows: list[Row]) -> str:
     seen: set[str] = set()
     for event in events:
         lines += [f"## {event['date']} — {event['title']}", "", event["note"], ""]
+        if "dateConfidence" in event:
+            lines += [
+                f"Date confidence {event['dateConfidence']}: sources disagree; see the note.",
+                "",
+            ]
         if not event["changes"]:
             lines += ["No polygon changes on this date.", ""]
         for change in event["changes"]:
@@ -552,6 +647,14 @@ def checklist(events: list[dict], rows: list[Row]) -> str:
                 f"{-maxx:.2f}°W to {-minx:.2f}°W."
                 + (f" {compare.describe(matches[id(row)])}" if matches else "")
             )
+            if row.fields.get("instrument"):
+                lines.append(f"  *Instrument:* {' '.join(row.fields['instrument'].split())}")
+            if row.fields.get("rationale"):
+                confidence = row.fields.get("confidence")
+                suffix = f" (confidence {confidence})" if confidence is not None else ""
+                lines.append(f"  *Departs from NRCan:* {' '.join(row.fields['rationale'].split())}{suffix}")
+            for ref in row.references:
+                lines.append(f"  *NRCan overlay:* `{ref['id']}` ({ref['name']}, {ref['source']}).")
         lines.append("")
     return "\n".join(lines).rstrip() + "\n"
 

@@ -1,4 +1,4 @@
-import type { AtlasEvent, AtlasFile, AtlasUnit, TruthLayer } from '../schema/atlas';
+import type { AtlasEvent, AtlasFile, AtlasReference, AtlasUnit, TruthLayer } from '../schema/atlas';
 
 /**
  * Resolve a date to the atlas units valid on it (vision §5.1): the event list is the data, a map
@@ -13,6 +13,13 @@ export function resolveUnits(
 ): AtlasUnit[] {
   return atlas.units.filter(
     (u) => truth.includes(u.truth) && u.validFrom <= date && (u.validTo === null || date < u.validTo),
+  );
+}
+
+/** Reference drawings (NRCan's, where the atlas departs from it) valid on `date`. */
+export function resolveReferences(atlas: Pick<AtlasFile, 'references'>, date: string): AtlasReference[] {
+  return (atlas.references ?? []).filter(
+    (r) => r.validFrom <= date && (r.validTo === null || date < r.validTo),
   );
 }
 

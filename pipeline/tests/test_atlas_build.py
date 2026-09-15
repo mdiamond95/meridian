@@ -246,3 +246,77 @@ def test_zone_takes_whole_islands_by_where_they_sit():
     taken = evaluator.eval({"zone": {"box": [-90, 55, -84.4, 70]}})
     assert taken.contains(Point(-84.2, 61.5))  # the whole island, beyond the zone edge
     assert taken.contains(Point(-88, 56)) and not taken.contains(Point(-83, 56))
+
+
+def test_annotations_and_date_confidence_reach_the_document(monkeypatch):
+    # NRCan's "map": a box that also covers the east, clipped to the unit it contrasts with.
+    reference = {"Big Territory": box(-110, 49, -80, 60), "Tiny": box(-100, 49, -99.99, 49.01)}
+    monkeypatch.setattr(build.compare, "nrcan_polygons_wgs84", lambda year: reference)
+    events, rows = build.resolve_events(
+        doc(
+            {
+                "date": "1870-01-01",
+                "title": "Start",
+                "note": "n",
+                "date_confidence": 0.5,
+                "changes": [
+                    create(
+                        "west",
+                        {"modern": ["WE", "MI"]},
+                        instrument="An Act, s. 1",
+                        rationale="The text is clear.",
+                        confidence=0.9,
+                        nrcan_overlay={
+                            "year": 1870,
+                            "until": "1875-01-01",
+                            "polygons": [{"name": "Big Territory", "clip": {"unit": "west"}, "note": "n"}],
+                        },
+                    ),
+                    create("east", {"modern": ["EA"]}),
+                ],
+            },
+            {
+                "date": "1880-01-01",
+                "title": "Later",
+                "note": "n",
+                "changes": [{"alter": "west", "capital": "X"}],
+            },
+        ),
+        FakeSources(),
+    )
+    build.assign_refs(rows)
+    atlas = build.atlas_document(events, rows)
+    assert atlas["events"][0]["dateConfidence"] == 0.5 and "dateConfidence" not in atlas["events"][1]
+    first, later = [u for u in atlas["units"] if u["id"] == "west"]
+    assert (first["instrument"], first["rationale"], first["confidence"]) == (
+        "An Act, s. 1",
+        "The text is clear.",
+        0.9,
+    )
+    assert not {"instrument", "rationale", "confidence"} & set(later), "annotations belong to one drawing"
+    (ref,) = atlas["references"]
+    assert (ref["unit"], ref["source"], ref["validFrom"], ref["validTo"]) == (
+        "west",
+        "nrcan_te_1870",
+        "1870-01-01",
+        "1875-01-01",
+    )
+    assert ref["id"] == ref["geometryRef"] == "nrcan_west_1870_big_territory"
+    clipped = next(r for r in rows if r.id == "west").references[0]["geometry"]
+    assert clipped.bounds == (-110, 49, -90, 60)
+
+    with pytest.raises(ValueError, match="leaves nothing"):
+        build.resolve_events(
+            doc({"date": "1870-01-01", "title": "t", "note": "n", "changes": [
+                create("w", {"modern": ["WE"]}, nrcan_overlay={"year": 1870, "polygons": [
+                    {"name": "Tiny", "clip": {"unit": "w"}}]}),
+            ]}),
+            FakeSources(),
+        )  # fmt: skip
+
+
+def test_unknown_event_keys_are_rejected():
+    with pytest.raises(ValueError, match="unknown keys"):
+        build.resolve_events(
+            doc({"date": "1870-01-01", "title": "t", "note": "n", "dat": 1, "changes": []}), FakeSources()
+        )

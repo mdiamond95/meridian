@@ -11,6 +11,8 @@ export function LayersMenu() {
   const setVisible = useAtlasStore((s) => s.setVisible);
   const truth = useAtlasStore((s) => s.truth);
   const toggleTruth = useAtlasStore((s) => s.toggleTruth);
+  const nrcanVisible = useAtlasStore((s) => s.nrcanVisible);
+  const toggleNrcan = useAtlasStore((s) => s.toggleNrcan);
 
   return (
     <nav className="layers" data-open={open} data-testid="layers" aria-label="Layers">
@@ -35,6 +37,10 @@ export function LayersMenu() {
               {TRUTH_LABELS[layer]}
             </label>
           ))}
+          <label className="indent" title="NRCan's map, shown only where the atlas departs from it">
+            <input type="checkbox" checked={nrcanVisible} disabled={!visible} onChange={toggleNrcan} />
+            NRCan drawing
+          </label>
         </fieldset>
       </div>
     </nav>
