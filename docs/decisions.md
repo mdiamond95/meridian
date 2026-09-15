@@ -198,3 +198,10 @@ Each entry below supersedes the matching Phase 0 entry.
 ### Determinism and verification
 - **`make verify`** rebuilds all artefacts into a temp directory from the same raw inputs and diffs hashes against `data/build/SHA256SUMS`.
 - **Raw inputs are pinned by SHA-256 in `data/raw/MANIFEST.json`,** which is not committed. After the Codespace restart wiped `/tmp`, the 8 Canada1Water files were re-downloaded into `data/raw/` with identical hashes. Upstreams that change (NRCan Aboriginal Lands is regenerated monthly) make a data refresh, not nondeterminism.
+
+## 2026-09-15 — Devcontainer: persist Claude Code
+
+- **Claude Code comes from the official feature `ghcr.io/anthropics/devcontainer-features/claude-code:1.0`.** It installs the CLI and the VS Code extension on every build, so a rebuild no longer loses them.
+- **Sign-in lives in a named volume, `claude-code-config-${devcontainerId}`, mounted at `/home/vscode/.claude`, with `CLAUDE_CONFIG_DIR` pointing there.** The volume survives rebuilds; setting the env var also moves `.claude.json` inside it. The path is `/home/vscode`, not `/home/codespace`, because the Python image's `remoteUser` is `vscode`.
+- **`post-create.sh` chowns the volume to the remote user.** Docker creates a named volume root-owned when the target is absent from the image.
+- **Pushed straight to `main`, no PR.** Config only; nothing in the app, pipeline or artefacts changes.

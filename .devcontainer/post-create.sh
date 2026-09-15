@@ -5,6 +5,9 @@ set -euo pipefail
 UV_VERSION=0.12.13
 MAPSHAPER_VERSION=0.7.61
 
+echo "→ Claude Code config volume (Docker creates it root-owned)"
+sudo chown -R "$(id -u):$(id -g)" /home/vscode/.claude
+
 echo "→ git hooks (secret scan on commit)"
 git config core.hooksPath .githooks
 
