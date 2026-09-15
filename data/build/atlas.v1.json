@@ -95,9 +95,10 @@
    ]
   },
   {
-   "date": "1874-06-26",
+   "date": "1874-07-09",
    "title": "Ontario's provisional boundary",
-   "note": "Ontario and the Dominion agree on a provisional line while Ontario's true limits are argued. Ontario extends north to 51°N and west to the meridian of Hunter's Island.",
+   "note": "Ontario and the Dominion agree on a provisional line while Ontario's true limits are argued. Ontario extends north to 51°N and west to the meridian of Hunter's Island. The arrangement took effect when Ontario's order approved it on 9 July 1874; the memorandum itself is dated 26 June and the Dominion's approving order 8 July.",
+   "dateConfidence": 0.8,
    "changes": [
     {
      "unit": "ontario",
@@ -142,7 +143,8 @@
   {
    "date": "1881-07-01",
    "title": "Manitoba enlarged",
-   "note": "Manitoba grows west, north and east. Ontario claims the eastern part too, and the dispute goes to the Privy Council.",
+   "note": "Manitoba grows west, north and east. Ontario claims the eastern part too, and the dispute goes to the Privy Council. The Act came into force on 1 July 1881 by proclamation of 13 June; a date of 23 December 1881 found in some secondary sources has no support in the Canada Gazette.",
+   "dateConfidence": 0.95,
    "changes": [
     {
      "unit": "manitoba",
@@ -421,7 +423,8 @@
   {
    "date": "1927-03-01",
    "title": "The Labrador boundary",
-   "note": "The Judicial Committee of the Privy Council sets the boundary between Canada and Newfoundland in Labrador. Newfoundland gets the whole Atlantic watershed.",
+   "note": "The Judicial Committee of the Privy Council sets the boundary between Canada and Newfoundland in Labrador, and Newfoundland gets the whole Atlantic watershed. The report was delivered on 1 March 1927; His Majesty in Council approved it on 22 March 1927.",
+   "dateConfidence": 0.9,
    "changes": [
     {
      "unit": "newfoundland",
@@ -530,7 +533,10 @@
    "validFrom": "1867-07-01",
    "validTo": "1880-09-01",
    "truth": "dejure",
-   "geometryRef": "arctic_islands_1867"
+   "geometryRef": "arctic_islands_1867",
+   "confidence": 0.7,
+   "instrument": "Rupert's Land and North-Western Territory Order (Imperial Order in Council, 23 June 1870, in force 15 July 1870), operative paragraph, which names no boundaries; Adjacent Territories Order (Imperial Order in Council, 31 July 1880), operative paragraph, transferring \"all Islands adjacent\" from 1 September 1880.",
+   "rationale": "London and Ottawa treated the Arctic islands as outside the 1870 transfer, which is why Britain transferred them separately in 1880, so they are drawn apart from the North-Western Territory; the DCER editors note the 1821 and 1859 definitions could be read to include them, hence 0.7."
   },
   {
    "id": "british_columbia",
@@ -641,7 +647,10 @@
    "validFrom": "1927-03-01",
    "validTo": "1999-04-01",
    "truth": "dejure",
-   "geometryRef": "district_of_franklin_1927"
+   "geometryRef": "district_of_franklin_1927",
+   "confidence": 0.9,
+   "instrument": "Order in Council of 16 March 1918 (in force 1 January 1920), description of Keewatin: \"thence southeasterly in a straight line to the most northerly point of cape Wolstenholme\"; Franklin is the remainder of the Northwest Territories.",
+   "rationale": "Nottingham Island lies at least 8 km north-east of the Frozen Strait–Cape Wolstenholme line, so it stays in Franklin; NRCan's maps from 1927 draw it in Keewatin."
   },
   {
    "id": "district_of_keewatin",
@@ -697,7 +706,9 @@
    "validFrom": "1897-12-18",
    "validTo": "1905-09-01",
    "truth": "dejure",
-   "geometryRef": "district_of_keewatin_1897"
+   "geometryRef": "district_of_keewatin_1897",
+   "note": "A provisional district created by order, alongside the statutory District of Keewatin of 1876. Unlike the 1895 proposal, the 1897 order annexed a full description of the district, the Minister of Justice advised in 1898 that provisional districts needed no statute, and the 1918 order recites it as having defined \"the provisional district of Keewatin\". Statutory Keewatin rejoined the territories in 1905.",
+   "instrument": "Order in Council P.C. 1897-3388 (18 December 1897, Canada Gazette 14 May 1898, pp. 2613–2614), annexed description \"KEEWATIN\"; cancelled from 1 January 1920 by the order of 16 March 1918."
   },
   {
    "id": "district_of_keewatin",
@@ -852,7 +863,10 @@
    "validFrom": "1912-05-15",
    "validTo": "1920-01-01",
    "truth": "dejure",
-   "geometryRef": "district_of_ungava_1912"
+   "geometryRef": "district_of_ungava_1912",
+   "confidence": 0.8,
+   "instrument": "Order in Council P.C. 1897-3388 (18 December 1897), description \"UNGAVA\" (bounded by the middle of Hudson Strait and Keewatin's mid-water line); Quebec Boundaries Extension Act, 1912, 2 Geo. V c. 45, s. 2 (the new boundary runs \"along the shores\"); Order in Council of 16 March 1918, cancelling the 1897 order and in force 1 January 1920.",
+   "rationale": "The 1912 Act moved only the mainland to Quebec and the 1897 order defining Ungava stood until 1 January 1920, so the islands remain a district until then; NRCan already splits them between Keewatin and Franklin, and the Act excludes islands only by following the shore, hence 0.8."
   },
   {
    "id": "manitoba",
@@ -863,7 +877,10 @@
    "validFrom": "1870-07-15",
    "validTo": "1881-07-01",
    "truth": "dejure",
-   "geometryRef": "manitoba_1870"
+   "geometryRef": "manitoba_1870",
+   "confidence": 0.95,
+   "instrument": "Manitoba Act, 1870, 33 Vict. c. 3, s. 1 (assented 12 May 1870, in force 15 July 1870).",
+   "rationale": "Section 1 fixes the province on the 96° and 99° meridians and the 49° and 50°30' parallels, so the box is drawn on those lines; NRCan's box is drafted 2–3 km off them."
   },
   {
    "id": "manitoba",
@@ -964,7 +981,7 @@
    "sovereign": "Canada",
    "capital": "Fort Garry (Winnipeg)",
    "validFrom": "1870-07-15",
-   "validTo": "1874-06-26",
+   "validTo": "1874-07-09",
    "truth": "dejure",
    "geometryRef": "northwest_territories_1870",
    "note": "Governed from Manitoba by its Lieutenant-Governor."
@@ -975,7 +992,7 @@
    "status": "territory",
    "sovereign": "Canada",
    "capital": "Fort Garry (Winnipeg)",
-   "validFrom": "1874-06-26",
+   "validFrom": "1874-07-09",
    "validTo": "1876-10-07",
    "truth": "dejure",
    "geometryRef": "northwest_territories_1874"
@@ -1046,7 +1063,10 @@
    "validFrom": "1895-10-02",
    "validTo": "1897-12-18",
    "truth": "dejure",
-   "geometryRef": "northwest_territories_1895"
+   "geometryRef": "northwest_territories_1895",
+   "confidence": 0.85,
+   "instrument": "Order in Council P.C. 1895-2640 (2 October 1895, Canada Gazette 19 October 1895, p. 684), Keewatin paragraph: the Minister \"recommends that at the next Session of Parliament a Bill be introduced\" to add about 470,000 square miles to Keewatin; the Ungava paragraph includes only islands \"within a distance of three sea miles from the coast\". Keewatin's limits were fixed by the Keewatin Act, 39 Vict. c. 21, s. 1 (R.S.C. 1886, c. 53).",
+   "rationale": "The 1895 order drew the four new districts directly but only proposed a bill to enlarge statutory Keewatin, and no bill was introduced (recited in P.C. 1897-3388), so this land stays outside any district until the 1897 order; NRCan draws the enlargement as if it had taken effect."
   },
   {
    "id": "northwest_territories",
@@ -1088,7 +1108,7 @@
    "sovereign": "Canada",
    "capital": "Toronto",
    "validFrom": "1867-07-01",
-   "validTo": "1874-06-26",
+   "validTo": "1874-07-09",
    "truth": "dejure",
    "geometryRef": "ontario_1867"
   },
@@ -1098,7 +1118,7 @@
    "status": "province",
    "sovereign": "Canada",
    "capital": "Toronto",
-   "validFrom": "1874-06-26",
+   "validFrom": "1874-07-09",
    "validTo": "1889-08-12",
    "truth": "dejure",
    "geometryRef": "ontario_1874"
@@ -1291,6 +1311,84 @@
    "validTo": null,
    "truth": "dejure",
    "geometryRef": "yukon_1901"
+  }
+ ],
+ "references": [
+  {
+   "id": "nrcan_arctic_islands_1867_northwest_territories",
+   "name": "Northwest Territories",
+   "unit": "arctic_islands",
+   "source": "nrcan_te_1867",
+   "attribution": "Territorial Evolution of Canada, Natural Resources Canada. Contains information licensed under the Open Government Licence – Canada.",
+   "validFrom": "1867-07-01",
+   "validTo": "1870-07-15",
+   "geometryRef": "nrcan_arctic_islands_1867_northwest_territories",
+   "note": "NRCan's 1867 map draws the Arctic islands inside the North-Western Territory."
+  },
+  {
+   "id": "nrcan_district_of_franklin_1927_district_of_keewatin",
+   "name": "District of Keewatin",
+   "unit": "district_of_franklin",
+   "source": "nrcan_te_1927",
+   "attribution": "Territorial Evolution of Canada, Natural Resources Canada. Contains information licensed under the Open Government Licence – Canada.",
+   "validFrom": "1927-03-01",
+   "validTo": "1999-04-01",
+   "geometryRef": "nrcan_district_of_franklin_1927_district_of_keewatin",
+   "note": "NRCan's maps from 1927 put Nottingham Island in Keewatin."
+  },
+  {
+   "id": "nrcan_district_of_ungava_1912_district_of_keewatin",
+   "name": "District of Keewatin",
+   "unit": "district_of_ungava",
+   "source": "nrcan_te_1912",
+   "attribution": "Territorial Evolution of Canada, Natural Resources Canada. Contains information licensed under the Open Government Licence – Canada.",
+   "validFrom": "1912-05-15",
+   "validTo": "1920-01-01",
+   "geometryRef": "nrcan_district_of_ungava_1912_district_of_keewatin",
+   "note": "NRCan's 1912 map puts these Ungava islands in Keewatin."
+  },
+  {
+   "id": "nrcan_district_of_ungava_1912_district_of_franklin",
+   "name": "District of Franklin",
+   "unit": "district_of_ungava",
+   "source": "nrcan_te_1912",
+   "attribution": "Territorial Evolution of Canada, Natural Resources Canada. Contains information licensed under the Open Government Licence – Canada.",
+   "validFrom": "1912-05-15",
+   "validTo": "1920-01-01",
+   "geometryRef": "nrcan_district_of_ungava_1912_district_of_franklin",
+   "note": "NRCan's 1912 map puts these Ungava islands in Franklin."
+  },
+  {
+   "id": "nrcan_manitoba_1870_manitoba",
+   "name": "Manitoba",
+   "unit": "manitoba",
+   "source": "nrcan_te_1870",
+   "attribution": "Territorial Evolution of Canada, Natural Resources Canada. Contains information licensed under the Open Government Licence – Canada.",
+   "validFrom": "1870-07-15",
+   "validTo": "1881-07-01",
+   "geometryRef": "nrcan_manitoba_1870_manitoba"
+  },
+  {
+   "id": "nrcan_northwest_territories_1895_district_of_keewatin",
+   "name": "District of Keewatin",
+   "unit": "northwest_territories",
+   "source": "nrcan_te_1895",
+   "attribution": "Territorial Evolution of Canada, Natural Resources Canada. Contains information licensed under the Open Government Licence – Canada.",
+   "validFrom": "1895-10-02",
+   "validTo": "1897-12-18",
+   "geometryRef": "nrcan_northwest_territories_1895_district_of_keewatin",
+   "note": "NRCan draws Keewatin with the enlargement the 1895 order only proposed."
+  },
+  {
+   "id": "nrcan_northwest_territories_1895_district_of_ungava",
+   "name": "District of Ungava",
+   "unit": "northwest_territories",
+   "source": "nrcan_te_1895",
+   "attribution": "Territorial Evolution of Canada, Natural Resources Canada. Contains information licensed under the Open Government Licence – Canada.",
+   "validFrom": "1895-10-02",
+   "validTo": "1897-12-18",
+   "geometryRef": "nrcan_northwest_territories_1895_district_of_ungava",
+   "note": "NRCan also puts the far islands of Hudson Bay in Ungava, beyond the order's three sea miles."
   }
  ]
 }

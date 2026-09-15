@@ -272,3 +272,36 @@ Each entry below supersedes the matching Phase 0 entry.
 - **Fill is by status.** Approximate units and non-de-jure layers are lighter, and disputed units are dashed.
 - **The de facto and disputed toggles exist but have no data** until Sittings B and C.
 - **`@types/geojson` is declared** rather than used through Leaflet's types.
+
+## 2026-09-15 — PR #5 review applied (Sitting A)
+
+Mark's decisions on PR #5, and what they changed.
+
+- **Drawing rule approved:** the instrument where its text is clear, NRCan where the text is silent or disputed.
+- **The five departures from NRCan now carry a citation, a one-sentence rationale and a confidence** (`instrument`, `rationale`, `confidence` on the unit row, printed in the checklist and the unit panel):
+
+  | Row | Instrument | Confidence |
+  |---|---|---|
+  | British Arctic Islands 1867 | Rupert's Land and North-Western Territory Order (23 June 1870); Adjacent Territories Order (31 July 1880, in force 1 September 1880) | 0.7 — the DCER editors note the 1821/1859 definitions could be read to include the islands; the "not transferred" view is the one officials held |
+  | Manitoba 1870 | Manitoba Act, 1870, 33 Vict. c. 3, s. 1 | 0.95 |
+  | Territories outside any district 1895 | P.C. 1895-2640, Keewatin paragraph (recommends a Bill); Keewatin Act, 39 Vict. c. 21, s. 1 | 0.85 |
+  | District of Ungava islands 1912 | P.C. 1897-3388 (Ungava); Quebec Boundaries Extension Act, 1912, s. 2; order of 16 March 1918 (in force 1 January 1920) | 0.8 — the Act excludes islands only by following the shore |
+  | Franklin 1927 (Nottingham Island) | Order of 16 March 1918, Keewatin description (line to Cape Wolstenholme) | 0.9 |
+
+- **Keewatin 1895: the divergence stands; the evidence is strong.**
+  - The order's text in the Canada Gazette (19 October 1895, p. 684) sets the four new districts' boundaries directly, but for Keewatin only "recommends that at the next Session of Parliament a Bill be introduced". Keewatin's limits were statutory, and the executive's statutory power only ran to cutting land out of it.
+  - The 1897 order recites that "no steps were taken to carry out the directions of the Order". Surveyor General Deville's memos of 1896 and 1897 and Nicholson (1964, pp. 75, 77) agree.
+  - **Open point:** the Commons Journals for 1896–97 were not searched directly.
+  - **Reconciling this with the 1897 Keewatin:** the 1897 order annexed a full description of a *provisional* district of Keewatin, as it did for the other eight. The Minister of Justice advised in 1898 that provisional districts needed no statute, and the 1918 order recites the 1897 order as having defined "the provisional district of Keewatin". So statutory Keewatin (1876 limits, re-annexed in 1905) and provisional Keewatin (1897–1919) coexisted, which Deville called "two Districts of Keewatin". The 1897 row's note says so.
+  - **Rendering:** a row with confidence of 0.75 or more is not drawn as approximate, so these citations don't grey out whole districts.
+- **NRCan's drawing ships as a reference overlay for those five only.**
+  - The file gains an optional `references` list: id, NRCan name, contrasted unit, source, attribution, validity and geometry ref. The geometry lives in the same topology.
+  - A change's `nrcan_overlay` names NRCan polygons for a year, optionally clipped to an expression (Ungava's islands; Nottingham Island) and optionally ending early (`until`: NRCan separates the Arctic islands from 1870).
+  - The app's "NRCan drawing" toggle (Atlas group) is off by default. It draws a dashed outline and adds the OGL attribution.
+  - The five `nrcan_te_*` years become atlas inputs in `artefacts.yaml`.
+- **Dates are the day the instrument took effect,** with `dateConfidence` on the event (schema field added) and the alternative in the note:
+  - **Ontario's provisional line: 1874-07-09.** Ontario's approving order was the last of the matching orders (memorandum 26 June, Dominion order 8 July). Confidence 0.8.
+  - **Manitoba enlarged: 1881-07-01.** 44 Vict. c. 14, s. 4 and the proclamation of 13 June 1881 (Canada Gazette, 18 June 1881, pp. 1775–76). The 23 December date is found in no Gazette. Confidence 0.95.
+  - **Labrador: 1927-03-01,** the day the report was delivered; approved in Council on 22 March, not 11 March. Confidence 0.9.
+- **Schema:** `AtlasEvent.dateConfidence`, `AtlasUnit.instrument` and `AtlasUnit.rationale`, and `AtlasFile.references` are optional additions. The atlas stays `v1`, by the same rule as RegionPack.
+- **Labrador before 1927 is unchanged** until Sitting C.

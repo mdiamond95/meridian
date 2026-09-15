@@ -30,7 +30,8 @@ const boundsOf = (date: string, id: string) => {
 
 describe('the committed atlas', () => {
   it('decodes a polygon for every geometry ref', () => {
-    expect(geometries.size).toBe(new Set(atlas.units.map((u) => u.geometryRef)).size);
+    const refs = [...atlas.units, ...(atlas.references ?? [])].map((u) => u.geometryRef);
+    expect(geometries.size).toBe(new Set(refs).size);
   });
 
   it('1900: Yukon and the North-West Territories districts, but no province of Alberta', () => {

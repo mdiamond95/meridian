@@ -43,3 +43,25 @@ test('clicking a unit opens its details', async ({ page }) => {
   await panel.getByRole('button', { name: 'Close' }).click();
   await expect(page.getByTestId('event-panel')).toBeVisible();
 });
+
+test('NRCan drawing overlay is off by default and shows where the atlas departs from it', async ({
+  page,
+}) => {
+  await page.goto('./');
+  await expect(page.locator('.leaflet-overlay-pane path').first()).toBeAttached();
+  // Ticks for 1867 and 1870 sit a few pixels apart, so dispatch the click rather than aim the pointer.
+  await page
+    .getByRole('button', { name: '15 Jul 1870: Manitoba and the North-West Territories' })
+    .dispatchEvent('click');
+  await expect(page.getByTestId('timeline-year')).toHaveText('1870');
+  const dashed = page.locator('.leaflet-overlay-pane path[stroke-dasharray="2 5"]');
+  await expect(dashed).toHaveCount(0);
+
+  await page.getByRole('button', { name: 'Layers' }).click();
+  await page.getByLabel('NRCan drawing').check();
+  await expect(dashed).toHaveCount(1); // Manitoba's box as NRCan drafts it
+  await expect(page.locator('.leaflet-control-attribution')).toContainText('Open Government Licence');
+
+  await page.getByLabel('NRCan drawing').uncheck();
+  await expect(dashed).toHaveCount(0);
+});

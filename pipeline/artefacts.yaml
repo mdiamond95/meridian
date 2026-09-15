@@ -96,6 +96,12 @@ artefacts:
       - nrcan_c1w_strahler_hudson
       - nrcan_c1w_strahler_mackenzie
       - nrcan_c1w_strahler_nelson
+      # NRCan's drawing, shipped only as reference overlays where the atlas departs from it.
+      - nrcan_te_1867
+      - nrcan_te_1870
+      - nrcan_te_1895
+      - nrcan_te_1912
+      - nrcan_te_1927
     outputs:
       - { path: data/build/atlas.v1.json, schema: docs/schemas/atlas.schema.json }
       - { path: data/build/atlas.v1.topojson.gz, schema: docs/schemas/topojson.schema.json }

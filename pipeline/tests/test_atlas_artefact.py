@@ -76,7 +76,7 @@ def test_golden_hashes():
 
 def test_every_geometry_ref_is_a_polygon_object():
     objects = topology()["objects"]
-    refs = {u["geometryRef"] for u in atlas()["units"]}
+    refs = {u["geometryRef"] for u in [*atlas()["units"], *atlas().get("references", [])]}
     assert refs == set(objects), "unused or missing TopoJSON objects"
     assert {o["type"] for o in objects.values()} <= {"Polygon", "MultiPolygon"}
 
@@ -157,3 +157,44 @@ def test_capitals_lie_inside_their_units_today():
     assert set(today) == set(capitals)
     for unit_id, point in capitals.items():
         assert geometry(today[unit_id]["geometryRef"]).buffer(0.05).contains(Point(point)), unit_id
+
+
+# The five places the atlas departs from NRCan's drawing (docs/decisions.md, PR #5 review).
+DIVERGENCES = {
+    ("arctic_islands", "1867-07-01"),
+    ("manitoba", "1870-07-15"),
+    ("northwest_territories", "1895-10-02"),
+    ("district_of_ungava", "1912-05-15"),
+    ("district_of_franklin", "1927-03-01"),
+}
+
+
+def test_every_divergence_cites_its_instrument_and_ships_nrcans_drawing():
+    units = {(u["id"], u["validFrom"]): u for u in atlas()["units"]}
+    departing = {key for key, u in units.items() if "rationale" in u}
+    assert departing == DIVERGENCES
+    references = atlas()["references"]
+    for key in DIVERGENCES:
+        unit = units[key]
+        assert unit["instrument"] and unit["rationale"] and 0 < unit["confidence"] <= 1, key
+        refs = [r for r in references if (r["unit"], r["validFrom"]) == key]
+        assert refs, f"no NRCan overlay for {key}"
+        for ref in refs:
+            assert "Open Government Licence" in ref["attribution"]
+            assert ref["source"].startswith("nrcan_te_")
+            assert unit["validTo"] is None or (
+                ref["validTo"] is not None and ref["validTo"] <= unit["validTo"]
+            )
+    assert {r["unit"] for r in references} == {key[0] for key in DIVERGENCES}
+
+
+def test_uncertain_dates_carry_a_confidence_and_their_alternative():
+    events = {e["date"]: e for e in atlas()["events"]}
+    assert set(events) >= {"1874-07-09", "1881-07-01", "1927-03-01"}
+    for date, alternative in (
+        ("1874-07-09", "26 June"),
+        ("1881-07-01", "23 December"),
+        ("1927-03-01", "22 March"),
+    ):
+        assert 0 < events[date]["dateConfidence"] < 1
+        assert alternative in events[date]["note"]

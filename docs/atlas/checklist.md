@@ -43,6 +43,9 @@ Ontario, Quebec, Nova Scotia and New Brunswick unite as the Dominion of Canada. 
   The lands draining to Hudson Bay and Hudson Strait (StatCan ocean drainage area Hudson Bay), including the bay's islands and southern Baffin Island. Also the Labrador interior inland of Newfoundland's coast, which drains to the Atlantic: NRCan draws it here, and no instrument assigns it elsewhere. Area 3,909,293 km²; extent 47.15°N to 71.77°N, 56.63°W to 117.42°W. NRCan 1867 “Rupert's Land”: 97.7% overlap, 90,690 km² differ.
 - [ ] create: **British Arctic Islands** (`arctic_islands_1867`, unorganized, dejure)  
   The Arctic Archipelago north of the straits the 1895 order names, less the parts draining to Hudson Bay. NRCan's 1867 map folds these islands into the North-Western Territory; they were not part of it, and NRCan separates them from 1870. Area 1,071,818 km²; extent 61.35°N to 83.14°N, 61.13°W to 126.01°W. NRCan 1867: no polygon named “Arctic Islands”.
+  *Instrument:* Rupert's Land and North-Western Territory Order (Imperial Order in Council, 23 June 1870, in force 15 July 1870), operative paragraph, which names no boundaries; Adjacent Territories Order (Imperial Order in Council, 31 July 1880), operative paragraph, transferring "all Islands adjacent" from 1 September 1880.
+  *Departs from NRCan:* London and Ottawa treated the Arctic islands as outside the 1870 transfer, which is why Britain transferred them separately in 1880, so they are drawn apart from the North-Western Territory; the DCER editors note the 1821 and 1859 definitions could be read to include them, hence 0.7. (confidence 0.7)
+  *NRCan overlay:* `nrcan_arctic_islands_1867_northwest_territories` (Northwest Territories, nrcan_te_1867).
 - [ ] create: **North-Western Territory** (`north_western_territory_1867`, unorganized, dejure)  
   The rest of British North America: the Arctic and Pacific drainage north of British Columbia and west of Rupert's Land, with the mainland's coastal islands. Area 2,425,871 km²; extent 49.00°N to 72.00°N, 57.12°W to 141.00°W. NRCan 1867 “Northwest Territories”: 68.2% overlap, 1,107,617 km² differ.
 
@@ -52,6 +55,9 @@ Canada takes over Rupert's Land and the North-Western Territory from the Hudson'
 
 - [ ] create: **Manitoba** (`manitoba_1870`, province, dejure)  
   The Manitoba Act: 49°N to 50°30'N between 96°W and 99°W. NRCan's box sits 2–3 km off these lines. Area 35,861 km²; extent 49.00°N to 50.50°N, 96.00°W to 99.00°W. NRCan 1870 “Manitoba”: 97.1% overlap, 1,053 km² differ.
+  *Instrument:* Manitoba Act, 1870, 33 Vict. c. 3, s. 1 (assented 12 May 1870, in force 15 July 1870).
+  *Departs from NRCan:* Section 1 fixes the province on the 96° and 99° meridians and the 49° and 50°30' parallels, so the box is drawn on those lines; NRCan's box is drafted 2–3 km off them. (confidence 0.95)
+  *NRCan overlay:* `nrcan_manitoba_1870_manitoba` (Manitoba, nrcan_te_1870).
 - [ ] create: **North-West Territories** (`northwest_territories_1870`, territory, dejure)  
   Rupert's Land and the North-Western Territory, less Manitoba. Area 6,299,303 km²; extent 47.15°N to 72.00°N, 56.63°W to 141.00°W. NRCan 1870 “Northwest Territories”: 99.1% overlap, 57,730 km² differ.
 - dissolve: `ruperts_land` (no polygon)
@@ -71,12 +77,14 @@ Prince Edward Island joins Canada six years after Confederation. The island's bo
 - [ ] alter: **Prince Edward Island** (`prince_edward_island_1867`, province, dejure) — same polygon as before  
   Modern Prince Edward Island. Area 6,061 km²; extent 45.95°N to 47.06°N, 61.98°W to 64.42°W. NRCan 1873 “Prince Edward Island”: 89.0% overlap, 630 km² differ.
 
-## 1874-06-26 — Ontario's provisional boundary
+## 1874-07-09 — Ontario's provisional boundary
 
-Ontario and the Dominion agree on a provisional line while Ontario's true limits are argued. Ontario extends north to 51°N and west to the meridian of Hunter's Island.
+Ontario and the Dominion agree on a provisional line while Ontario's true limits are argued. Ontario extends north to 51°N and west to the meridian of Hunter's Island. The arrangement took effect when Ontario's order approved it on 9 July 1874; the memorandum itself is dated 26 June and the Dominion's approving order 8 July.
+
+Date confidence 0.8: sources disagree; see the note.
 
 - [ ] alter: **Ontario** (`ontario_1874`, province, dejure)  
-  Matching orders in council of 1874: west, the meridian through the most easterly point of Hunter's Island (90°58'W) from the international boundary to 51°N; north, 51°N east to the line due north of Lake Timiskaming (the modern Ontario–Quebec line). The order's date is flagged as uncertain. Area 574,672 km²; extent 41.68°N to 51.00°N, 74.32°W to 90.97°W. NRCan 1874 “Ontario”: 98.8% overlap, 5,594 km² differ.
+  Memorandum of 26 June 1874, approved by Dominion order of 8 July and Ontario order of 9 July: west, the meridian through the most easterly point of Hunter's Island (90°58'W) from the international boundary to 51°N; north, 51°N east to the line due north of Lake Timiskaming (the modern Ontario–Quebec line). Area 574,672 km²; extent 41.68°N to 51.00°N, 74.32°W to 90.97°W. NRCan 1874 “Ontario”: 98.8% overlap, 5,594 km² differ.
 - [ ] alter: **North-West Territories** (`northwest_territories_1874`, territory, dejure)  
   Less Ontario's provisional extension. Area 6,104,715 km²; extent 47.78°N to 72.00°N, 56.63°W to 141.00°W. NRCan 1874 “Northwest Territories”: 99.1% overlap, 55,070 km² differ.
 
@@ -99,10 +107,12 @@ Britain transfers all its remaining North American possessions to Canada, except
 
 ## 1881-07-01 — Manitoba enlarged
 
-Manitoba grows west, north and east. Ontario claims the eastern part too, and the dispute goes to the Privy Council.
+Manitoba grows west, north and east. Ontario claims the eastern part too, and the dispute goes to the Privy Council. The Act came into force on 1 July 1881 by proclamation of 13 June; a date of 23 December 1881 found in some secondary sources has no support in the Canada Gazette.
+
+Date confidence 0.95: sources disagree; see the note.
 
 - [ ] alter: **Manitoba** (`manitoba_1881`, province, dejure)  
-  West, the road allowance between ranges 29 and 30 west of the Principal Meridian (the modern Manitoba–Saskatchewan border); north, the 12th base line (52.8422°N); east, as NRCan draws it, the meridian of the North-West Angle of Lake of the Woods (95°09'W, the modern Manitoba–Ontario border). Manitoba claimed east to 89°09'W. The proclamation date is disputed (1 July or 23 December 1881). Area 188,558 km²; extent 49.00°N to 52.84°N, 95.15°W to 101.67°W. NRCan 1881 “Manitoba”: 98.8% overlap, 2,299 km² differ.
+  West, the road allowance between ranges 29 and 30 west of the Principal Meridian (the modern Manitoba–Saskatchewan border); north, the 12th base line (52.8422°N); east, as NRCan draws it, the meridian of the North-West Angle of Lake of the Woods (95°09'W, the modern Manitoba–Ontario border). Manitoba claimed east to 89°09'W. In force 1 July 1881 under s. 4 of 44 Vict. c. 14 and the proclamation of 13 June 1881. Area 188,558 km²; extent 49.00°N to 52.84°N, 95.15°W to 101.67°W. NRCan 1881 “Manitoba”: 98.8% overlap, 2,299 km² differ.
 - [ ] create: **Ontario–Manitoba disputed area** (`ontario_manitoba_disputed_area_1881`, disputed, dejure)  
   As NRCan draws it: between 95°09'W and Ontario's 1874 meridian, from the international boundary north to the 12th base line. The legal claims reached further (Manitoba to 89°09'W, Ontario north to the Albany River); those are a Sitting C overlay. Area 140,169 km²; extent 48.04°N to 52.84°N, 90.97°W to 95.15°W. NRCan 1881 “Disputed area”: 98.6% overlap, 1,910 km² differ.
 - [ ] alter: **District of Keewatin** (`district_of_keewatin_1881`, district, dejure)  
@@ -162,6 +172,10 @@ An order in council divides the northern territories into the districts of Ungav
   Extended east to 100°W between the 18th correction line and 60°N. Area 620,758 km²; extent 55.11°N to 60.00°N, 100.00°W to 120.00°W. NRCan 1895 “District of Athabaska”: 99.7% overlap, 1,988 km² differ.
 - [ ] alter: **North-West Territories** (`northwest_territories_1895`, territory, dejure)  
   The land in no district: north of Ontario east of statutory Keewatin, and the far islands of Hudson Bay and Hudson Strait. The order proposed adding the first to Keewatin by bill; no bill was introduced. NRCan draws both inside Keewatin and Ungava, so NRCan has no polygon here. Area 355,284 km²; extent 51.00°N to 72.00°N, 64.42°W to 136.27°W. NRCan 1895: no polygon named “Northwest Territories”.
+  *Instrument:* Order in Council P.C. 1895-2640 (2 October 1895, Canada Gazette 19 October 1895, p. 684), Keewatin paragraph: the Minister "recommends that at the next Session of Parliament a Bill be introduced" to add about 470,000 square miles to Keewatin; the Ungava paragraph includes only islands "within a distance of three sea miles from the coast". Keewatin's limits were fixed by the Keewatin Act, 39 Vict. c. 21, s. 1 (R.S.C. 1886, c. 53).
+  *Departs from NRCan:* The 1895 order drew the four new districts directly but only proposed a bill to enlarge statutory Keewatin, and no bill was introduced (recited in P.C. 1897-3388), so this land stays outside any district until the 1897 order; NRCan draws the enlargement as if it had taken effect. (confidence 0.85)
+  *NRCan overlay:* `nrcan_northwest_territories_1895_district_of_keewatin` (District of Keewatin, nrcan_te_1895).
+  *NRCan overlay:* `nrcan_northwest_territories_1895_district_of_ungava` (District of Ungava, nrcan_te_1895).
 
 ## 1897-12-18 — Districts redrawn
 
@@ -169,6 +183,7 @@ A new order in council redraws the northern districts along the middle of the ba
 
 - [ ] alter: **District of Keewatin** (`district_of_keewatin_1897`, district, dejure)  
   Order in council 3388 of 1897 (provisional district): from the Ontario–Quebec line north through the middle of James Bay (Akimiski and Bear islands west, Charlton and the Twin Islands east), through Hudson Bay between Coats and Mansel, Foxe Channel, Frozen Strait and Repulse Bay, across Rae Isthmus, through Committee Bay and the Gulf of Boothia, across Boothia Isthmus to Spence Bay and the waters south of King William Island to 100°W; south along 100°W to the 18th correction line, east to the Nelson River, and down the Nelson and Lake Winnipeg to Manitoba and Ontario. Statutory Keewatin still existed inside it. Area 1,191,515 km²; extent 49.00°N to 69.72°N, 80.15°W to 100.00°W. NRCan 1897 “District of Keewatin”: 99.3% overlap, 8,149 km² differ.
+  *Instrument:* Order in Council P.C. 1897-3388 (18 December 1897, Canada Gazette 14 May 1898, pp. 2613–2614), annexed description "KEEWATIN"; cancelled from 1 January 1920 by the order of 16 March 1918.
 - [ ] alter: **District of Ungava** (`district_of_ungava_1897`, district, dejure)  
   East of Keewatin's line through James Bay and Hudson Bay, north to the middle of Hudson Strait, the line continuing between Salisbury (Franklin) and Nottingham (Ungava) islands. Belcher, Mansel, Nottingham and Charlton islands are Ungava's. Area 1,078,056 km²; extent 47.78°N to 63.52°N, 56.63°W to 80.83°W. NRCan 1897 “District of Ungava”: 97.9% overlap, 22,913 km² differ.
 - [ ] alter: **District of Yukon** (`yukon_1897`, district, dejure)  
@@ -237,6 +252,10 @@ Three provinces extend north to Hudson Bay and Hudson Strait, taking most of Kee
   Less Manitoba's and Ontario's extensions. Area 480,725 km²; extent 52.41°N to 69.72°N, 80.15°W to 119.33°W. NRCan 1912 “District of Keewatin”: 96.9% overlap, 15,142 km² differ.
 - [ ] alter: **District of Ungava** (`district_of_ungava_1912`, district, dejure)  
   The islands left of the district: the east side of Hudson and James Bays, the south half of Hudson Strait and Ungava Bay. The 1897 order was not cancelled until 1920; NRCan already splits these islands between Keewatin and Franklin as the 1918 order would. Area 10,950 km²; extent 52.25°N to 63.52°N, 64.42°W to 80.83°W. NRCan 1912: no polygon named “District of Ungava”.
+  *Instrument:* Order in Council P.C. 1897-3388 (18 December 1897), description "UNGAVA" (bounded by the middle of Hudson Strait and Keewatin's mid-water line); Quebec Boundaries Extension Act, 1912, 2 Geo. V c. 45, s. 2 (the new boundary runs "along the shores"); Order in Council of 16 March 1918, cancelling the 1897 order and in force 1 January 1920.
+  *Departs from NRCan:* The 1912 Act moved only the mainland to Quebec and the 1897 order defining Ungava stood until 1 January 1920, so the islands remain a district until then; NRCan already splits them between Keewatin and Franklin, and the Act excludes islands only by following the shore, hence 0.8. (confidence 0.8)
+  *NRCan overlay:* `nrcan_district_of_ungava_1912_district_of_keewatin` (District of Keewatin, nrcan_te_1912).
+  *NRCan overlay:* `nrcan_district_of_ungava_1912_district_of_franklin` (District of Franklin, nrcan_te_1912).
 
 ## 1920-01-01 — Northwest Territories districts revised
 
@@ -252,14 +271,19 @@ An order of 1918 comes into force, leaving three districts: Mackenzie, Keewatin 
 
 ## 1927-03-01 — The Labrador boundary
 
-The Judicial Committee of the Privy Council sets the boundary between Canada and Newfoundland in Labrador. Newfoundland gets the whole Atlantic watershed.
+The Judicial Committee of the Privy Council sets the boundary between Canada and Newfoundland in Labrador, and Newfoundland gets the whole Atlantic watershed. The report was delivered on 1 March 1927; His Majesty in Council approved it on 22 March 1927.
+
+Date confidence 0.9: sources disagree; see the note.
 
 - [ ] alter: **Newfoundland** (`newfoundland_1927`, colony, dejure)  
   Privy Council report of 1 March 1927: due north from Blanc-Sablon to 52°N, west to the Romaine River, up it to its source, and along the crest of the Atlantic watershed to Cape Chidley. The modern border. Area 399,483 km²; extent 46.61°N to 60.38°N, 52.62°W to 67.82°W. NRCan 1927 “Newfoundland”: 96.8% overlap, 12,566 km² differ.
 - [ ] alter: **Quebec** (`quebec_1927`, province, dejure)  
   Less Labrador as the Privy Council drew it. Modern Quebec. Area 1,477,116 km²; extent 44.99°N to 62.58°N, 57.11°W to 79.76°W. NRCan 1927 “Quebec”: 98.9% overlap, 16,048 km² differ.
 - [ ] alter: **District of Franklin** (`district_of_franklin_1927`, district, dejure)  
-  Less a few coastal islets that modern Quebec (Atlas of Canada 1:1M) includes. No instrument moved them; NRCan's 1927 Franklin shrinks by a similar area. Area 1,416,058 km²; extent 58.28°N to 83.14°N, 61.13°W to 136.27°W. NRCan 1927 “District of Franklin”: 97.1% overlap, 41,304 km² differ.
+  Less a few coastal islets that modern Quebec (Atlas of Canada 1:1M) includes. No instrument moved them; NRCan's 1927 Franklin shrinks by a similar area. Nottingham Island stays in Franklin. Area 1,416,058 km²; extent 58.28°N to 83.14°N, 61.13°W to 136.27°W. NRCan 1927 “District of Franklin”: 97.1% overlap, 41,304 km² differ.
+  *Instrument:* Order in Council of 16 March 1918 (in force 1 January 1920), description of Keewatin: "thence southeasterly in a straight line to the most northerly point of cape Wolstenholme"; Franklin is the remainder of the Northwest Territories.
+  *Departs from NRCan:* Nottingham Island lies at least 8 km north-east of the Frozen Strait–Cape Wolstenholme line, so it stays in Franklin; NRCan's maps from 1927 draw it in Keewatin. (confidence 0.9)
+  *NRCan overlay:* `nrcan_district_of_franklin_1927_district_of_keewatin` (District of Keewatin, nrcan_te_1927).
 
 ## 1949-03-31 — Newfoundland joins
 
