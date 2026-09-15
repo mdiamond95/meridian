@@ -161,7 +161,7 @@ def test_capitals_lie_inside_their_units_today():
 
 # The five places the atlas departs from NRCan's drawing (docs/decisions.md, PR #5 review).
 DIVERGENCES = {
-    ("arctic_islands", "1867-07-01"),
+    ("arctic_islands", "1763-10-07"),
     ("manitoba", "1870-07-15"),
     ("northwest_territories", "1895-10-02"),
     ("district_of_ungava", "1912-05-15"),
@@ -198,3 +198,50 @@ def test_uncertain_dates_carry_a_confidence_and_their_alternative():
     ):
         assert 0 < events[date]["dateConfidence"] < 1
         assert alternative in events[date]["note"]
+
+
+def test_control_points_hold_in_the_artefact():
+    """The checks in events.yaml, re-run on the committed geometry (display-simplified, so with the
+    same ~1 km tolerance the build uses)."""
+    from atlas import build
+
+    checks = build.load_events(build.EVENTS).get("checks", [])
+    for check in checks:
+        date = str(check["date"])
+        units = resolve(date)
+        assert check["unit"] in units, (date, check["unit"])
+        polygon = geometry(units[check["unit"]]["geometryRef"])
+        assert polygon.buffer(build.CHECK_TOLERANCE_DEG * 3).covers(Point(check["point"])), check
+
+
+def test_1700_new_france_ruperts_land_and_acadia():
+    units = resolve("1700-01-01")
+    assert units["new_france"]["sovereign"] == "France"
+    assert units["ruperts_land"]["status"] == "hbc_charter"
+    assert units["newfoundland"]["status"] == "disputed"
+    assert {"acadia", "north_western_territory"} <= set(units)
+    assert "quebec" not in units and "nova_scotia" not in units
+
+
+def test_1800_upper_and_lower_canada_and_1850_the_province_of_canada():
+    units = resolve("1800-01-01")
+    assert {"upper_canada", "lower_canada", "new_brunswick", "cape_breton", "prince_edward_island"} <= set(
+        units
+    )
+    assert "province_of_canada" not in units
+    later = resolve("1850-01-01")
+    assert "province_of_canada" in later and "upper_canada" not in later and "cape_breton" not in later
+
+
+def test_confederation_dissolves_the_province_of_canada():
+    before, after = resolve("1867-06-30"), resolve("1867-07-01")
+    assert "province_of_canada" in before and "ontario" not in before
+    assert {"ontario", "quebec"} <= set(after) and "province_of_canada" not in after
+
+
+def test_de_facto_layer_covers_1670_to_1870_and_never_counts_as_de_jure():
+    assert resolve("1700-01-01", "defacto") and resolve("1860-01-01", "defacto")
+    assert resolve("1871-01-01", "defacto") == {}
+    for unit in atlas()["units"]:
+        if unit["truth"] == "defacto":
+            assert unit["confidence"] < 1

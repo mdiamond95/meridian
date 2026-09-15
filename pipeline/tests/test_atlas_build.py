@@ -320,3 +320,78 @@ def test_unknown_event_keys_are_rejected():
         build.resolve_events(
             doc({"date": "1870-01-01", "title": "t", "note": "n", "dat": 1, "changes": []}), FakeSources()
         )
+
+
+def test_control_points_name_the_unit_holding_a_place():
+    events, rows = build.resolve_events(
+        doc({"date": "1870-01-01", "title": "t", "note": "n", "changes": [
+            create("west", {"modern": ["WE"]}), create("rest", {"modern": ["MI", "EA"]})]}),
+        FakeSources(),
+    )  # fmt: skip
+    results = build.control_points(
+        {
+            "checks": [
+                {"date": "1875-01-01", "point": [-105, 55], "unit": "west", "source": "s"},
+                {"date": "1875-01-01", "point": [-95, 55], "unit": "west", "source": "s"},
+            ]
+        },
+        rows,
+    )
+    assert results[0][1] is None
+    assert "not west" in results[1][1] and "rest" in results[1][1]
+    with pytest.raises(ValueError, match="date, point, unit and source"):
+        build.control_points({"checks": [{"date": "1875-01-01", "point": [0, 0]}]}, rows)
+
+
+def test_rows_older_than_nrcans_maps_are_compared_on_its_first_date():
+    from atlas import compare
+
+    assert compare.comparison_date("1784-06-18", None) == "1867-07-01"
+    assert compare.comparison_date("1784-06-18", "1867-07-01") == "1784-06-18"  # ended before the maps
+    assert compare.comparison_date("1870-07-15", None) == "1870-07-15"
+
+
+def test_buffers_and_coast_strips_are_measured_in_kilometres():
+    from atlas.sources import Sources
+
+    circle = Sources().buffer([(-100.0, 50.0)], [], 100)
+    minx, miny, maxx, maxy = circle.bounds
+    assert maxy - miny == pytest.approx(200 / 111.2, rel=0.02)  # ~1.8° of latitude
+    corridor = Sources().buffer([], [(-100.0, 50.0), (-99.0, 50.0)], 10)
+    assert corridor.contains(Point(-99.5, 50.05)) and not corridor.contains(Point(-99.5, 50.2))
+
+    src = Sources()
+    src.__dict__["mainland"] = box(-70, 45, -60, 55)  # the sea lies north of 55°N
+    strip = src.near_coast(box(-68, 50, -62, 56), 50)
+    assert strip.contains(Point(-65, 54.8)) and not strip.contains(Point(-65, 53.5))
+
+
+def test_presence_snapshots_take_open_posts_and_belts_by_year_and_power(tmp_path):
+    data = tmp_path / "defacto.yaml"
+    data.write_text(
+        """
+tiers: {post: 100}
+posts:
+  - {id: a, name: A, at: [-100, 55], tier: post, periods: [[1700, 1710, french], [1720, null, british]]}
+belts:
+  - {id: b, name: B, km: 10, periods: [[1700, null, british]], line: [[-90, 50], [-85, 50]]}
+""",
+        encoding="utf-8",
+    )
+    build.load_defacto.cache_clear()
+
+    def fake_buffer(points, line, km):
+        geoms = [shapely.Point(p) for p in points] + ([shapely.LineString(line)] if line else [])
+        return shapely.buffer(shapely.union_all(geoms), km / 100)
+
+    class Sources(FakeSources):
+        buffer = staticmethod(fake_buffer)
+
+    evaluator = build.Evaluator(Sources(), defacto_path=data)
+    assert evaluator.eval({"posts": {"as_of": 1705, "power": "french"}}).contains(Point(-100, 55.5))
+    assert evaluator.eval({"posts": {"as_of": 1725, "power": "british"}}).contains(Point(-100, 55.5))
+    with pytest.raises(ValueError, match="no posts open for british in 1715"):
+        evaluator.eval({"posts": {"as_of": 1715, "power": "british"}})
+    assert evaluator.eval({"belts": {"as_of": 1800, "power": "british"}}).contains(Point(-87, 50.05))
+    with pytest.raises(ValueError, match="as_of"):
+        evaluator.eval({"belts": {"year": 1800, "power": "british"}})

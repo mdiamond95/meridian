@@ -1,0 +1,154 @@
+# De facto European presence, 1670–1870: the dated places the de facto truth layer is built from.
+#
+# A post is a presence marker inside Indigenous-held territory, not a territory: its catchment is a
+# circle of the tier's radius around the listed site, drawn while one of its periods is open. A
+# settlement belt is permanent farming or fishing settlement along a shore or river: a corridor of
+# `km` around its line or points. Snapshots are taken at event years (events.yaml `posts:` and
+# `belts:` expressions), so a post that opened and closed between two events never shows.
+#
+# Periods are [from, to, power] in years, `to` exclusive (null = still open in 1870). A post that
+# changed hands (the French raids on the bay posts, 1686–1714) has one period per holder, and an
+# abandoned post has a gap.
+#
+# Sources: each post's URL (CGNDB or Wikipedia coordinates, both citing HBCA, DCB or Parks Canada);
+# radii from nearest-neighbour spacing of 42 long-lived posts (median ~200 km, so an exclusive
+# reach of 60–120 km) and the York Factory wood-cutting corridor (Manitoba History 20,
+# mhs.mb.ca/docs/mb_history/20/fortchurchill.shtml). Settlement belt depths are the usual figures
+# (a St. Lawrence rang of 40 arpents ≈ 2.3 km; Red River lots of 2 miles plus hay privilege) and
+# carry lower confidence than the posts' sites: see docs/decisions.md.
+
+tiers:  # catchment radius in km
+  bay_factory: 60        # Hudson Bay and James Bay factories
+  depot: 80              # inland depots and district headquarters
+  post: 50               # permanent posts
+  outpost: 25            # short-lived, seasonal or duplicate posts
+  french_west: 40        # La Vérendrye's posts, 1731–1759
+  french_lakes: 50       # French Great Lakes forts
+  pacific: 30            # Pacific coast forts before the colonies
+
+posts:
+  # Hudson Bay, James Bay, Labrador
+  - {id: rupert_house, name: Charles Fort / Rupert House, at: [-78.750, 51.483], tier: bay_factory, periods: [[1668, 1686, british], [1776, null, british]], source: "https://en.wikipedia.org/wiki/Waskaganish"}
+  - {id: moose_factory, name: Moose Factory, at: [-80.605, 51.256], tier: bay_factory, periods: [[1673, 1686, british], [1686, 1696, french], [1730, null, british]], source: "https://en.wikipedia.org/wiki/Moose_Factory"}
+  - {id: fort_albany, name: Fort Albany, at: [-81.684, 52.211], tier: bay_factory, periods: [[1679, 1686, british], [1686, 1693, french], [1693, null, british]], source: "https://en.wikipedia.org/wiki/Fort_Albany_(Ontario)"}
+  - {id: york_factory, name: York Factory, at: [-92.306, 57.002], tier: bay_factory, periods: [[1684, 1694, british], [1694, 1696, french], [1696, 1697, british], [1697, 1714, french], [1714, null, british]], source: "https://en.wikipedia.org/wiki/York_Factory"}
+  - {id: severn_house, name: Severn House, at: [-87.615, 55.998], tier: post, periods: [[1685, 1690, british], [1759, null, british]], source: "https://www.canadashistory.ca/explore/settlement-immigration/the-founding-of-fort-severn"}
+  - {id: churchill, name: Churchill / Prince of Wales Fort, at: [-94.213, 58.797], tier: bay_factory, periods: [[1717, null, british]], source: "https://en.wikipedia.org/wiki/Prince_of_Wales_Fort"}
+  - {id: eastmain_house, name: Eastmain House, at: [-78.500, 52.250], tier: post, periods: [[1723, null, british]], source: "https://en.wikipedia.org/wiki/Eastmain,_Quebec"}
+  - {id: henley_house, name: Henley House, at: [-84.326, 51.238], tier: post, periods: [[1743, null, british]], source: "https://en.wikipedia.org/wiki/Henley_House"}
+  - {id: richmond_fort, name: Richmond Fort, at: [-76.294, 56.249], tier: outpost, periods: [[1749, 1759, british]], source: "https://en.wikipedia.org/wiki/List_of_Hudson%27s_Bay_Company_trading_posts"}
+  - {id: osnaburgh_house, name: Osnaburgh House, at: [-90.267, 51.137], tier: post, periods: [[1786, null, british]], source: "https://en.wikipedia.org/wiki/Lake_St._Joseph_(Ontario)"}
+  - {id: great_whale, name: Great Whale River, at: [-77.764, 55.278], tier: post, periods: [[1820, null, british]], source: "https://en.wikipedia.org/wiki/Kuujjuarapik"}
+  - {id: little_whale, name: Little Whale River, at: [-76.783, 56.004], tier: outpost, periods: [[1853, null, british]], source: "https://en.wikipedia.org/wiki/Little_Whale_River"}
+  - {id: fort_chimo, name: Fort Chimo, at: [-68.400, 58.108], tier: post, periods: [[1830, 1843, british], [1866, null, british]], source: "https://digitaleditions.library.dal.ca/arctic/chapter/chapter-8-fort-chimo/"}
+  - {id: rigolet, name: Rigolet, at: [-58.431, 54.179], tier: post, periods: [[1735, 1760, french], [1760, null, british]], source: "https://en.wikipedia.org/wiki/Rigolet"}
+  - {id: north_west_river, name: North West River, at: [-60.144, 53.535], tier: post, periods: [[1743, 1760, french], [1760, null, british]], source: "https://en.wikipedia.org/wiki/North_West_River"}
+  # St. Lawrence, Ottawa River, Great Lakes
+  - {id: tadoussac, name: Tadoussac, at: [-69.717, 48.150], tier: depot, periods: [[1600, 1760, french], [1760, 1859, british]], source: "https://en.wikipedia.org/wiki/Tadoussac"}
+  - {id: chicoutimi, name: Chicoutimi post, at: [-71.062, 48.428], tier: post, periods: [[1676, 1760, french], [1760, 1782, british]], source: "https://en.wikipedia.org/wiki/Chicoutimi"}
+  - {id: mingan, name: Mingan, at: [-64.019, 50.291], tier: outpost, periods: [[1661, 1760, french], [1760, null, british]], source: "https://en.wikipedia.org/wiki/Mingan"}
+  - {id: fort_temiscamingue, name: Fort Témiscamingue, at: [-79.457, 47.295], tier: post, periods: [[1720, 1760, french], [1788, null, british]], source: "https://en.wikipedia.org/wiki/Fort_T%C3%A9miscamingue"}
+  - {id: fort_coulonge, name: Fort Coulonge, at: [-76.738, 45.841], tier: outpost, periods: [[1784, null, british]], source: "https://en.wikipedia.org/wiki/Fort-Coulonge"}
+  - {id: fort_frontenac, name: Fort Frontenac, at: [-76.479, 44.233], tier: french_lakes, periods: [[1673, 1758, french]], source: "https://en.wikipedia.org/wiki/Fort_Frontenac"}
+  - {id: fort_rouille, name: Fort Rouillé, at: [-79.424, 43.631], tier: outpost, periods: [[1750, 1759, french]], source: "https://en.wikipedia.org/wiki/Fort_Rouill%C3%A9"}
+  - {id: kaministiquia, name: Fort Kaministiquia, at: [-89.240, 48.393], tier: french_lakes, periods: [[1717, 1758, french]], source: "https://en.wikipedia.org/wiki/Fort_William,_Ontario"}
+  - {id: fort_william, name: Fort William, at: [-89.280, 48.380], tier: depot, periods: [[1803, null, british]], source: "https://en.wikipedia.org/wiki/Fort_William,_Ontario"}
+  - {id: fort_nipigon, name: Fort Nipigon, at: [-88.266, 49.011], tier: outpost, periods: [[1717, 1760, french]], source: "https://www.pc.gc.ca/apps/dfhd/page_nhs_eng.aspx?id=440"}
+  - {id: michipicoten, name: Michipicoten, at: [-84.825, 47.936], tier: post, periods: [[1725, 1763, french], [1767, null, british]], source: "https://www.sootoday.com/columns/remember-this/the-hudson-bay-company-post-in-michipicoten-1634061"}
+  # La Vérendrye's western posts, all closed at the Conquest
+  - {id: fort_st_pierre, name: Fort Saint-Pierre, at: [-93.357, 48.615], tier: french_west, periods: [[1731, 1758, french]], source: "https://en.wikipedia.org/wiki/Fort_Saint_Pierre"}
+  - {id: fort_maurepas, name: Fort Maurepas, at: [-96.296, 50.609], tier: french_west, periods: [[1739, 1759, french]], source: "https://en.wikipedia.org/wiki/Fort_Maurepas_(Canada)"}
+  - {id: fort_rouge, name: Fort Rouge, at: [-97.131, 49.888], tier: french_west, periods: [[1738, 1749, french]], source: "https://en.wikipedia.org/wiki/Fort_Rouge_(fortification)"}
+  - {id: fort_la_reine, name: Fort La Reine, at: [-98.328, 49.951], tier: french_west, periods: [[1738, 1752, french]], source: "https://en.wikipedia.org/wiki/Fort_La_Reine"}
+  - {id: fort_dauphin, name: Fort Dauphin, at: [-99.926, 51.649], tier: french_west, periods: [[1741, 1759, french]], source: "https://en.wikipedia.org/wiki/Fort_Dauphin_(Manitoba)"}
+  - {id: fort_bourbon, name: Fort Bourbon, at: [-99.263, 53.186], tier: french_west, periods: [[1741, 1759, french]], source: "https://en.wikipedia.org/wiki/Fort_Bourbon"}
+  - {id: fort_paskoya, name: Fort Paskoya, at: [-100.651, 53.507], tier: french_west, periods: [[1741, 1759, french]], source: "https://en.wikipedia.org/wiki/Fort_Paskoya"}
+  - {id: fort_la_corne, name: Fort de la Corne, at: [-104.800, 53.150], tier: french_west, periods: [[1753, 1759, french]], source: "https://en.wikipedia.org/wiki/Fort_de_la_Corne"}
+  # Saskatchewan, Assiniboine and Red River after the Conquest
+  - {id: fort_des_epinettes, name: Pine Fort, at: [-99.222, 49.711], tier: outpost, periods: [[1768, 1811, british]], source: "https://en.wikipedia.org/wiki/Fort_des_%C3%89pinettes"}
+  - {id: cumberland_house, name: Cumberland House, at: [-102.268, 53.956], tier: depot, periods: [[1774, null, british]], source: "https://en.wikipedia.org/wiki/Cumberland_House,_Saskatchewan"}
+  - {id: fort_sturgeon, name: Fort Sturgeon, at: [-105.855, 53.205], tier: outpost, periods: [[1776, 1780, british]], source: "https://en.wikipedia.org/wiki/Fort_Sturgeon"}
+  - {id: hudson_house, name: Hudson House, at: [-106.270, 53.200], tier: post, periods: [[1779, 1787, british]], source: "https://iportal.usask.ca/record/68019"}
+  - {id: south_branch_house, name: South Branch House, at: [-106.033, 52.890], tier: outpost, periods: [[1785, 1794, british]], source: "https://en.wikipedia.org/wiki/South_Branch_House"}
+  - {id: manchester_house, name: Manchester House, at: [-109.061, 53.222], tier: outpost, periods: [[1786, 1793, british]], source: "https://en.wikipedia.org/wiki/Pine_Island_Fort"}
+  - {id: fort_esperance, name: Fort Espérance, at: [-101.577, 50.492], tier: outpost, periods: [[1787, 1819, british]], source: "https://en.wikipedia.org/wiki/Fort_Esp%C3%A9rance"}
+  - {id: buckingham_house, name: Buckingham House, at: [-110.757, 53.862], tier: outpost, periods: [[1792, 1800, british]], source: "https://en.wikipedia.org/wiki/Buckingham_House_(fur-trade_post)"}
+  - {id: bas_de_la_riviere, name: Fort Alexander, at: [-96.296, 50.609], tier: post, periods: [[1792, null, british]], source: "https://en.wikipedia.org/wiki/Bas_de_la_Rivi%C3%A8re"}
+  - {id: brandon_house, name: Brandon House, at: [-99.629, 49.674], tier: outpost, periods: [[1793, 1824, british]], source: "https://en.wikipedia.org/wiki/Brandon_House"}
+  - {id: fort_ellice, name: Fort Ellice, at: [-101.287, 50.410], tier: post, periods: [[1794, 1824, british], [1831, null, british]], source: "https://en.wikipedia.org/wiki/Fort_Ellice"}
+  - {id: fort_carlton, name: Fort Carlton, at: [-106.527, 52.873], tier: depot, periods: [[1795, null, british]], source: "https://en.wikipedia.org/wiki/Fort_Carlton"}
+  - {id: edmonton_house, name: Edmonton House I, at: [-113.172, 53.768], tier: post, periods: [[1795, 1802, british]], source: "https://en.wikipedia.org/wiki/Fort_Edmonton"}
+  - {id: fort_edmonton, name: Fort Edmonton, at: [-113.498, 53.529], tier: depot, periods: [[1802, null, british]], source: "https://en.wikipedia.org/wiki/Fort_Edmonton"}
+  - {id: oxford_house, name: Oxford House, at: [-95.266, 54.948], tier: post, periods: [[1798, null, british]], source: "https://en.wikipedia.org/wiki/Oxford_House,_Manitoba"}
+  - {id: fort_de_lisle, name: Fort de l'Isle, at: [-111.158, 53.753], tier: outpost, periods: [[1799, 1808, british]], source: "https://en.wikipedia.org/wiki/Fort_de_l%27Isle"}
+  - {id: rocky_mountain_house, name: Rocky Mountain House, at: [-114.964, 52.369], tier: post, periods: [[1799, null, british]], source: "https://en.wikipedia.org/wiki/Rocky_Mountain_House"}
+  - {id: fort_lac_la_pluie, name: Fort Lac la Pluie, at: [-93.394, 48.612], tier: post, periods: [[1780, null, british]], source: "https://en.wikipedia.org/wiki/Fort_Lac_la_Pluie"}
+  - {id: paint_creek_house, name: Paint Creek House, at: [-110.335, 53.664], tier: outpost, periods: [[1802, 1816, british]], source: "https://en.wikipedia.org/wiki/Saskatchewan_River_fur_trade"}
+  - {id: fort_gibraltar, name: Fort Gibraltar, at: [-97.129, 49.887], tier: post, periods: [[1809, 1822, british]], source: "https://en.wikipedia.org/wiki/Fort_Gibraltar"}
+  - {id: jasper_house, name: Jasper House, at: [-117.981, 53.138], tier: outpost, periods: [[1813, null, british]], source: "https://en.wikipedia.org/wiki/Jasper_House"}
+  - {id: norway_house, name: Norway House, at: [-97.816, 53.990], tier: depot, periods: [[1814, null, british]], source: "https://en.wikipedia.org/wiki/Norway_House"}
+  - {id: upper_fort_garry, name: Fort Garry, at: [-97.135, 49.888], tier: depot, periods: [[1822, null, british]], source: "https://en.wikipedia.org/wiki/Fort_Garry"}
+  - {id: fort_assiniboine, name: Fort Assiniboine, at: [-114.775, 54.334], tier: post, periods: [[1824, null, british]], source: "https://en.wikipedia.org/wiki/Fort_Assiniboine"}
+  - {id: fort_pelly, name: Fort Pelly, at: [-101.997, 51.776], tier: post, periods: [[1824, null, british]], source: "https://en.wikipedia.org/wiki/Fort_Pelly"}
+  - {id: fort_pitt, name: Fort Pitt, at: [-109.791, 53.574], tier: post, periods: [[1829, null, british]], source: "https://en.wikipedia.org/wiki/Fort_Pitt_Provincial_Park"}
+  - {id: fort_quappelle, name: Fort Qu'Appelle, at: [-103.790, 50.766], tier: outpost, periods: [[1864, null, british]], source: "https://en.wikipedia.org/wiki/Fort_Qu%27Appelle"}
+  # Athabasca, Mackenzie, Yukon
+  - {id: ile_a_la_crosse, name: Île-à-la-Crosse, at: [-107.897, 55.436], tier: depot, periods: [[1776, null, british]], source: "https://en.wikipedia.org/wiki/%C3%8Ele-%C3%A0-la-Crosse"}
+  - {id: fort_chipewyan_1, name: Fort Chipewyan I, at: [-110.609, 58.651], tier: depot, periods: [[1788, 1798, british]], source: "https://en.wikipedia.org/wiki/Fort_Chipewyan"}
+  - {id: fort_chipewyan, name: Fort Chipewyan, at: [-111.158, 58.714], tier: depot, periods: [[1798, null, british]], source: "https://en.wikipedia.org/wiki/Fort_Chipewyan"}
+  - {id: fort_vermilion, name: Fort Vermilion, at: [-116.017, 58.390], tier: post, periods: [[1788, null, british]], source: "https://en.wikipedia.org/wiki/Fort_Vermilion"}
+  - {id: fort_resolution, name: Fort Resolution, at: [-113.672, 61.171], tier: depot, periods: [[1786, null, british]], source: "https://www.biographi.ca/en/bio/grant_cuthbert_1799_4E.html"}
+  - {id: old_fort_providence, name: Old Fort Providence, at: [-114.168, 62.267], tier: outpost, periods: [[1789, 1823, british]], source: "https://en.wikipedia.org/wiki/Old_Fort_Providence"}
+  - {id: fort_rae, name: Fort Rae, at: [-115.823, 62.653], tier: outpost, periods: [[1852, null, british]], source: "https://en.wikipedia.org/wiki/Behchok%C7%AB%CC%80"}
+  - {id: fort_st_john, name: Fort St. John, at: [-120.847, 56.252], tier: post, periods: [[1794, 1823, british], [1860, null, british]], source: "https://en.wikipedia.org/wiki/Fort_St._John,_British_Columbia"}
+  - {id: fort_dunvegan, name: Fort Dunvegan, at: [-118.593, 55.924], tier: post, periods: [[1805, 1823, british], [1828, null, british]], source: "https://en.wikipedia.org/wiki/Dunvegan_Provincial_Park"}
+  - {id: fort_simpson, name: Fort Simpson, at: [-121.353, 61.861], tier: depot, periods: [[1803, null, british]], source: "https://en.wikipedia.org/wiki/Fort_Simpson"}
+  - {id: fort_liard, name: Fort Liard, at: [-123.475, 60.239], tier: post, periods: [[1806, 1813, british], [1820, null, british]], source: "https://fortliard.com/brief-history"}
+  - {id: fort_nelson, name: Fort Nelson, at: [-122.543, 58.824], tier: outpost, periods: [[1805, null, british]], source: "https://en.wikipedia.org/wiki/Fort_Nelson,_British_Columbia"}
+  - {id: fort_norman, name: Fort Norman, at: [-125.576, 64.901], tier: post, periods: [[1810, null, british]], source: "https://www.srrb.nt.ca/people-and-places/sahtu-atlas/99-sahtu-atlas/the-sahtu/183-ttulita"}
+  - {id: fort_good_hope, name: Fort Good Hope, at: [-128.638, 66.257], tier: post, periods: [[1805, null, british]], source: "https://en.wikipedia.org/wiki/Fort_Good_Hope"}
+  - {id: fort_halkett, name: Fort Halkett, at: [-126.465, 59.566], tier: outpost, periods: [[1829, null, british]], source: "https://bcparks.ca/smith-river-falls-fort-halkett-park/"}
+  - {id: fort_mcpherson, name: Fort McPherson, at: [-134.882, 67.435], tier: post, periods: [[1840, null, british]], source: "https://www.pc.gc.ca/apps/dfhd/page_nhs_eng.aspx?id=324"}
+  - {id: fort_selkirk, name: Fort Selkirk, at: [-137.386, 62.774], tier: outpost, periods: [[1848, 1852, british]], source: "https://en.wikipedia.org/wiki/Fort_Selkirk"}
+  # New Caledonia, Columbia District, Pacific coast
+  - {id: santa_cruz_de_nuca, name: Santa Cruz de Nuca, at: [-126.620, 49.594], tier: pacific, periods: [[1789, 1795, spanish]], source: "https://en.wikipedia.org/wiki/Santa_Cruz_de_Nuca"}
+  - {id: mcleod_lake, name: McLeod Lake, at: [-123.035, 54.983], tier: post, periods: [[1805, null, british]], source: "https://en.wikipedia.org/wiki/McLeod_Lake"}
+  - {id: fort_st_james, name: Fort St. James, at: [-124.256, 54.440], tier: depot, periods: [[1806, null, british]], source: "https://en.wikipedia.org/wiki/Fort_St._James"}
+  - {id: fort_fraser, name: Fort Fraser, at: [-124.551, 54.066], tier: outpost, periods: [[1806, null, british]], source: "https://en.wikipedia.org/wiki/Fort_Fraser,_British_Columbia"}
+  - {id: fort_george_bc, name: Fort George, at: [-122.745, 53.913], tier: post, periods: [[1807, null, british]], source: "https://en.wikipedia.org/wiki/Prince_George,_British_Columbia"}
+  - {id: fort_kamloops, name: Fort Kamloops, at: [-120.339, 50.676], tier: post, periods: [[1812, null, british]], source: "https://www.biographi.ca/en/bio/ross_alexander_8E.html"}
+  - {id: fort_alexandria, name: Fort Alexandria, at: [-122.451, 52.633], tier: outpost, periods: [[1821, null, british]], source: "https://en.wikipedia.org/wiki/Alexandria,_British_Columbia"}
+  - {id: fort_babine, name: Fort Babine, at: [-126.625, 55.318], tier: outpost, periods: [[1822, null, british]], source: "https://en.wikipedia.org/wiki/Fort_Babine"}
+  - {id: fort_langley, name: Fort Langley, at: [-122.569, 49.168], tier: depot, periods: [[1827, null, british]], source: "https://en.wikipedia.org/wiki/Fort_Langley_National_Historic_Site"}
+  - {id: fort_simpson_nass, name: Fort Simpson (Nass), at: [-130.434, 54.557], tier: pacific, periods: [[1831, null, british]], source: "https://en.wikipedia.org/wiki/Fort_Simpson_(Columbia_Department)"}
+  - {id: fort_mcloughlin, name: Fort McLoughlin, at: [-128.145, 52.162], tier: pacific, periods: [[1833, 1843, british]], source: "https://en.wikipedia.org/wiki/Fort_McLoughlin"}
+  - {id: fort_victoria, name: Fort Victoria, at: [-123.369, 48.426], tier: depot, periods: [[1843, null, british]], source: "https://en.wikipedia.org/wiki/Fort_Victoria_(British_Columbia)"}
+  - {id: fort_hope, name: Fort Hope, at: [-121.441, 49.380], tier: outpost, periods: [[1848, null, british]], source: "https://en.wikipedia.org/wiki/Hope,_British_Columbia"}
+  - {id: fort_rupert_bc, name: Fort Rupert, at: [-127.411, 50.693], tier: pacific, periods: [[1849, null, british]], source: "https://en.wikipedia.org/wiki/Fort_Rupert"}
+  # Acadia, Île Royale, Plaisance: French forts outside the settlement belts
+  - {id: fort_nashwaak, name: Fort Nashwaak, at: [-66.626, 45.962], tier: outpost, periods: [[1691, 1700, french]], source: "https://en.wikipedia.org/wiki/Fort_Nashwaak"}
+  - {id: port_la_joye, name: Port-la-Joye, at: [-63.137, 46.197], tier: outpost, periods: [[1720, 1758, french]], source: "https://en.wikipedia.org/wiki/Skmaqn%E2%80%93Port-la-Joye%E2%80%93Fort_Amherst"}
+
+belts:
+  - {id: st_lawrence_core, name: St. Lawrence seigneurial belt, km: 4, periods: [[1634, 1760, french], [1760, null, british]], line: [[-73.57, 45.50], [-72.55, 46.35], [-71.21, 46.81], [-70.85, 47.02]], source: "https://www.thecanadianencyclopedia.ca/en/article/seigneurial-system"}
+  - {id: richelieu, name: Richelieu valley, km: 3, periods: [[1665, 1760, french], [1760, null, british]], line: [[-73.28, 45.45], [-73.12, 46.04]], source: "https://en.wikipedia.org/wiki/Fort_Chambly"}
+  - {id: st_lawrence_lower, name: Lower St. Lawrence shores, km: 4, periods: [[1700, 1760, french], [1760, null, british]], line: [[-70.50, 47.44], [-71.21, 46.81], [-69.87, 47.57]], source: "https://www.thecanadianencyclopedia.ca/en/article/seigneurial-system"}
+  - {id: lower_canada_belt, name: Lower Canada settled belt, km: 20, periods: [[1791, null, british]], line: [[-74.30, 45.30], [-73.57, 45.50], [-72.55, 46.35], [-71.21, 46.81], [-69.53, 47.83], [-68.52, 48.45]], source: "https://www.thecanadianencyclopedia.ca/en/article/lower-canada"}
+  - {id: eastern_townships, name: Eastern Townships, km: 30, periods: [[1800, null, british]], line: [[-72.50, 45.10], [-71.89, 45.40], [-71.30, 45.90]], source: "https://www.thecanadianencyclopedia.ca/en/article/eastern-townships"}
+  - {id: port_royal, name: Port-Royal and the Annapolis basin, km: 3, periods: [[1636, 1710, french], [1710, null, british]], line: [[-65.75, 44.65], [-65.52, 44.74], [-65.20, 44.85]], source: "https://en.wikipedia.org/wiki/Port-Royal_(Acadia)"}
+  - {id: minas_chignecto, name: Minas Basin and Chignecto Acadian settlements, km: 3, periods: [[1680, 1755, french]], points: [[-64.30, 45.10], [-64.14, 45.00], [-63.60, 45.37], [-64.29, 45.86]], source: "https://en.wikipedia.org/wiki/Acadians"}
+  - {id: plaisance, name: Plaisance, km: 10, periods: [[1662, 1713, french]], points: [[-53.96, 47.25]], source: "https://en.wikipedia.org/wiki/Placentia,_Newfoundland_and_Labrador"}
+  - {id: english_shore, name: English Shore of Newfoundland, km: 5, periods: [[1610, null, british]], line: [[-53.36, 46.74], [-52.86, 47.02], [-52.71, 47.56], [-53.07, 47.52], [-53.22, 47.68], [-53.36, 48.37], [-53.11, 48.65]], source: "https://www.heritage.nf.ca/articles/exploration/english-shore.php"}
+  - {id: ile_royale, name: Louisbourg and Île Royale harbours, km: 5, periods: [[1713, 1758, french]], points: [[-59.98, 45.89], [-60.87, 45.65], [-60.55, 46.25]], source: "https://en.wikipedia.org/wiki/Fortress_of_Louisbourg"}
+  - {id: halifax, name: Halifax and Lunenburg, km: 8, periods: [[1749, null, british]], line: [[-63.59, 44.65], [-64.31, 44.38]], source: "https://en.wikipedia.org/wiki/Halifax,_Nova_Scotia"}
+  - {id: planter_valley, name: Annapolis Valley and Minas (New England Planters), km: 10, periods: [[1760, null, british]], line: [[-65.52, 44.74], [-64.36, 45.09], [-64.14, 44.99], [-63.28, 45.37]], source: "https://www.thecanadianencyclopedia.ca/en/article/planters"}
+  - {id: saint_john_valley, name: Saint John River Loyalist settlement, km: 10, periods: [[1783, null, british]], line: [[-66.06, 45.27], [-66.64, 45.96], [-67.57, 46.15]], source: "https://www.thecanadianencyclopedia.ca/en/article/loyalists"}
+  - {id: st_johns_island, name: St. John's Island settlements, km: 25, periods: [[1770, null, british]], points: [[-63.13, 46.24]], source: "https://www.biographi.ca/en/bio/patterson_walter_4E.html"}
+  - {id: loyalist_upper_canada, name: Loyalist Upper Canada fronts, km: 15, periods: [[1784, 1800, british]], line: [[-74.73, 45.02], [-75.68, 44.59], [-76.48, 44.23], [-77.38, 44.16]], source: "https://www.thecanadianencyclopedia.ca/en/article/loyalists"}
+  - {id: niagara_detroit, name: Niagara and Detroit River settlements, km: 15, periods: [[1784, 1800, british]], points: [[-79.06, 43.25], [-79.20, 43.05], [-83.11, 42.10], [-83.03, 42.31]], source: "https://en.wikipedia.org/wiki/Fort_Malden"}
+  - {id: upper_canada_front, name: Upper Canada settled front, km: 30, periods: [[1800, 1840, british]], line: [[-74.73, 45.02], [-76.48, 44.23], [-77.38, 44.16], [-78.17, 43.96], [-79.38, 43.65], [-79.87, 43.26], [-80.26, 43.14], [-81.25, 42.98], [-82.18, 42.40], [-83.00, 42.30]], source: "https://www.thecanadianencyclopedia.ca/en/article/upper-canada"}
+  - {id: canada_west, name: Canada West settled belt, km: 60, periods: [[1840, null, british]], line: [[-74.73, 45.02], [-76.48, 44.23], [-77.38, 44.16], [-78.17, 43.96], [-79.38, 43.65], [-79.87, 43.26], [-80.26, 43.14], [-81.25, 42.98], [-82.18, 42.40], [-83.00, 42.30]], source: "https://www.thecanadianencyclopedia.ca/en/article/upper-canada"}
+  - {id: ottawa_huron, name: Ottawa valley and Huron Tract, km: 25, periods: [[1840, null, british]], line: [[-77.12, 45.83], [-75.70, 45.42]], points: [[-81.71, 43.74], [-80.94, 44.57], [-79.69, 44.39]], source: "https://www.thecanadianencyclopedia.ca/en/article/huron-tract"}
+  - {id: red_river, name: Red River Settlement, km: 3.2, periods: [[1812, null, british]], line: [[-96.90, 50.35], [-96.93, 50.11], [-97.135, 49.888], [-97.20, 49.77]], points: [[-97.53, 49.93], [-97.30, 49.90]], source: "https://en.wikipedia.org/wiki/Red_River_Colony"}
+  - {id: victoria, name: Victoria and Nanaimo, km: 10, periods: [[1843, null, british]], points: [[-123.37, 48.43], [-123.94, 49.16]], source: "https://en.wikipedia.org/wiki/Fort_Victoria_(British_Columbia)"}
+  - {id: lower_fraser, name: Lower Fraser valley, km: 5, periods: [[1858, null, british]], line: [[-122.91, 49.21], [-122.57, 49.17], [-121.44, 49.38], [-121.43, 49.56]], source: "https://en.wikipedia.org/wiki/Fort_Langley_National_Historic_Site"}
