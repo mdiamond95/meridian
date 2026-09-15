@@ -5,6 +5,9 @@ set -euo pipefail
 UV_VERSION=0.12.13
 MAPSHAPER_VERSION=0.7.61
 
+echo "→ git hooks (secret scan on commit)"
+git config core.hooksPath .githooks
+
 echo "→ uv ${UV_VERSION}"
 curl -LsSf "https://astral.sh/uv/${UV_VERSION}/install.sh" | sh
 export PATH="$HOME/.local/bin:$PATH"
