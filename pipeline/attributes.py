@@ -37,6 +37,7 @@ import io
 import json
 import math
 import re
+import resource
 import sys
 import time
 import zipfile
@@ -48,7 +49,7 @@ import numpy as np
 import pandas as pd
 import shapely
 
-from census import da_points, load_profile
+from census import da_points, load_profile, release_memory
 from columns import MONEY_UNIT, check_column_name, encode_column, file_meta
 from common import BUILD, EQUAL_AREA_CRS, MESH_VERSION, WGS84, load_manifest, raw_file, write_json_gz
 from geo import cell_polygons, largest, nearest_key, overlap_areas, points_within, read_vector, zip_dataset
@@ -123,7 +124,8 @@ URBAN_CLASSES = {0: "remote", 1: "rural", 2: "small urban (CA)", 3: "CMA"}
 
 
 def log(message: str) -> None:
-    print(f"[attrs {time.strftime('%H:%M:%S')}] {message}", flush=True)
+    peak_mb = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024  # Linux reports KiB
+    print(f"[attrs {time.strftime('%H:%M:%S')} peak {peak_mb:,.0f} MB] {message}", flush=True)
 
 
 # --- inputs ---------------------------------------------------------------------------------
@@ -215,9 +217,9 @@ def cells_of_points(
 
 
 def das_to_cells(
-    mesh: dict, index: dict[str, int], csds: gpd.GeoDataFrame, cma: gpd.GeoDataFrame
+    das: gpd.GeoDataFrame, mesh: dict, index: dict[str, int], csds: gpd.GeoDataFrame, cma: gpd.GeoDataFrame
 ) -> pd.DataFrame:
-    das = da_points()
+    """Each DA's CSD, mesh cell and CMA/CA class, from its representative point."""
     points = das.geometry
     csd_of = points_within(points, csds, "csd")
     missing = [i for i in range(len(das)) if i not in csd_of.index]
@@ -449,6 +451,37 @@ def treaty_columns(polys) -> tuple[np.ndarray, np.ndarray, dict]:
     return treaty_id, kind_area, labels
 
 
+def subbasin_column(polys: gpd.GeoSeries) -> tuple[np.ndarray, dict[str, str]]:
+    """Largest-overlap WSC sub-drainage area per cell. The NHN work units hold about 25 million
+    vertices, so they are read, dissolved and overlaid one major drainage area at a time (the first
+    two characters of the sub-drainage code); a sub-drainage area never spans two major areas, so
+    the result equals a single national pass."""
+    path = zip_dataset(raw_file("nrcan_nhn_workunits"))
+    codes_table = read_vector(path, columns=["WSCSDA"], read_geometry=False)
+    codes = sorted(codes_table["WSCSDA"].dropna().unique())
+    code_id = {code: i + 1 for i, code in enumerate(codes)}
+    overlaps, labels = [], {}
+    for major in sorted({code[:2] for code in codes}):
+        nhn = read_vector(
+            path, columns=["WSCSDA", "WSCSDANAME", "WSCMDANAME"], where=f"WSCSDA LIKE '{major}%'"
+        )
+        nhn = nhn[nhn["WSCSDA"].notna()].to_crs(EQUAL_AREA_CRS)
+        nhn["geometry"] = shapely.make_valid(nhn.geometry.to_numpy())
+        nhn["sid"] = nhn["WSCSDA"].map(code_id)
+        nhn = nhn.dissolve("sid", as_index=False, aggfunc="first")
+        overlaps.append(overlap_areas(polys, nhn, "sid"))
+        for r in nhn.itertuples():
+            labels[str(r.sid)] = f"{r.WSCSDA} {subbasin_name(r.WSCSDANAME, r.WSCMDANAME)}"
+        del nhn
+        release_memory()
+    out = np.zeros(len(polys), dtype=np.int64)
+    combined = pd.concat(overlaps, ignore_index=True)
+    if not combined.empty:
+        for cell, row in largest(combined).iterrows():
+            out[cell] = int(row["key"])
+    return out, dict(sorted(labels.items(), key=lambda kv: int(kv[0])))
+
+
 def overlay_inputs():
     eco = read_vector(raw_file("aafc_ecozones")).to_crs(EQUAL_AREA_CRS)
     eco = eco.dissolve("ECOZONE_ID", as_index=False)
@@ -466,10 +499,17 @@ def build() -> dict:
     polys = cell_polygons(cells)
     areas_m2 = polys.area.to_numpy()
 
+    # DA points first, while little else is in memory: reading the DA GeoJSON is the largest
+    # transient allocation in this step (docs/perf.md).
+    log("DA representative points")
+    points = da_points()
+    release_memory()
     csds = load_csds()
-    cma = read_vector(raw_file("statcan_cma_2021"), crs=EQUAL_AREA_CRS)
+    cma = read_vector(raw_file("statcan_cma_2021"), crs=EQUAL_AREA_CRS, columns=["CMATYPE"])
     log("DA representative points → cells")
-    das = das_to_cells(mesh, index, csds, cma)
+    das = das_to_cells(points, mesh, index, csds, cma)
+    del points, cma
+    release_memory()
     da_prof = load_profile("statcan_profile_da_2021")
     csd_prof = load_profile("statcan_profile_csd_2021")
 
@@ -478,6 +518,8 @@ def build() -> dict:
     cell_csd_weight = {
         csd: (g["cell"].to_numpy(), g["area"].to_numpy()) for csd, g in csd_overlap.groupby("key", sort=True)
     }
+    del csds
+    release_memory()
 
     log("population")
     pops = population_columns(mesh, das, da_prof, csd_prof, cell_csd_weight)
@@ -548,23 +590,14 @@ def build() -> dict:
     }
 
     log("sub-basins (NHN work units)")
-    nhn = read_vector(
-        zip_dataset(raw_file("nrcan_nhn_workunits")), columns=["WSCSDA", "WSCSDANAME", "WSCMDANAME"]
-    )
-    nhn = nhn[nhn["WSCSDA"].notna()].to_crs(EQUAL_AREA_CRS)
-    nhn["geometry"] = shapely.make_valid(nhn.geometry.to_numpy())
-    codes = sorted(nhn["WSCSDA"].unique())
-    code_id = {code: i + 1 for i, code in enumerate(codes)}
-    nhn["sid"] = nhn["WSCSDA"].map(code_id)
-    nhn = nhn.dissolve("sid", as_index=False, aggfunc="first")
-    add("subbasin_id", id_from_overlap(polys, nhn, "sid"), "id", method="largest_overlap_wsc_sda_v1")
-    lookups["subbasin_id"] = {"0": "none"} | {
-        str(r.sid): f"{r.WSCSDA} {subbasin_name(r.WSCSDANAME, r.WSCMDANAME)}"
-        for r in nhn.sort_values("sid").itertuples()
-    }
+    subbasin, sub_labels = subbasin_column(polys)
+    add("subbasin_id", subbasin, "id", method="largest_overlap_wsc_sda_v1")
+    lookups["subbasin_id"] = {"0": "none"} | sub_labels
+    release_memory()
 
     log("treaties")
     treaty_id, kind_area, treaty_labels = treaty_columns(polys)
+    release_memory()
     land = np.zeros(n)
     for row in csd_overlap.groupby("cell")["area"].sum().items():
         land[row[0]] = row[1]
@@ -576,8 +609,11 @@ def build() -> dict:
     lookups["treaty_id"] = {"0": "none"} | treaty_labels
 
     log("reserves, Métis settlements, Inuit regions")
-    lands = read_vector(zip_dataset(raw_file("nrcan_aboriginal_lands"), r"\.shp$"))
-    reserves = lands[lands["ALTYPE"] == "Indian Reserve"].to_crs(EQUAL_AREA_CRS)
+    reserves = read_vector(
+        zip_dataset(raw_file("nrcan_aboriginal_lands"), r"\.shp$"),
+        columns=["ALTYPE"],
+        where="ALTYPE = 'Indian Reserve'",
+    ).to_crs(EQUAL_AREA_CRS)
     reserves = gpd.GeoDataFrame(
         {"k": 1},
         index=reserves.index,
@@ -606,6 +642,7 @@ def build() -> dict:
     add("inuit_region", id_from_overlap(polys, inuit, "rid", MAJORITY), "id", method="majority_overlap_v1")
     lookups["inuit_region"] = {"0": "none"} | {str(r.rid): r.REGION for r in inuit.itertuples()}
 
+    release_memory()
     log("ridings and 2025 results")
     feds = read_vector(zip_dataset(raw_file("elections_fed_2023"), r"\.shp$")).to_crs(EQUAL_AREA_CRS)
     feds["fed"] = feds["FED_NUM"].astype(int)
