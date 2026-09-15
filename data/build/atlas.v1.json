@@ -1,0 +1,1296 @@
+{
+ "format": "meridian.atlas",
+ "version": "v1",
+ "events": [
+  {
+   "date": "1867-07-01",
+   "title": "Confederation",
+   "note": "Ontario, Quebec, Nova Scotia and New Brunswick unite as the Dominion of Canada. Everything north and west still belongs to Britain or to the Hudson's Bay Company.",
+   "changes": [
+    {
+     "unit": "ontario",
+     "kind": "create"
+    },
+    {
+     "unit": "newfoundland",
+     "kind": "create"
+    },
+    {
+     "unit": "quebec",
+     "kind": "create"
+    },
+    {
+     "unit": "nova_scotia",
+     "kind": "create"
+    },
+    {
+     "unit": "new_brunswick",
+     "kind": "create"
+    },
+    {
+     "unit": "prince_edward_island",
+     "kind": "create"
+    },
+    {
+     "unit": "british_columbia",
+     "kind": "create"
+    },
+    {
+     "unit": "ruperts_land",
+     "kind": "create"
+    },
+    {
+     "unit": "arctic_islands",
+     "kind": "create"
+    },
+    {
+     "unit": "north_western_territory",
+     "kind": "create"
+    }
+   ]
+  },
+  {
+   "date": "1870-07-15",
+   "title": "Manitoba and the North-West Territories",
+   "note": "Canada takes over Rupert's Land and the North-Western Territory from the Hudson's Bay Company. A small square around the Red River settlement becomes Manitoba.",
+   "changes": [
+    {
+     "unit": "manitoba",
+     "kind": "create"
+    },
+    {
+     "unit": "northwest_territories",
+     "kind": "create"
+    },
+    {
+     "unit": "ruperts_land",
+     "kind": "dissolve"
+    },
+    {
+     "unit": "north_western_territory",
+     "kind": "dissolve"
+    }
+   ]
+  },
+  {
+   "date": "1871-07-20",
+   "title": "British Columbia joins",
+   "note": "British Columbia enters Confederation on the promise of a railway to the Pacific. Its boundaries are unchanged.",
+   "changes": [
+    {
+     "unit": "british_columbia",
+     "kind": "alter"
+    }
+   ]
+  },
+  {
+   "date": "1873-07-01",
+   "title": "Prince Edward Island joins",
+   "note": "Prince Edward Island joins Canada six years after Confederation. The island's boundaries are unchanged.",
+   "changes": [
+    {
+     "unit": "prince_edward_island",
+     "kind": "alter"
+    }
+   ]
+  },
+  {
+   "date": "1874-06-26",
+   "title": "Ontario's provisional boundary",
+   "note": "Ontario and the Dominion agree on a provisional line while Ontario's true limits are argued. Ontario extends north to 51°N and west to the meridian of Hunter's Island.",
+   "changes": [
+    {
+     "unit": "ontario",
+     "kind": "alter"
+    },
+    {
+     "unit": "northwest_territories",
+     "kind": "alter"
+    }
+   ]
+  },
+  {
+   "date": "1876-10-07",
+   "title": "District of Keewatin",
+   "note": "The Keewatin Act carves a district from the North-West Territories between Manitoba and Hudson Bay. The Lieutenant-Governor of Manitoba governs it from Winnipeg.",
+   "changes": [
+    {
+     "unit": "district_of_keewatin",
+     "kind": "create"
+    },
+    {
+     "unit": "northwest_territories",
+     "kind": "alter"
+    }
+   ]
+  },
+  {
+   "date": "1880-09-01",
+   "title": "The Arctic islands",
+   "note": "Britain transfers all its remaining North American possessions to Canada, except Newfoundland. The Arctic Archipelago joins the North-West Territories.",
+   "changes": [
+    {
+     "unit": "northwest_territories",
+     "kind": "alter"
+    },
+    {
+     "unit": "arctic_islands",
+     "kind": "dissolve"
+    }
+   ]
+  },
+  {
+   "date": "1881-07-01",
+   "title": "Manitoba enlarged",
+   "note": "Manitoba grows west, north and east. Ontario claims the eastern part too, and the dispute goes to the Privy Council.",
+   "changes": [
+    {
+     "unit": "manitoba",
+     "kind": "alter"
+    },
+    {
+     "unit": "ontario_manitoba_disputed_area",
+     "kind": "create"
+    },
+    {
+     "unit": "district_of_keewatin",
+     "kind": "alter"
+    },
+    {
+     "unit": "northwest_territories",
+     "kind": "alter"
+    }
+   ]
+  },
+  {
+   "date": "1882-05-08",
+   "title": "Provisional districts",
+   "note": "Four districts are laid out on the prairies for settlers and the post office. Regina is chosen as the territorial capital.",
+   "changes": [
+    {
+     "unit": "district_of_assiniboia",
+     "kind": "create"
+    },
+    {
+     "unit": "district_of_saskatchewan",
+     "kind": "create"
+    },
+    {
+     "unit": "district_of_alberta",
+     "kind": "create"
+    },
+    {
+     "unit": "district_of_athabasca",
+     "kind": "create"
+    },
+    {
+     "unit": "northwest_territories",
+     "kind": "alter"
+    }
+   ]
+  },
+  {
+   "date": "1886-05-07",
+   "title": "Keewatin trimmed",
+   "note": "A proclamation moves the land between Lake Winnipegosis and the Nelson River from Keewatin to the District of Saskatchewan. Keewatin now starts at Lake Winnipeg.",
+   "changes": [
+    {
+     "unit": "district_of_saskatchewan",
+     "kind": "alter"
+    },
+    {
+     "unit": "district_of_keewatin",
+     "kind": "alter"
+    }
+   ]
+  },
+  {
+   "date": "1889-08-12",
+   "title": "Ontario's boundary settled",
+   "note": "Parliament confirms the Privy Council's ruling for Ontario. Its northern boundary becomes the English and Albany rivers, and the dispute with Manitoba ends.",
+   "changes": [
+    {
+     "unit": "ontario",
+     "kind": "alter"
+    },
+    {
+     "unit": "district_of_keewatin",
+     "kind": "alter"
+    },
+    {
+     "unit": "northwest_territories",
+     "kind": "alter"
+    },
+    {
+     "unit": "ontario_manitoba_disputed_area",
+     "kind": "dissolve"
+    }
+   ]
+  },
+  {
+   "date": "1895-10-02",
+   "title": "Districts of the North",
+   "note": "An order in council divides the northern territories into the districts of Ungava, Franklin, Mackenzie and Yukon. Athabaska grows east to 100°W.",
+   "changes": [
+    {
+     "unit": "yukon",
+     "kind": "create"
+    },
+    {
+     "unit": "district_of_mackenzie",
+     "kind": "create"
+    },
+    {
+     "unit": "district_of_franklin",
+     "kind": "create"
+    },
+    {
+     "unit": "district_of_ungava",
+     "kind": "create"
+    },
+    {
+     "unit": "district_of_athabasca",
+     "kind": "alter"
+    },
+    {
+     "unit": "northwest_territories",
+     "kind": "alter"
+    }
+   ]
+  },
+  {
+   "date": "1897-12-18",
+   "title": "Districts redrawn",
+   "note": "A new order in council redraws the northern districts along the middle of the bays and straits. Keewatin takes Hudson Bay's western islands, and Franklin takes the Boothia and Melville peninsulas.",
+   "changes": [
+    {
+     "unit": "district_of_keewatin",
+     "kind": "alter"
+    },
+    {
+     "unit": "district_of_ungava",
+     "kind": "alter"
+    },
+    {
+     "unit": "yukon",
+     "kind": "alter"
+    },
+    {
+     "unit": "district_of_mackenzie",
+     "kind": "alter"
+    },
+    {
+     "unit": "district_of_franklin",
+     "kind": "alter"
+    },
+    {
+     "unit": "northwest_territories",
+     "kind": "dissolve"
+    }
+   ]
+  },
+  {
+   "date": "1898-06-13",
+   "title": "Yukon Territory and Quebec's first extension",
+   "note": "The Klondike gold rush makes Yukon a separate territory with its capital at Dawson. Quebec extends north to the Eastmain River and east to Hamilton Inlet.",
+   "changes": [
+    {
+     "unit": "yukon",
+     "kind": "alter"
+    },
+    {
+     "unit": "district_of_mackenzie",
+     "kind": "alter"
+    },
+    {
+     "unit": "quebec",
+     "kind": "alter"
+    },
+    {
+     "unit": "district_of_ungava",
+     "kind": "alter"
+    }
+   ]
+  },
+  {
+   "date": "1901-05-23",
+   "title": "Yukon's boundary redrawn",
+   "note": "Parliament moves Yukon's eastern boundary onto the mountain divides. It is the line Yukon still has.",
+   "changes": [
+    {
+     "unit": "yukon",
+     "kind": "alter"
+    },
+    {
+     "unit": "district_of_mackenzie",
+     "kind": "alter"
+    }
+   ]
+  },
+  {
+   "date": "1903-10-20",
+   "title": "The Alaska boundary award",
+   "note": "An international tribunal settles the Alaska panhandle boundary, mostly in favour of the United States. The atlas draws the award line throughout, as NRCan does; the earlier claim lines arrive with the disputed layer.",
+   "changes": []
+  },
+  {
+   "date": "1905-09-01",
+   "title": "Alberta and Saskatchewan",
+   "note": "Two provinces are carved from the North-West Territories, each running from 49°N to 60°N. Keewatin is folded back into the territories, now run from Ottawa.",
+   "changes": [
+    {
+     "unit": "alberta",
+     "kind": "create"
+    },
+    {
+     "unit": "saskatchewan",
+     "kind": "create"
+    },
+    {
+     "unit": "district_of_keewatin",
+     "kind": "alter"
+    },
+    {
+     "unit": "district_of_assiniboia",
+     "kind": "dissolve"
+    },
+    {
+     "unit": "district_of_saskatchewan",
+     "kind": "dissolve"
+    },
+    {
+     "unit": "district_of_alberta",
+     "kind": "dissolve"
+    },
+    {
+     "unit": "district_of_athabasca",
+     "kind": "dissolve"
+    }
+   ]
+  },
+  {
+   "date": "1912-05-15",
+   "title": "Manitoba, Ontario and Quebec extended",
+   "note": "Three provinces extend north to Hudson Bay and Hudson Strait, taking most of Keewatin and the mainland of Ungava. Manitoba reaches 60°N.",
+   "changes": [
+    {
+     "unit": "manitoba",
+     "kind": "alter"
+    },
+    {
+     "unit": "ontario",
+     "kind": "alter"
+    },
+    {
+     "unit": "quebec",
+     "kind": "alter"
+    },
+    {
+     "unit": "district_of_keewatin",
+     "kind": "alter"
+    },
+    {
+     "unit": "district_of_ungava",
+     "kind": "alter"
+    }
+   ]
+  },
+  {
+   "date": "1920-01-01",
+   "title": "Northwest Territories districts revised",
+   "note": "An order of 1918 comes into force, leaving three districts: Mackenzie, Keewatin and Franklin. The District of Ungava disappears.",
+   "changes": [
+    {
+     "unit": "district_of_mackenzie",
+     "kind": "alter"
+    },
+    {
+     "unit": "district_of_keewatin",
+     "kind": "alter"
+    },
+    {
+     "unit": "district_of_franklin",
+     "kind": "alter"
+    },
+    {
+     "unit": "district_of_ungava",
+     "kind": "dissolve"
+    }
+   ]
+  },
+  {
+   "date": "1927-03-01",
+   "title": "The Labrador boundary",
+   "note": "The Judicial Committee of the Privy Council sets the boundary between Canada and Newfoundland in Labrador. Newfoundland gets the whole Atlantic watershed.",
+   "changes": [
+    {
+     "unit": "newfoundland",
+     "kind": "alter"
+    },
+    {
+     "unit": "quebec",
+     "kind": "alter"
+    },
+    {
+     "unit": "district_of_franklin",
+     "kind": "alter"
+    }
+   ]
+  },
+  {
+   "date": "1949-03-31",
+   "title": "Newfoundland joins",
+   "note": "Newfoundland becomes Canada's tenth province after two referendums. Its boundaries, Labrador included, are those of 1927.",
+   "changes": [
+    {
+     "unit": "newfoundland",
+     "kind": "alter"
+    }
+   ]
+  },
+  {
+   "date": "1953-04-01",
+   "title": "Whitehorse becomes Yukon's capital",
+   "note": "Yukon's capital moves from Dawson to Whitehorse, on the highway and the railway. No boundary changes.",
+   "changes": [
+    {
+     "unit": "yukon",
+     "kind": "alter"
+    }
+   ]
+  },
+  {
+   "date": "1999-04-01",
+   "title": "Nunavut",
+   "note": "Nunavut is created from the eastern and northern Northwest Territories, following the Nunavut Land Claims Agreement. The old districts of Mackenzie, Keewatin and Franklin end.",
+   "changes": [
+    {
+     "unit": "nunavut",
+     "kind": "create"
+    },
+    {
+     "unit": "northwest_territories",
+     "kind": "create"
+    },
+    {
+     "unit": "district_of_mackenzie",
+     "kind": "dissolve"
+    },
+    {
+     "unit": "district_of_keewatin",
+     "kind": "dissolve"
+    },
+    {
+     "unit": "district_of_franklin",
+     "kind": "dissolve"
+    }
+   ]
+  },
+  {
+   "date": "2001-12-06",
+   "title": "Newfoundland and Labrador",
+   "note": "A constitutional amendment renames the province Newfoundland and Labrador. Its boundaries are unchanged.",
+   "changes": [
+    {
+     "unit": "newfoundland",
+     "kind": "rename"
+    }
+   ]
+  },
+  {
+   "date": "2003-04-01",
+   "title": "Yukon",
+   "note": "The new Yukon Act drops \"Territory\" from the name. Its boundaries are unchanged.",
+   "changes": [
+    {
+     "unit": "yukon",
+     "kind": "rename"
+    }
+   ]
+  }
+ ],
+ "units": [
+  {
+   "id": "alberta",
+   "name": "Alberta",
+   "status": "province",
+   "sovereign": "Canada",
+   "capital": "Edmonton",
+   "validFrom": "1905-09-01",
+   "validTo": null,
+   "truth": "dejure",
+   "geometryRef": "alberta_1905"
+  },
+  {
+   "id": "arctic_islands",
+   "name": "British Arctic Islands",
+   "status": "unorganized",
+   "sovereign": "Britain",
+   "capital": null,
+   "validFrom": "1867-07-01",
+   "validTo": "1880-09-01",
+   "truth": "dejure",
+   "geometryRef": "arctic_islands_1867"
+  },
+  {
+   "id": "british_columbia",
+   "name": "British Columbia",
+   "status": "colony",
+   "sovereign": "Britain",
+   "capital": "Victoria",
+   "validFrom": "1867-07-01",
+   "validTo": "1871-07-20",
+   "truth": "dejure",
+   "geometryRef": "british_columbia_1867",
+   "note": "Vancouver Island and the mainland colony were united in 1866; the capital moved from New Westminster to Victoria in 1868."
+  },
+  {
+   "id": "british_columbia",
+   "name": "British Columbia",
+   "status": "province",
+   "sovereign": "Canada",
+   "capital": "Victoria",
+   "validFrom": "1871-07-20",
+   "validTo": null,
+   "truth": "dejure",
+   "geometryRef": "british_columbia_1867"
+  },
+  {
+   "id": "district_of_alberta",
+   "name": "District of Alberta",
+   "status": "district",
+   "sovereign": "Canada",
+   "capital": null,
+   "validFrom": "1882-05-08",
+   "validTo": "1905-09-01",
+   "truth": "dejure",
+   "geometryRef": "district_of_alberta_1882"
+  },
+  {
+   "id": "district_of_assiniboia",
+   "name": "District of Assiniboia",
+   "status": "district",
+   "sovereign": "Canada",
+   "capital": null,
+   "validFrom": "1882-05-08",
+   "validTo": "1905-09-01",
+   "truth": "dejure",
+   "geometryRef": "district_of_assiniboia_1882"
+  },
+  {
+   "id": "district_of_athabasca",
+   "name": "District of Athabaska",
+   "status": "district",
+   "sovereign": "Canada",
+   "capital": null,
+   "validFrom": "1882-05-08",
+   "validTo": "1895-10-02",
+   "truth": "dejure",
+   "geometryRef": "district_of_athabasca_1882"
+  },
+  {
+   "id": "district_of_athabasca",
+   "name": "District of Athabaska",
+   "status": "district",
+   "sovereign": "Canada",
+   "capital": null,
+   "validFrom": "1895-10-02",
+   "validTo": "1905-09-01",
+   "truth": "dejure",
+   "geometryRef": "district_of_athabasca_1895"
+  },
+  {
+   "id": "district_of_franklin",
+   "name": "District of Franklin",
+   "status": "district",
+   "sovereign": "Canada",
+   "capital": null,
+   "validFrom": "1895-10-02",
+   "validTo": "1897-12-18",
+   "truth": "dejure",
+   "geometryRef": "district_of_franklin_1895"
+  },
+  {
+   "id": "district_of_franklin",
+   "name": "District of Franklin",
+   "status": "district",
+   "sovereign": "Canada",
+   "capital": null,
+   "validFrom": "1897-12-18",
+   "validTo": "1920-01-01",
+   "truth": "dejure",
+   "geometryRef": "district_of_franklin_1897"
+  },
+  {
+   "id": "district_of_franklin",
+   "name": "District of Franklin",
+   "status": "district",
+   "sovereign": "Canada",
+   "capital": null,
+   "validFrom": "1920-01-01",
+   "validTo": "1927-03-01",
+   "truth": "dejure",
+   "geometryRef": "district_of_franklin_1920"
+  },
+  {
+   "id": "district_of_franklin",
+   "name": "District of Franklin",
+   "status": "district",
+   "sovereign": "Canada",
+   "capital": null,
+   "validFrom": "1927-03-01",
+   "validTo": "1999-04-01",
+   "truth": "dejure",
+   "geometryRef": "district_of_franklin_1927"
+  },
+  {
+   "id": "district_of_keewatin",
+   "name": "District of Keewatin",
+   "status": "district",
+   "sovereign": "Canada",
+   "capital": null,
+   "validFrom": "1876-10-07",
+   "validTo": "1881-07-01",
+   "truth": "dejure",
+   "geometryRef": "district_of_keewatin_1876",
+   "note": "Governed from Winnipeg by the Lieutenant-Governor of Manitoba and the Council of Keewatin."
+  },
+  {
+   "id": "district_of_keewatin",
+   "name": "District of Keewatin",
+   "status": "district",
+   "sovereign": "Canada",
+   "capital": null,
+   "validFrom": "1881-07-01",
+   "validTo": "1886-05-07",
+   "truth": "dejure",
+   "geometryRef": "district_of_keewatin_1881"
+  },
+  {
+   "id": "district_of_keewatin",
+   "name": "District of Keewatin",
+   "status": "district",
+   "sovereign": "Canada",
+   "capital": null,
+   "validFrom": "1886-05-07",
+   "validTo": "1889-08-12",
+   "truth": "dejure",
+   "geometryRef": "district_of_keewatin_1886"
+  },
+  {
+   "id": "district_of_keewatin",
+   "name": "District of Keewatin",
+   "status": "district",
+   "sovereign": "Canada",
+   "capital": null,
+   "validFrom": "1889-08-12",
+   "validTo": "1897-12-18",
+   "truth": "dejure",
+   "geometryRef": "district_of_keewatin_1889"
+  },
+  {
+   "id": "district_of_keewatin",
+   "name": "District of Keewatin",
+   "status": "district",
+   "sovereign": "Canada",
+   "capital": null,
+   "validFrom": "1897-12-18",
+   "validTo": "1905-09-01",
+   "truth": "dejure",
+   "geometryRef": "district_of_keewatin_1897"
+  },
+  {
+   "id": "district_of_keewatin",
+   "name": "District of Keewatin",
+   "status": "district",
+   "sovereign": "Canada",
+   "capital": null,
+   "validFrom": "1905-09-01",
+   "validTo": "1912-05-15",
+   "truth": "dejure",
+   "geometryRef": "district_of_keewatin_1905",
+   "note": "Re-annexed to the North-West Territories, which were governed from Ottawa."
+  },
+  {
+   "id": "district_of_keewatin",
+   "name": "District of Keewatin",
+   "status": "district",
+   "sovereign": "Canada",
+   "capital": null,
+   "validFrom": "1912-05-15",
+   "validTo": "1920-01-01",
+   "truth": "dejure",
+   "geometryRef": "district_of_keewatin_1912"
+  },
+  {
+   "id": "district_of_keewatin",
+   "name": "District of Keewatin",
+   "status": "district",
+   "sovereign": "Canada",
+   "capital": null,
+   "validFrom": "1920-01-01",
+   "validTo": "1999-04-01",
+   "truth": "dejure",
+   "geometryRef": "district_of_keewatin_1920"
+  },
+  {
+   "id": "district_of_mackenzie",
+   "name": "District of Mackenzie",
+   "status": "district",
+   "sovereign": "Canada",
+   "capital": null,
+   "validFrom": "1895-10-02",
+   "validTo": "1897-12-18",
+   "truth": "dejure",
+   "geometryRef": "district_of_mackenzie_1895"
+  },
+  {
+   "id": "district_of_mackenzie",
+   "name": "District of Mackenzie",
+   "status": "district",
+   "sovereign": "Canada",
+   "capital": null,
+   "validFrom": "1897-12-18",
+   "validTo": "1898-06-13",
+   "truth": "dejure",
+   "geometryRef": "district_of_mackenzie_1897"
+  },
+  {
+   "id": "district_of_mackenzie",
+   "name": "District of Mackenzie",
+   "status": "district",
+   "sovereign": "Canada",
+   "capital": null,
+   "validFrom": "1898-06-13",
+   "validTo": "1901-05-23",
+   "truth": "dejure",
+   "geometryRef": "district_of_mackenzie_1898"
+  },
+  {
+   "id": "district_of_mackenzie",
+   "name": "District of Mackenzie",
+   "status": "district",
+   "sovereign": "Canada",
+   "capital": null,
+   "validFrom": "1901-05-23",
+   "validTo": "1920-01-01",
+   "truth": "dejure",
+   "geometryRef": "district_of_mackenzie_1901"
+  },
+  {
+   "id": "district_of_mackenzie",
+   "name": "District of Mackenzie",
+   "status": "district",
+   "sovereign": "Canada",
+   "capital": null,
+   "validFrom": "1920-01-01",
+   "validTo": "1999-04-01",
+   "truth": "dejure",
+   "geometryRef": "district_of_mackenzie_1920"
+  },
+  {
+   "id": "district_of_saskatchewan",
+   "name": "District of Saskatchewan",
+   "status": "district",
+   "sovereign": "Canada",
+   "capital": null,
+   "validFrom": "1882-05-08",
+   "validTo": "1886-05-07",
+   "truth": "dejure",
+   "geometryRef": "district_of_saskatchewan_1882"
+  },
+  {
+   "id": "district_of_saskatchewan",
+   "name": "District of Saskatchewan",
+   "status": "district",
+   "sovereign": "Canada",
+   "capital": null,
+   "validFrom": "1886-05-07",
+   "validTo": "1905-09-01",
+   "truth": "dejure",
+   "geometryRef": "district_of_saskatchewan_1886"
+  },
+  {
+   "id": "district_of_ungava",
+   "name": "District of Ungava",
+   "status": "district",
+   "sovereign": "Canada",
+   "capital": null,
+   "validFrom": "1895-10-02",
+   "validTo": "1897-12-18",
+   "truth": "dejure",
+   "geometryRef": "district_of_ungava_1895"
+  },
+  {
+   "id": "district_of_ungava",
+   "name": "District of Ungava",
+   "status": "district",
+   "sovereign": "Canada",
+   "capital": null,
+   "validFrom": "1897-12-18",
+   "validTo": "1898-06-13",
+   "truth": "dejure",
+   "geometryRef": "district_of_ungava_1897"
+  },
+  {
+   "id": "district_of_ungava",
+   "name": "District of Ungava",
+   "status": "district",
+   "sovereign": "Canada",
+   "capital": null,
+   "validFrom": "1898-06-13",
+   "validTo": "1912-05-15",
+   "truth": "dejure",
+   "geometryRef": "district_of_ungava_1898"
+  },
+  {
+   "id": "district_of_ungava",
+   "name": "District of Ungava",
+   "status": "district",
+   "sovereign": "Canada",
+   "capital": null,
+   "validFrom": "1912-05-15",
+   "validTo": "1920-01-01",
+   "truth": "dejure",
+   "geometryRef": "district_of_ungava_1912"
+  },
+  {
+   "id": "manitoba",
+   "name": "Manitoba",
+   "status": "province",
+   "sovereign": "Canada",
+   "capital": "Winnipeg",
+   "validFrom": "1870-07-15",
+   "validTo": "1881-07-01",
+   "truth": "dejure",
+   "geometryRef": "manitoba_1870"
+  },
+  {
+   "id": "manitoba",
+   "name": "Manitoba",
+   "status": "province",
+   "sovereign": "Canada",
+   "capital": "Winnipeg",
+   "validFrom": "1881-07-01",
+   "validTo": "1912-05-15",
+   "truth": "dejure",
+   "geometryRef": "manitoba_1881"
+  },
+  {
+   "id": "manitoba",
+   "name": "Manitoba",
+   "status": "province",
+   "sovereign": "Canada",
+   "capital": "Winnipeg",
+   "validFrom": "1912-05-15",
+   "validTo": null,
+   "truth": "dejure",
+   "geometryRef": "manitoba_1912"
+  },
+  {
+   "id": "new_brunswick",
+   "name": "New Brunswick",
+   "status": "province",
+   "sovereign": "Canada",
+   "capital": "Fredericton",
+   "validFrom": "1867-07-01",
+   "validTo": null,
+   "truth": "dejure",
+   "geometryRef": "new_brunswick_1867"
+  },
+  {
+   "id": "newfoundland",
+   "name": "Newfoundland",
+   "status": "colony",
+   "sovereign": "Britain",
+   "capital": "St. John's",
+   "validFrom": "1867-07-01",
+   "validTo": "1927-03-01",
+   "truth": "dejure",
+   "geometryRef": "newfoundland_1867",
+   "note": "A self-governing British colony, a Dominion from 1907, and under a Commission of Government from 1934. How far its Labrador coast ran inland was not defined until 1927; the strip shown follows NRCan's maps.",
+   "confidence": 0.5
+  },
+  {
+   "id": "newfoundland",
+   "name": "Newfoundland",
+   "status": "colony",
+   "sovereign": "Britain",
+   "capital": "St. John's",
+   "validFrom": "1927-03-01",
+   "validTo": "1949-03-31",
+   "truth": "dejure",
+   "geometryRef": "newfoundland_1927",
+   "note": "A Dominion under a Commission of Government from 1934. The Privy Council's line of 1927 has never been demarcated, and Quebec has not formally accepted it."
+  },
+  {
+   "id": "newfoundland",
+   "name": "Newfoundland",
+   "status": "province",
+   "sovereign": "Canada",
+   "capital": "St. John's",
+   "validFrom": "1949-03-31",
+   "validTo": "2001-12-06",
+   "truth": "dejure",
+   "geometryRef": "newfoundland_1927"
+  },
+  {
+   "id": "newfoundland",
+   "name": "Newfoundland and Labrador",
+   "status": "province",
+   "sovereign": "Canada",
+   "capital": "St. John's",
+   "validFrom": "2001-12-06",
+   "validTo": null,
+   "truth": "dejure",
+   "geometryRef": "newfoundland_1927"
+  },
+  {
+   "id": "north_western_territory",
+   "name": "North-Western Territory",
+   "status": "unorganized",
+   "sovereign": "Britain",
+   "capital": null,
+   "validFrom": "1867-07-01",
+   "validTo": "1870-07-15",
+   "truth": "dejure",
+   "geometryRef": "north_western_territory_1867",
+   "note": "Never defined in law; British territory under the Hudson's Bay Company's trade."
+  },
+  {
+   "id": "northwest_territories",
+   "name": "North-West Territories",
+   "status": "territory",
+   "sovereign": "Canada",
+   "capital": "Fort Garry (Winnipeg)",
+   "validFrom": "1870-07-15",
+   "validTo": "1874-06-26",
+   "truth": "dejure",
+   "geometryRef": "northwest_territories_1870",
+   "note": "Governed from Manitoba by its Lieutenant-Governor."
+  },
+  {
+   "id": "northwest_territories",
+   "name": "North-West Territories",
+   "status": "territory",
+   "sovereign": "Canada",
+   "capital": "Fort Garry (Winnipeg)",
+   "validFrom": "1874-06-26",
+   "validTo": "1876-10-07",
+   "truth": "dejure",
+   "geometryRef": "northwest_territories_1874"
+  },
+  {
+   "id": "northwest_territories",
+   "name": "North-West Territories",
+   "status": "territory",
+   "sovereign": "Canada",
+   "capital": "Fort Livingstone",
+   "validFrom": "1876-10-07",
+   "validTo": "1880-09-01",
+   "truth": "dejure",
+   "geometryRef": "northwest_territories_1876",
+   "note": "The seat moved from Fort Livingstone to Battleford in 1877–78."
+  },
+  {
+   "id": "northwest_territories",
+   "name": "North-West Territories",
+   "status": "territory",
+   "sovereign": "Canada",
+   "capital": "Battleford",
+   "validFrom": "1880-09-01",
+   "validTo": "1881-07-01",
+   "truth": "dejure",
+   "geometryRef": "northwest_territories_1880"
+  },
+  {
+   "id": "northwest_territories",
+   "name": "North-West Territories",
+   "status": "territory",
+   "sovereign": "Canada",
+   "capital": "Battleford",
+   "validFrom": "1881-07-01",
+   "validTo": "1882-05-08",
+   "truth": "dejure",
+   "geometryRef": "northwest_territories_1881"
+  },
+  {
+   "id": "northwest_territories",
+   "name": "North-West Territories",
+   "status": "territory",
+   "sovereign": "Canada",
+   "capital": "Battleford",
+   "validFrom": "1882-05-08",
+   "validTo": "1889-08-12",
+   "truth": "dejure",
+   "geometryRef": "northwest_territories_1882",
+   "note": "Regina was named the seat in 1882 and took over from Battleford on 27 March 1883."
+  },
+  {
+   "id": "northwest_territories",
+   "name": "North-West Territories",
+   "status": "territory",
+   "sovereign": "Canada",
+   "capital": "Regina",
+   "validFrom": "1889-08-12",
+   "validTo": "1895-10-02",
+   "truth": "dejure",
+   "geometryRef": "northwest_territories_1889"
+  },
+  {
+   "id": "northwest_territories",
+   "name": "North-West Territories",
+   "status": "territory",
+   "sovereign": "Canada",
+   "capital": "Regina",
+   "validFrom": "1895-10-02",
+   "validTo": "1897-12-18",
+   "truth": "dejure",
+   "geometryRef": "northwest_territories_1895"
+  },
+  {
+   "id": "northwest_territories",
+   "name": "Northwest Territories",
+   "status": "territory",
+   "sovereign": "Canada",
+   "capital": "Yellowknife",
+   "validFrom": "1999-04-01",
+   "validTo": null,
+   "truth": "dejure",
+   "geometryRef": "northwest_territories_1999"
+  },
+  {
+   "id": "nova_scotia",
+   "name": "Nova Scotia",
+   "status": "province",
+   "sovereign": "Canada",
+   "capital": "Halifax",
+   "validFrom": "1867-07-01",
+   "validTo": null,
+   "truth": "dejure",
+   "geometryRef": "nova_scotia_1867"
+  },
+  {
+   "id": "nunavut",
+   "name": "Nunavut",
+   "status": "territory",
+   "sovereign": "Canada",
+   "capital": "Iqaluit",
+   "validFrom": "1999-04-01",
+   "validTo": null,
+   "truth": "dejure",
+   "geometryRef": "nunavut_1999"
+  },
+  {
+   "id": "ontario",
+   "name": "Ontario",
+   "status": "province",
+   "sovereign": "Canada",
+   "capital": "Toronto",
+   "validFrom": "1867-07-01",
+   "validTo": "1874-06-26",
+   "truth": "dejure",
+   "geometryRef": "ontario_1867"
+  },
+  {
+   "id": "ontario",
+   "name": "Ontario",
+   "status": "province",
+   "sovereign": "Canada",
+   "capital": "Toronto",
+   "validFrom": "1874-06-26",
+   "validTo": "1889-08-12",
+   "truth": "dejure",
+   "geometryRef": "ontario_1874"
+  },
+  {
+   "id": "ontario",
+   "name": "Ontario",
+   "status": "province",
+   "sovereign": "Canada",
+   "capital": "Toronto",
+   "validFrom": "1889-08-12",
+   "validTo": "1912-05-15",
+   "truth": "dejure",
+   "geometryRef": "ontario_1889"
+  },
+  {
+   "id": "ontario",
+   "name": "Ontario",
+   "status": "province",
+   "sovereign": "Canada",
+   "capital": "Toronto",
+   "validFrom": "1912-05-15",
+   "validTo": null,
+   "truth": "dejure",
+   "geometryRef": "ontario_1912"
+  },
+  {
+   "id": "ontario_manitoba_disputed_area",
+   "name": "Ontario–Manitoba disputed area",
+   "status": "disputed",
+   "sovereign": "Canada (Ontario and Manitoba)",
+   "capital": null,
+   "validFrom": "1881-07-01",
+   "validTo": "1889-08-12",
+   "truth": "dejure",
+   "geometryRef": "ontario_manitoba_disputed_area_1881",
+   "note": "Claimed by Manitoba under the 1881 Act and by Ontario under the 1878 arbitration. The Privy Council found for Ontario in 1884; Parliament confirmed it in 1889."
+  },
+  {
+   "id": "prince_edward_island",
+   "name": "Prince Edward Island",
+   "status": "colony",
+   "sovereign": "Britain",
+   "capital": "Charlottetown",
+   "validFrom": "1867-07-01",
+   "validTo": "1873-07-01",
+   "truth": "dejure",
+   "geometryRef": "prince_edward_island_1867"
+  },
+  {
+   "id": "prince_edward_island",
+   "name": "Prince Edward Island",
+   "status": "province",
+   "sovereign": "Canada",
+   "capital": "Charlottetown",
+   "validFrom": "1873-07-01",
+   "validTo": null,
+   "truth": "dejure",
+   "geometryRef": "prince_edward_island_1867"
+  },
+  {
+   "id": "quebec",
+   "name": "Quebec",
+   "status": "province",
+   "sovereign": "Canada",
+   "capital": "Québec",
+   "validFrom": "1867-07-01",
+   "validTo": "1898-06-13",
+   "truth": "dejure",
+   "geometryRef": "quebec_1867"
+  },
+  {
+   "id": "quebec",
+   "name": "Quebec",
+   "status": "province",
+   "sovereign": "Canada",
+   "capital": "Québec",
+   "validFrom": "1898-06-13",
+   "validTo": "1912-05-15",
+   "truth": "dejure",
+   "geometryRef": "quebec_1898"
+  },
+  {
+   "id": "quebec",
+   "name": "Quebec",
+   "status": "province",
+   "sovereign": "Canada",
+   "capital": "Québec",
+   "validFrom": "1912-05-15",
+   "validTo": "1927-03-01",
+   "truth": "dejure",
+   "geometryRef": "quebec_1912"
+  },
+  {
+   "id": "quebec",
+   "name": "Quebec",
+   "status": "province",
+   "sovereign": "Canada",
+   "capital": "Québec",
+   "validFrom": "1927-03-01",
+   "validTo": null,
+   "truth": "dejure",
+   "geometryRef": "quebec_1927"
+  },
+  {
+   "id": "ruperts_land",
+   "name": "Rupert's Land",
+   "status": "hbc_charter",
+   "sovereign": "Hudson's Bay Company",
+   "capital": null,
+   "validFrom": "1867-07-01",
+   "validTo": "1870-07-15",
+   "truth": "dejure",
+   "geometryRef": "ruperts_land_1867",
+   "note": "Granted to the Hudson's Bay Company by royal charter in 1670."
+  },
+  {
+   "id": "saskatchewan",
+   "name": "Saskatchewan",
+   "status": "province",
+   "sovereign": "Canada",
+   "capital": "Regina",
+   "validFrom": "1905-09-01",
+   "validTo": null,
+   "truth": "dejure",
+   "geometryRef": "saskatchewan_1905"
+  },
+  {
+   "id": "yukon",
+   "name": "District of Yukon",
+   "status": "district",
+   "sovereign": "Canada",
+   "capital": null,
+   "validFrom": "1895-10-02",
+   "validTo": "1897-12-18",
+   "truth": "dejure",
+   "geometryRef": "yukon_1895"
+  },
+  {
+   "id": "yukon",
+   "name": "District of Yukon",
+   "status": "district",
+   "sovereign": "Canada",
+   "capital": null,
+   "validFrom": "1897-12-18",
+   "validTo": "1898-06-13",
+   "truth": "dejure",
+   "geometryRef": "yukon_1897"
+  },
+  {
+   "id": "yukon",
+   "name": "Yukon Territory",
+   "status": "territory",
+   "sovereign": "Canada",
+   "capital": "Dawson",
+   "validFrom": "1898-06-13",
+   "validTo": "1901-05-23",
+   "truth": "dejure",
+   "geometryRef": "yukon_1895"
+  },
+  {
+   "id": "yukon",
+   "name": "Yukon Territory",
+   "status": "territory",
+   "sovereign": "Canada",
+   "capital": "Dawson",
+   "validFrom": "1901-05-23",
+   "validTo": "1953-04-01",
+   "truth": "dejure",
+   "geometryRef": "yukon_1901"
+  },
+  {
+   "id": "yukon",
+   "name": "Yukon Territory",
+   "status": "territory",
+   "sovereign": "Canada",
+   "capital": "Whitehorse",
+   "validFrom": "1953-04-01",
+   "validTo": "2003-04-01",
+   "truth": "dejure",
+   "geometryRef": "yukon_1901"
+  },
+  {
+   "id": "yukon",
+   "name": "Yukon",
+   "status": "territory",
+   "sovereign": "Canada",
+   "capital": "Whitehorse",
+   "validFrom": "2003-04-01",
+   "validTo": null,
+   "truth": "dejure",
+   "geometryRef": "yukon_1901"
+  }
+ ]
+}

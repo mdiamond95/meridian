@@ -205,3 +205,70 @@ Each entry below supersedes the matching Phase 0 entry.
 - **Sign-in lives in a named volume, `claude-code-config-${devcontainerId}`, mounted at `/home/vscode/.claude`, with `CLAUDE_CONFIG_DIR` pointing there.** The volume survives rebuilds; setting the env var also moves `.claude.json` inside it. The path is `/home/vscode`, not `/home/codespace`, because the Python image's `remoteUser` is `vscode`.
 - **`post-create.sh` chowns the volume to the remote user.** Docker creates a named volume root-owned when the target is absent from the image.
 - **Pushed straight to `main`, no PR.** Config only; nothing in the app, pipeline or artefacts changes.
+
+## 2026-09-15 — Phase 2 Sitting A: atlas framework, 1867 to today
+
+### Deviations from the brief
+1. **More dates.** Research against the statutes and NRCan's maps found polygon changes the brief's list lacks: 1874 (Ontario's provisional line), 1886 (Keewatin trimmed), 1897 (districts redrawn), 1901 (Yukon's modern line) and 1920 (the 1918 district order). All are events. Two name/capital events were added as well: 1953 (Whitehorse) and 2003 ("Yukon").
+   - **1877 is not an event.** Manitoba was re-described along survey lines that year, a shift of under 8 km.
+   - **1903 has no polygon change.** NRCan draws the award line for every year, so the atlas does too; the claim lines are Sitting C's disputed layer.
+2. **Boundaries are expressions, not only rings.** Where an instrument walks a ring (Manitoba 1870, Keewatin 1876, the 1882 districts), the unit is a ring of primitives. Where it defines by reference ("the rest of the territories", "the Hudson Bay watershed", "less Manitoba"), the unit is a set operation over units, modern borders and primitives. The same algebra guarantees tiling.
+3. **Extra primitives, each unit-tested:**
+   - `drainage`: land split among StatCan drainage regions.
+   - `island`, `zone` and `coastal_islands`: whole islands by position or by distance from the mainland, for the orders' "islands within three miles".
+   - `cut`: a line across an isthmus, used for Boothia and Melville.
+   - `was`: units as they stood when an event began, for redistributions.
+4. **`atlas.v1.topojson.gz`, not `.topojson`,** matching the layers. `atlas.v1.json` stays plain, since its hash is the golden.
+5. **Units that existed before 1867 start at 1867-07-01** until Sitting B backdates them.
+6. **The golden records both files,** in `pipeline/tests/golden/atlas.sha`, and pytest asserts it in CI.
+7. **Resolve tests run twice.** pytest runs them on the artefact; Vitest runs them through the app's own loader and decoder.
+
+### Drawing rules
+- **The instrument decides where its text is clear. NRCan's Territorial Evolution maps decide where the text is silent, ambiguous or disputed.** Every divergence from NRCan is named in the unit's boundary text in `docs/atlas/checklist.md`.
+- **NRCan's maps are a verification-only source.** They are the `nrcan_te_<year>` rows, under OGL-Canada. The build compares each polygon with NRCan's polygon for the same year and writes the overlap into the checklist; nothing in `data/build/` is derived from them.
+- **Lake shores and survey descriptions with no source here** (Lake Manitoba to Cedar Lake, Lake Winnipeg, Lac Seul and Lake St. Joseph, the 1895/1897 Yukon ranges, the Hamilton River) **use NRCan waypoints simplified to about 2 km,** marked in `events.yaml`. Rivers with named Canada1Water reaches use the network: English, Albany, Nelson, Athabasca, Slave and Eastmain.
+- **Dominion Land Survey lines are read from the modern Manitoba–Saskatchewan border's correction-line jogs.** The 9th correction line is 51.9686°N, the 12th base line 52.8422°N, and the 18th correction line 55.1116°N. The ranges 10/11 W4 line is stepped at 9.80 km per range, within about 2 km of the survey.
+- **The Hudson Bay watershed is StatCan's Hudson Bay ocean drainage area.** Coastal land no region covers joins the nearest region, in 0.1° tiles.
+
+### Where the atlas departs from NRCan's drawing
+- **1867, Arctic islands:** a separate British unit. NRCan folds them into the North-Western Territory for 1867 only, which is why that row matches NRCan at 68%.
+- **1870, Manitoba:** the Act's lines (96°W, 99°W, 50°30′N); NRCan's box is 2–3 km off.
+- **1895–1897, Keewatin:** stays statutory. The order's enlargement needed a bill that was never introduced. The land north of Ontario and the far Hudson Bay islands stay in the territories outside any district, which is why Ungava 1895 matches at 93%.
+- **1912–1920, District of Ungava:** survives as islands. The 1897 order was cancelled only from 1920; NRCan splits the islands early.
+- **1920 onward, Nottingham Island:** stays in Franklin, as the order puts it; NRCan's maps from 1927 put it in Keewatin.
+
+### Following NRCan where the law is silent
+- **Labrador before 1927:** NRCan's coastal strip, with `confidence: 0.5` and a note. How to show the dispute is Mark's Sitting C decision.
+- **Ontario 1867:** the height of land.
+- **The Labrador interior:** Rupert's Land, then the territories.
+- **The Ontario–Manitoba disputed area, 1881–1889:** between 95°09′W and 90°58′W, south of the 12th base line.
+- **Keewatin's eastern limit, 1889–1895:** stays at 90°58′W.
+- **Keewatin, 1905–1920:** extends west to 102°W.
+- **The 1882 Saskatchewan district:** does not overlap statutory Keewatin.
+
+### Dates chosen where sources disagree (flagged in the checklist)
+| Event | Date used | Alternative |
+|---|---|---|
+| Manitoba enlarged | 1881-07-01 | 1881-12-23 |
+| Ontario's provisional line | 1874-06-26 | orders of 1874, day uncertain |
+| Provisional districts | 1882-05-08, the order's own date | 17 May |
+| Labrador decision | 1927-03-01, the report | 11 March |
+
+### Model choices
+- **Newfoundland is `colony` from 1867 to 1949.** The status enum has no "dominion"; the note records 1907 and 1934.
+- **From 1882 to 1999 the northern units are the districts.** A `northwest_territories` unit exists only where land lies in no district (1870–1897), then again from 1999. Territorial capitals in those years are in notes.
+- **Validation tolerances:**
+  - De jure units at each event date may overlap by at most 5 km².
+  - Together they must cover modern Canada within 0.5%.
+  - Areas are computed in EPSG:3347 after densifying to 0.02°, because a two-vertex parallel projects to a chord.
+- **The display copy is built for shared arcs.** Collinear vertices are removed before export, so every polygon has the same vertex sequence along a shared edge; this took the topology from 1.74 MB to 184 KB. mapshaper then simplifies at 750 m and islands under 2 km² are dropped. Areas stay within 0.2%.
+- **Slow steps are cached in `data/raw/.cache/`,** keyed by input SHA-256: the drainage partition and the Canada1Water reaches.
+
+### App
+- **Artefacts are imported with Vite `?url`,** so the bundle ships fingerprinted copies of the versioned files.
+- **TopoJSON is decoded in about 40 lines** (`app/src/atlas/topology.ts`) instead of adding `topojson-client`.
+- **The slider steps by year, and a year shows the map as at 31 December.** Event ticks jump to the exact date, so 1 April 1999 shows Nunavut.
+- **Selection is by unit id,** so a selected Manitoba stays selected as it grows.
+- **Fill is by status.** Approximate units and non-de-jure layers are lighter, and disputed units are dashed.
+- **The de facto and disputed toggles exist but have no data** until Sittings B and C.
+- **`@types/geojson` is declared** rather than used through Leaflet's types.
