@@ -82,6 +82,9 @@ def semantic_errors(doc: Any) -> list[str]:
         for i, unit in enumerate(doc["units"]):
             if unit["validTo"] is not None and unit["validTo"] <= unit["validFrom"]:
                 errors.append(f"units[{i}].validTo: must follow validFrom")
+        for i, ref in enumerate(doc.get("references", [])):
+            if ref["validTo"] is not None and ref["validTo"] <= ref["validFrom"]:
+                errors.append(f"references[{i}].validTo: must follow validFrom")
     return errors
 
 

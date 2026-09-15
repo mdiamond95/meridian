@@ -16,7 +16,7 @@ from pathlib import Path
 from common import BUILD, ROOT, sha256_file
 
 SUMS = "SHA256SUMS"
-STEPS = ["mesh.py", "attributes.py", "polygons.py"]
+STEPS = [["mesh.py"], ["attributes.py"], ["polygons.py"], ["-m", "atlas.build"]]
 SKIP = {SUMS, ".gitkeep"}
 
 
@@ -54,8 +54,8 @@ def verify() -> int:
     with tempfile.TemporaryDirectory(prefix="meridian-verify-") as tmp:
         env = {**os.environ, "MERIDIAN_BUILD": tmp}
         for step in STEPS:
-            print(f"rebuilding: {step}", flush=True)
-            subprocess.run([sys.executable, step], cwd=ROOT / "pipeline", env=env, check=True)
+            print(f"rebuilding: {' '.join(step)}", flush=True)
+            subprocess.run([sys.executable, *step], cwd=ROOT / "pipeline", env=env, check=True)
         rebuilt = hashes(Path(tmp))
     for name in sorted(set(recorded) | set(rebuilt)):
         if recorded.get(name) != rebuilt.get(name):

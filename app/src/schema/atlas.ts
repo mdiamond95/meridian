@@ -37,9 +37,15 @@ export const AtlasChangeSchema = z
 
 export const AtlasEventSchema = z
   .object({
-    date: IsoDateSchema,
+    date: IsoDateSchema.describe('The date the instrument took effect'),
     title: z.string().min(1),
-    note: z.string().describe('Two plain sentences'),
+    note: z.string().describe('Two plain sentences; an uncertain date names the alternative here'),
+    dateConfidence: z
+      .number()
+      .min(0)
+      .max(1)
+      .optional()
+      .describe('Present when sources disagree on the effective date'),
     changes: z.array(AtlasChangeSchema),
   })
   .meta({ id: 'AtlasEvent' });
@@ -61,9 +67,35 @@ export const AtlasUnitSchema = z
       .min(0)
       .max(1)
       .optional()
-      .describe('Present on approximate polygons (de facto extents, pre-contact)'),
+      .describe('Present on approximate polygons (de facto extents, pre-contact) and contested drawings'),
+    instrument: z
+      .string()
+      .optional()
+      .describe('The statute, order or treaty the boundary follows, with date and section'),
+    rationale: z
+      .string()
+      .optional()
+      .describe('Why the drawing departs from the reference map, in one sentence'),
   })
   .meta({ id: 'AtlasUnit' });
+
+/**
+ * Another map's drawing of the same area, shown for comparison where the atlas departs from it
+ * (NRCan's Territorial Evolution maps). Not part of any truth layer.
+ */
+export const AtlasReferenceSchema = z
+  .object({
+    id: UnitIdSchema,
+    name: z.string().min(1).describe('The polygon name on the reference map'),
+    unit: UnitIdSchema.describe('The atlas unit whose drawing it contrasts with'),
+    source: z.string().min(1).describe('Source id in docs/data-sources.md, e.g. "nrcan_te_1895"'),
+    attribution: z.string().min(1),
+    validFrom: IsoDateSchema,
+    validTo: IsoDateSchema.nullable(),
+    geometryRef: z.string().min(1),
+    note: z.string().optional(),
+  })
+  .meta({ id: 'AtlasReference' });
 
 export const AtlasFileSchema = z
   .object({
@@ -71,6 +103,7 @@ export const AtlasFileSchema = z
     version: z.string().regex(/^v\d+$/),
     events: z.array(AtlasEventSchema).describe('Sorted by date ascending'),
     units: z.array(AtlasUnitSchema),
+    references: z.array(AtlasReferenceSchema).optional().describe('Comparison drawings; see AtlasReference'),
   })
   .superRefine((atlas, ctx) => {
     atlas.events.forEach((event, i) => {
@@ -87,6 +120,15 @@ export const AtlasFileSchema = z
         });
       }
     });
+    (atlas.references ?? []).forEach((ref, i) => {
+      if (ref.validTo !== null && ref.validTo <= ref.validFrom) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['references', i, 'validTo'],
+          message: 'validTo must follow validFrom',
+        });
+      }
+    });
   })
   .meta({ id: 'AtlasFile', title: 'Meridian AtlasFile' });
 
@@ -94,3 +136,4 @@ export type AtlasFile = z.infer<typeof AtlasFileSchema>;
 export type AtlasEvent = z.infer<typeof AtlasEventSchema>;
 export type AtlasUnit = z.infer<typeof AtlasUnitSchema>;
 export type AtlasChange = z.infer<typeof AtlasChangeSchema>;
+export type AtlasReference = z.infer<typeof AtlasReferenceSchema>;

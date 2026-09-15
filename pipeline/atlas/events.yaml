@@ -1,0 +1,1176 @@
+# The historical atlas: every first-order boundary change from Confederation to today.
+#
+#   make atlas           build data/build/atlas.v1.json, atlas.v1.topojson.gz, docs/atlas/checklist.md
+#   python -m atlas.build --check    validate and compare with NRCan without writing
+#
+# Geometry expressions and ring pieces are documented in atlas/build.py. Coordinates are
+# [longitude, latitude] in degrees. Every geometry is clipped to modern Canada.
+#
+# Drawing rules (docs/decisions.md, 2026-09-15 Phase 2 Sitting A):
+#   - The instrument's text decides where it is clear. NRCan's Territorial Evolution maps decide
+#     where the text is silent, ambiguous or disputed. Each divergence from NRCan is named in the
+#     unit's `boundary` text, which the checklist prints.
+#   - A line only needs to be exact where two units meet. Lines through water, or through land
+#     that another unit already holds, are rough on purpose: the clip and the set operations
+#     remove what they cross.
+#   - Lake shores, and survey lines no source here carries, use waypoints taken from NRCan's
+#     line and simplified to about 2 km; they are marked "(NRCan waypoints)".
+#   - Dominion Land Survey lines: correction and base line latitudes are read from the jogs in
+#     the modern Manitoba–Saskatchewan border (Atlas of Canada 1:1M). 9th correction line
+#     51.9686°N, 12th base line 52.8422°N, 18th correction line 55.1116°N, 32nd ≈ 60°N.
+
+shapes:
+  hudson_bay:
+    watershed: hudson_bay
+
+  # Waters dividing the Arctic Archipelago from the mainland, as the 1895 order walks them:
+  # Hudson Strait, Foxe Channel, Fury and Hecla Strait, Gulf of Boothia, Bellot and Franklin
+  # Straits, James Ross, Rae and Simpson Straits, Queen Maud Gulf, Dease Strait, Coronation Gulf,
+  # Dolphin and Union Strait, Amundsen Gulf to 71°N 125°30'W, then west of Banks and Prince Patrick.
+  archipelago_waters:
+    ring:
+      - line: [[-63.5, 60.9], [-66.5, 61.0], [-70.0, 61.9], [-73.0, 62.4], [-76.0, 62.75], [-77.5, 63.0],
+               [-79.0, 64.8], [-80.0, 67.0], [-82.0, 69.0], [-84.0, 69.9], [-86.0, 69.95], [-88.0, 70.3],
+               [-91.5, 71.7], [-94.5, 72.02], [-96.1, 71.6], [-95.9, 70.0], [-95.5, 68.9], [-97.5, 68.5],
+               [-101.5, 68.4], [-106.5, 68.75], [-110.0, 68.6], [-115.0, 69.1], [-120.0, 70.0],
+               [-125.5, 71.0], [-128.0, 72.0], [-127.0, 77.0], [-120.0, 79.5]]
+      - line: [[-120.0, 79.5], [-100.0, 84.5], [-60.0, 84.5], [-55.0, 80.0], [-55.0, 70.0], [-58.0, 64.0],
+               [-63.5, 60.9]]
+
+  arctic_islands:
+    minus: [{zone: {shape: archipelago_waters}}, {mainland: true}]
+
+  # Newfoundland's Labrador before 1927: "the coast of Labrador", with no inland limit in law.
+  # NRCan draws a coastal strip 40–100 km wide around Lake Melville; its inner edge (NRCan
+  # waypoints, 1867–1926 maps) runs from Blanc-Sablon to Cape Chidley, closed offshore.
+  labrador_coast_strip:
+    ring:
+      - line: [[-57.15, 51.42], [-57.14, 51.93], [-56.63, 52.22], [-56.70, 53.02], [-56.90, 53.16],
+               [-58.35, 53.59], [-59.02, 53.52], [-60.31, 53.05], [-61.05, 53.22], [-61.12, 53.64],
+               [-60.90, 53.86], [-59.60, 54.11], [-59.05, 54.35], [-60.69, 54.72], [-62.32, 55.93],
+               [-64.16, 58.38], [-64.55, 59.02], [-64.53, 59.34], [-64.92, 59.64], [-64.68, 59.94],
+               [-64.60, 60.60]]
+      - line: [[-64.60, 60.60], [-64.0, 61.0], [-60.0, 59.0], [-57.0, 56.0], [-54.5, 54.0], [-54.8, 52.2],
+               [-56.5, 51.55], [-57.3, 51.2], [-57.15, 51.42]]
+
+  newfoundland_before_1927:
+    union:
+      - minus: [{modern: [NL]}, {mainland: true}]
+      - intersect: [{modern: [NL]}, {shape: labrador_coast_strip}]
+
+  # The northern districts' land, as it stood when an event began: redistributions draw from it.
+  northern_pool:
+    was: [district_of_keewatin, district_of_franklin, district_of_mackenzie, district_of_ungava, northwest_territories]
+
+  # 1897 redrew the District of Yukon along with the others.
+  northern_pool_with_yukon:
+    union: [{shape: northern_pool}, {was: yukon}]
+
+  # The 1895 District of Yukon, which the Yukon Territory Act adopted in 1898: 141°W, 60°N to the
+  # Liard, the ranges west of the Liard and the Peel, 136°W north to the Arctic (NRCan waypoints).
+  yukon_1895:
+    ring:
+      - line: [[-141.5, 58.0], [-141.5, 72.0], [-136.103, 72.0], [-136.103, 68.873], [-136.114, 67.566],
+               [-136.161, 67.427], [-136.053, 67.282], [-136.172, 67.139], [-135.898, 66.542], [-135.482, 66.100],
+               [-134.640, 65.829], [-134.157, 65.435], [-133.686, 65.315], [-132.495, 64.607], [-131.813, 64.366],
+               [-131.238, 64.452], [-130.865, 64.186]]
+      - shape: yukon_ranges_south
+      - line: [[-123.785, 60.001], [-123.785, 58.0], [-141.5, 58.0]]
+
+  # Common to the 1895 and 1897 Yukon lines: the ranges from 64.2°N down to the Liard at 60°N.
+  yukon_ranges_south:
+    line: [[-130.865, 64.186], [-130.932, 64.141], [-130.892, 64.080], [-130.716, 63.959], [-130.272, 63.818],
+           [-130.239, 63.877], [-130.116, 63.870], [-130.088, 63.772], [-130.303, 63.706], [-130.283, 63.662],
+           [-130.168, 63.690], [-129.862, 63.518], [-129.883, 63.395], [-130.136, 63.309], [-130.134, 63.257],
+           [-129.615, 63.051], [-129.742, 62.839], [-129.454, 62.634], [-129.508, 62.590], [-129.465, 62.550],
+           [-129.142, 62.481], [-129.219, 62.457], [-129.271, 62.309], [-129.145, 62.100], [-128.904, 62.119],
+           [-128.783, 62.056], [-128.502, 62.123], [-127.516, 61.532], [-127.285, 61.518], [-127.105, 61.341],
+           [-127.037, 61.149], [-127.113, 61.081], [-126.969, 60.999], [-126.805, 60.750], [-126.510, 60.797],
+           [-126.304, 60.761], [-126.200, 60.853], [-126.020, 60.802], [-125.866, 60.886], [-125.368, 60.778],
+           [-124.558, 60.989], [-124.452, 60.846], [-124.570, 60.705], [-124.208, 60.407], [-124.086, 60.227],
+           [-123.685, 60.152], [-123.785, 60.001]]
+
+  # The peninsulas the 1897 and 1918 orders cut off at their isthmuses: Boothia Isthmus from Spence
+  # Bay to Lord Mayor Bay, Rae Isthmus from Committee Bay to Repulse Bay (NRCan waypoints).
+  boothia_peninsula:
+    cut: {of: {mainland: true}, line: [[-93.64, 69.52], [-92.73, 69.72]], keep: [-94.5, 70.5]}
+  melville_peninsula:
+    cut:
+      of: {mainland: true}
+      line: [[-87.35, 67.30], [-87.32, 67.15], [-86.80, 66.57], [-86.66, 66.53], [-86.60, 66.45]]
+      keep: [-84.0, 68.0]
+
+  # Ranges 10/11 west of the 4th Meridian (centre of the road allowance), stepped at each
+  # correction line: 10 ranges of 9.80 km measured on each block's base line west of 110°W.
+  range_10_11_w4_to_55n:
+    line: [[-111.3419, 49.0], [-111.3419, 49.1777], [-111.3516, 49.1777], [-111.3516, 49.5327],
+           [-111.3614, 49.5327], [-111.3614, 49.8867], [-111.3715, 49.8867], [-111.3715, 50.2405],
+           [-111.3817, 50.2405], [-111.3817, 50.5944], [-111.3921, 50.5944], [-111.3921, 50.9485],
+           [-111.4027, 50.9485], [-111.4027, 51.3019], [-111.4136, 51.3019], [-111.4136, 51.6549],
+           [-111.4234, 51.6549], [-111.4234, 51.9686], [-111.4345, 51.9686], [-111.4345, 52.3182],
+           [-111.4459, 52.3182], [-111.4459, 52.6673], [-111.4575, 52.6673], [-111.4575, 53.0164],
+           [-111.4693, 53.0164], [-111.4693, 53.3658], [-111.4814, 53.3658], [-111.4814, 53.7151],
+           [-111.4938, 53.7151], [-111.4938, 54.0644], [-111.5064, 54.0644], [-111.5064, 54.4136],
+           [-111.5193, 54.4136], [-111.5193, 54.7626], [-111.5324, 54.7626], [-111.5324, 55.1116]]
+
+events:
+  - date: 1867-07-01
+    title: Confederation
+    note: >-
+      Ontario, Quebec, Nova Scotia and New Brunswick unite as the Dominion of Canada. Everything
+      north and west still belongs to Britain or to the Hudson's Bay Company.
+    changes:
+      - create: ontario
+        name: Ontario
+        status: province
+        sovereign: Canada
+        capital: Toronto
+        boundary: >-
+          The former Canada West: the Great Lakes–St. Lawrence side of the height of land (the
+          Hudson Bay watershed), meeting the international boundary west of Lake Superior. Its
+          northern and western limits were unsettled in law; the height of land is the Dominion's
+          reading and NRCan's.
+        geometry:
+          minus: [{modern: [ON]}, {shape: hudson_bay}]
+
+      - create: newfoundland
+        name: Newfoundland
+        status: colony
+        sovereign: Britain
+        capital: St. John's
+        confidence: 0.5
+        note: >-
+          A self-governing British colony, a Dominion from 1907, and under a Commission of
+          Government from 1934. How far its Labrador coast ran inland was not defined until 1927;
+          the strip shown follows NRCan's maps.
+        boundary: >-
+          The island, and the coast of Labrador from Blanc-Sablon to Cape Chidley as NRCan's coastal
+          strip (NRCan waypoints). Not a legal line: the inland limit was undefined before 1927.
+        geometry:
+          shape: newfoundland_before_1927
+
+      - create: quebec
+        name: Quebec
+        status: province
+        sovereign: Canada
+        capital: Québec
+        boundary: >-
+          The former Canada East: the St. Lawrence side of the height of land, north-east to the
+          Blanc-Sablon meridian at 52°N. Taken as modern Quebec and Labrador less the Hudson Bay
+          watershed, the Atlantic drainage of Labrador (StatCan drainage region 25) and
+          Newfoundland's coast.
+        geometry:
+          minus:
+            - modern: [QC, NL]
+            - shape: hudson_bay
+            - drainage: ["25"]
+            - unit: newfoundland
+
+      - create: nova_scotia
+        name: Nova Scotia
+        status: province
+        sovereign: Canada
+        capital: Halifax
+        boundary: Modern Nova Scotia.
+        geometry: {modern: [NS]}
+
+      - create: new_brunswick
+        name: New Brunswick
+        status: province
+        sovereign: Canada
+        capital: Fredericton
+        boundary: Modern New Brunswick.
+        geometry: {modern: [NB]}
+
+      - create: prince_edward_island
+        name: Prince Edward Island
+        status: colony
+        sovereign: Britain
+        capital: Charlottetown
+        boundary: Modern Prince Edward Island.
+        geometry: {modern: [PE]}
+
+      - create: british_columbia
+        name: British Columbia
+        status: colony
+        sovereign: Britain
+        capital: Victoria
+        note: >-
+          Vancouver Island and the mainland colony were united in 1866; the capital moved from New
+          Westminster to Victoria in 1868.
+        boundary: >-
+          Modern British Columbia: 49°N, the Rocky Mountain divide, 120°W and 60°N. The Alaska
+          panhandle line is the 1903 award, as NRCan draws it for every year; the dispute is a
+          Sitting C overlay.
+        geometry: {modern: [BC]}
+
+      - create: ruperts_land
+        name: Rupert's Land
+        status: hbc_charter
+        sovereign: Hudson's Bay Company
+        note: Granted to the Hudson's Bay Company by royal charter in 1670.
+        boundary: >-
+          The lands draining to Hudson Bay and Hudson Strait (StatCan ocean drainage area Hudson
+          Bay), including the bay's islands and southern Baffin Island. Also the Labrador interior
+          inland of Newfoundland's coast, which drains to the Atlantic: NRCan draws it here, and no
+          instrument assigns it elsewhere.
+        geometry:
+          minus:
+            - union: [{shape: hudson_bay}, {intersect: [{drainage: ["25"]}, {mainland: true}]}]
+            - unit: ontario
+            - unit: quebec
+            - unit: newfoundland
+            - unit: british_columbia
+
+      - create: arctic_islands
+        name: British Arctic Islands
+        status: unorganized
+        sovereign: Britain
+        nrcan: Arctic Islands
+        confidence: 0.7
+        instrument: >-
+          Rupert's Land and North-Western Territory Order (Imperial Order in Council, 23 June 1870,
+          in force 15 July 1870), operative paragraph, which names no boundaries; Adjacent Territories
+          Order (Imperial Order in Council, 31 July 1880), operative paragraph, transferring "all Islands
+          adjacent" from 1 September 1880.
+        rationale: >-
+          London and Ottawa treated the Arctic islands as outside the 1870 transfer, which is why Britain
+          transferred them separately in 1880, so they are drawn apart from the North-Western Territory;
+          the DCER editors note the 1821 and 1859 definitions could be read to include them, hence 0.7.
+        nrcan_overlay:
+          year: 1867
+          until: 1870-07-15
+          polygons:
+            - name: Northwest Territories
+              note: NRCan's 1867 map draws the Arctic islands inside the North-Western Territory.
+        boundary: >-
+          The Arctic Archipelago north of the straits the 1895 order names, less the parts draining
+          to Hudson Bay. NRCan's 1867 map folds these islands into the North-Western Territory;
+          they were not part of it, and NRCan separates them from 1870.
+        geometry:
+          minus: [{shape: arctic_islands}, {shape: hudson_bay}]
+
+      - create: north_western_territory
+        name: North-Western Territory
+        status: unorganized
+        sovereign: Britain
+        note: Never defined in law; British territory under the Hudson's Bay Company's trade.
+        nrcan: Northwest Territories
+        boundary: >-
+          The rest of British North America: the Arctic and Pacific drainage north of British
+          Columbia and west of Rupert's Land, with the mainland's coastal islands.
+        geometry:
+          minus:
+            - canada: true
+            - unit: ontario
+            - unit: quebec
+            - unit: nova_scotia
+            - unit: new_brunswick
+            - unit: prince_edward_island
+            - unit: british_columbia
+            - unit: newfoundland
+            - unit: ruperts_land
+            - unit: arctic_islands
+
+  - date: 1870-07-15
+    title: Manitoba and the North-West Territories
+    note: >-
+      Canada takes over Rupert's Land and the North-Western Territory from the Hudson's Bay
+      Company. A small square around the Red River settlement becomes Manitoba.
+    changes:
+      - create: manitoba
+        name: Manitoba
+        status: province
+        sovereign: Canada
+        capital: Winnipeg
+        confidence: 0.95
+        instrument: Manitoba Act, 1870, 33 Vict. c. 3, s. 1 (assented 12 May 1870, in force 15 July 1870).
+        rationale: >-
+          Section 1 fixes the province on the 96° and 99° meridians and the 49° and 50°30' parallels, so the
+          box is drawn on those lines; NRCan's box is drafted 2–3 km off them.
+        nrcan_overlay:
+          year: 1870
+          polygons:
+            - name: Manitoba
+        boundary: >-
+          The Manitoba Act: 49°N to 50°30'N between 96°W and 99°W. NRCan's box sits 2–3 km off
+          these lines.
+        geometry: {box: [-99.0, 48.5, -96.0, 50.5]}
+
+      - create: northwest_territories
+        name: North-West Territories
+        status: territory
+        sovereign: Canada
+        capital: Fort Garry (Winnipeg)
+        nrcan: Northwest Territories
+        note: Governed from Manitoba by its Lieutenant-Governor.
+        boundary: Rupert's Land and the North-Western Territory, less Manitoba.
+        geometry:
+          minus:
+            - union: [{unit: ruperts_land}, {unit: north_western_territory}]
+            - unit: manitoba
+
+      - dissolve: ruperts_land
+      - dissolve: north_western_territory
+
+  - date: 1871-07-20
+    title: British Columbia joins
+    note: >-
+      British Columbia enters Confederation on the promise of a railway to the Pacific. Its
+      boundaries are unchanged.
+    changes:
+      - alter: british_columbia
+        status: province
+        sovereign: Canada
+
+  - date: 1873-07-01
+    title: Prince Edward Island joins
+    note: >-
+      Prince Edward Island joins Canada six years after Confederation. The island's boundaries are
+      unchanged.
+    changes:
+      - alter: prince_edward_island
+        status: province
+        sovereign: Canada
+
+  - date: 1874-07-09
+    title: Ontario's provisional boundary
+    date_confidence: 0.8
+    note: >-
+      Ontario and the Dominion agree on a provisional line while Ontario's true limits are argued.
+      Ontario extends north to 51°N and west to the meridian of Hunter's Island. The arrangement took
+      effect when Ontario's order approved it on 9 July 1874; the memorandum itself is dated 26 June and
+      the Dominion's approving order 8 July.
+    changes:
+      - alter: ontario
+        boundary: >-
+          Memorandum of 26 June 1874, approved by Dominion order of 8 July and Ontario order of 9 July: west, the meridian through the most easterly point of
+          Hunter's Island (90°58'W) from the international boundary to 51°N; north, 51°N east to
+          the line due north of Lake Timiskaming (the modern Ontario–Quebec line).
+        geometry:
+          union:
+            - unit: ontario
+            - intersect: [{modern: [ON]}, {box: [-90.9667, 41.0, -74.0, 51.0]}]
+      - alter: northwest_territories
+        boundary: Less Ontario's provisional extension.
+        geometry:
+          minus: [{unit: northwest_territories}, {unit: ontario}]
+
+  - date: 1876-10-07
+    title: District of Keewatin
+    note: >-
+      The Keewatin Act carves a district from the North-West Territories between Manitoba and
+      Hudson Bay. The Lieutenant-Governor of Manitoba governs it from Winnipeg.
+    changes:
+      - create: district_of_keewatin
+        name: District of Keewatin
+        status: district
+        sovereign: Canada
+        note: Governed from Winnipeg by the Lieutenant-Governor of Manitoba and the Council of Keewatin.
+        boundary: >-
+          The Keewatin Act: from Ontario's western limit (the 1874 meridian) west along the
+          international boundary to Manitoba, north along 96°W to 50°30'N, west to Lake Manitoba,
+          along its west shore, Meadow Portage, Lake Winnipegosis and Mossy Portage to Cedar Lake
+          (NRCan waypoints), then due north (100°W, as NRCan draws the Mossy Portage meridian) to the
+          Arctic coast, east along the coast (Boothia and Melville peninsulas included) and south
+          along Hudson Bay's west shore to the 1874 meridian. Mainland only: the coast is the limit.
+        geometry:
+          intersect:
+            - unit: northwest_territories
+            - mainland: true
+            - ring:
+                - line: [[-90.9667, 48.0], [-97.0, 48.0], [-97.0, 50.3], [-98.6, 50.3], [-98.592, 50.481]]
+                - line: [[-98.592, 50.481], [-98.642, 50.610], [-98.875, 50.883], [-98.856, 50.955],
+                         [-98.956, 50.965], [-99.025, 51.127], [-98.994, 51.145], [-98.902, 51.062],
+                         [-98.894, 51.010], [-98.844, 51.001], [-98.814, 51.079], [-98.886, 51.098],
+                         [-98.895, 51.178], [-98.857, 51.236], [-98.946, 51.227], [-98.938, 51.180],
+                         [-98.985, 51.190], [-99.075, 51.271], [-99.154, 51.523], [-99.241, 51.562],
+                         [-99.296, 51.522], [-99.329, 51.613], [-99.464, 51.623], [-99.524, 51.578],
+                         [-99.502, 51.499], [-99.545, 51.494], [-99.574, 51.611], [-99.627, 51.635],
+                         [-99.672, 51.709], [-99.652, 51.794], [-99.674, 51.876], [-99.753, 51.828],
+                         [-99.741, 51.735], [-99.837, 51.754], [-99.861, 51.915], [-99.764, 51.935],
+                         [-99.784, 52.028], [-99.865, 52.055], [-99.874, 52.256], [-99.779, 52.319],
+                         [-99.675, 52.532], [-99.750, 52.811], [-99.714, 52.907], [-99.752, 52.912],
+                         [-99.807, 52.861], [-99.822, 52.890], [-99.769, 52.961], [-100.0, 53.010]]
+                - meridian: [-100.0, 53.010, 75.0]
+                - line: [[-100.0, 75.0], [-82.0, 75.0], [-82.0, 63.0], [-86.0, 58.0], [-90.9667, 57.3],
+                         [-90.9667, 48.0]]
+      - alter: northwest_territories
+        capital: Fort Livingstone
+        note: The seat moved from Fort Livingstone to Battleford in 1877–78.
+        boundary: Less the District of Keewatin.
+        geometry:
+          minus: [{unit: northwest_territories}, {unit: district_of_keewatin}]
+
+  - date: 1880-09-01
+    title: The Arctic islands
+    note: >-
+      Britain transfers all its remaining North American possessions to Canada, except
+      Newfoundland. The Arctic Archipelago joins the North-West Territories.
+    changes:
+      - alter: northwest_territories
+        capital: Battleford
+        boundary: With the Arctic Archipelago.
+        geometry:
+          union: [{unit: northwest_territories}, {unit: arctic_islands}]
+      - dissolve: arctic_islands
+
+  - date: 1881-07-01
+    title: Manitoba enlarged
+    date_confidence: 0.95
+    note: >-
+      Manitoba grows west, north and east. Ontario claims the eastern part too, and the dispute goes to
+      the Privy Council. The Act came into force on 1 July 1881 by proclamation of 13 June; a date of 23
+      December 1881 found in some secondary sources has no support in the Canada Gazette.
+    changes:
+      - alter: manitoba
+        boundary: >-
+          West, the road allowance between ranges 29 and 30 west of the Principal Meridian (the
+          modern Manitoba–Saskatchewan border); north, the 12th base line (52.8422°N); east, as
+          NRCan draws it, the meridian of the North-West Angle of Lake of the Woods (95°09'W,
+          the modern Manitoba–Ontario border). Manitoba claimed east to 89°09'W. In force 1 July 1881 under s. 4
+          of 44 Vict. c. 14 and the proclamation of 13 June 1881.
+        geometry:
+          intersect: [{modern: [MB]}, {box: [-103.0, 48.5, -95.1534, 52.8422]}]
+      - create: ontario_manitoba_disputed_area
+        name: Ontario–Manitoba disputed area
+        status: disputed
+        sovereign: Canada (Ontario and Manitoba)
+        nrcan: Disputed area
+        note: >-
+          Claimed by Manitoba under the 1881 Act and by Ontario under the 1878 arbitration. The
+          Privy Council found for Ontario in 1884; Parliament confirmed it in 1889.
+        boundary: >-
+          As NRCan draws it: between 95°09'W and Ontario's 1874 meridian, from the international
+          boundary north to the 12th base line. The legal claims reached further (Manitoba to
+          89°09'W, Ontario north to the Albany River); those are a Sitting C overlay.
+        geometry:
+          intersect: [{unit: district_of_keewatin}, {box: [-95.1534, 48.0, -90.9667, 52.8422]}]
+      - alter: district_of_keewatin
+        boundary: Less Manitoba's extension and the disputed area.
+        geometry:
+          minus: [{unit: district_of_keewatin}, {unit: manitoba}, {unit: ontario_manitoba_disputed_area}]
+      - alter: northwest_territories
+        boundary: Less Manitoba's extension.
+        geometry:
+          minus: [{unit: northwest_territories}, {unit: manitoba}]
+
+  - date: 1882-05-08
+    title: Provisional districts
+    note: >-
+      Four districts are laid out on the prairies for settlers and the post office. Regina is
+      chosen as the territorial capital.
+    changes:
+      - create: district_of_assiniboia
+        name: District of Assiniboia
+        status: district
+        sovereign: Canada
+        boundary: >-
+          Order in council of 8 May 1882: 49°N to the 9th correction line (51.9686°N), from Manitoba
+          west to the road allowance between ranges 10 and 11 west of the 4th Meridian.
+        geometry:
+          intersect:
+            - unit: northwest_territories
+            - ring:
+                - shape: range_10_11_w4_to_55n
+                - line: [[-111.5324, 55.1116], [-111.5324, 55.2], [-99.0, 55.2], [-99.0, 48.5], [-111.3419, 48.5],
+                         [-111.3419, 49.0]]
+            - box: [-120.0, 48.5, -99.0, 51.9686]
+      - create: district_of_saskatchewan
+        name: District of Saskatchewan
+        status: district
+        sovereign: Canada
+        boundary: >-
+          North of Assiniboia and Manitoba to the 18th correction line (55.1116°N), east of the
+          ranges 10/11 W4 line. The order ran east to Lake Winnipeg and the Nelson River, over
+          statutory Keewatin; NRCan leaves that overlap in Keewatin until 1886, and so does this atlas.
+        geometry:
+          intersect:
+            - unit: northwest_territories
+            - ring:
+                - shape: range_10_11_w4_to_55n
+                - line: [[-111.5324, 55.1116], [-95.0, 55.1116], [-95.0, 48.5], [-111.3419, 48.5], [-111.3419, 49.0]]
+            - box: [-120.0, 51.9686, -95.0, 55.1116]
+      - create: district_of_alberta
+        name: District of Alberta
+        status: district
+        sovereign: Canada
+        boundary: >-
+          49°N to the 18th correction line, from the ranges 10/11 W4 line west to British Columbia.
+        geometry:
+          intersect:
+            - unit: northwest_territories
+            - ring:
+                - shape: range_10_11_w4_to_55n
+                - line: [[-111.5324, 55.1116], [-125.0, 55.1116], [-125.0, 48.5], [-111.3419, 48.5], [-111.3419, 49.0]]
+      - create: district_of_athabasca
+        name: District of Athabaska
+        status: district
+        sovereign: Canada
+        boundary: >-
+          The 18th correction line north to the 32nd (≈60°N), from British Columbia east to the
+          ranges 10/11 W4 line, then the Athabasca River, Lake Athabasca (NRCan waypoints) and the
+          Slave River.
+        geometry:
+          intersect:
+            - unit: northwest_territories
+            - ring:
+                - line: [[-125.0, 55.1116], [-111.5459, 55.1116], [-111.5459, 55.4604], [-111.5596, 55.4604],
+                         [-111.5596, 55.8094], [-111.5737, 55.8094], [-111.5737, 56.1585], [-111.588, 56.1585],
+                         [-111.588, 56.5075], [-111.6027, 56.5075], [-111.6027, 56.6523]]
+                - river: {names: [Athabasca River], region: mackenzie, from: [-111.6027, 56.6523],
+                          to: [-110.846, 58.647], bridge_km: 5}
+                # Across the west end of Lake Athabasca and down Rivière des Rochers (NRCan waypoints).
+                - line: [[-110.846, 58.647], [-111.10, 58.70], [-111.25, 58.80], [-111.29, 58.83], [-111.24, 58.92],
+                         [-111.413, 58.998]]
+                - river: {names: [Slave River], region: mackenzie, from: [-111.413, 58.998], to: [-111.81, 60.0],
+                          bridge_km: 5}
+                - line: [[-111.81, 60.0], [-125.0, 60.0], [-125.0, 55.1116]]
+      - alter: northwest_territories
+        capital: Battleford
+        note: Regina was named the seat in 1882 and took over from Battleford on 27 March 1883.
+        boundary: Less the four provisional districts.
+        geometry:
+          minus:
+            - unit: northwest_territories
+            - unit: district_of_assiniboia
+            - unit: district_of_saskatchewan
+            - unit: district_of_alberta
+            - unit: district_of_athabasca
+
+  - date: 1886-05-07
+    title: Keewatin trimmed
+    note: >-
+      A proclamation moves the land between Lake Winnipegosis and the Nelson River from Keewatin to
+      the District of Saskatchewan. Keewatin now starts at Lake Winnipeg.
+    changes:
+      - alter: district_of_saskatchewan
+        boundary: >-
+          With the land detached from Keewatin: north of Manitoba to the 18th correction line,
+          between Lake Winnipegosis, Mossy Portage and the 100°W line on the west and the Nelson
+          River (Canada1Water) and the west shore of Lake Winnipeg (NRCan waypoints) on the east.
+        geometry:
+          union:
+            - unit: district_of_saskatchewan
+            - intersect:
+                - unit: district_of_keewatin
+                - ring:
+                    - line: [[-101.0, 52.8422], [-101.0, 55.1116], [-97.4902, 55.1116]]
+                    - river: {names: [Nelson River], region: nelson, from: [-97.4902, 55.1116], to: [-97.861, 53.698],
+                              bridge_km: 20}
+                    - line: [[-97.861, 53.698], [-97.929, 53.683], [-97.990, 53.688], [-98.066, 53.760],
+                             [-98.227, 53.818], [-98.433, 53.853], [-98.623, 53.865], [-98.890, 53.781],
+                             [-98.957, 53.787], [-98.765, 53.860], [-98.815, 53.896], [-98.966, 53.890],
+                             [-98.968, 53.830], [-99.043, 53.779], [-98.995, 53.686], [-99.065, 53.618],
+                             [-99.144, 53.446], [-99.229, 53.394], [-99.279, 53.186], [-99.207, 53.176],
+                             [-99.061, 53.043], [-98.809, 53.077], [-98.471, 53.053], [-98.521, 53.012],
+                             [-98.922, 52.941], [-98.952, 52.904], [-98.866, 52.819], [-98.866, 52.5],
+                             [-101.0, 52.5], [-101.0, 52.8422]]
+      - alter: district_of_keewatin
+        boundary: Less the land given to the District of Saskatchewan.
+        geometry:
+          minus: [{unit: district_of_keewatin}, {unit: district_of_saskatchewan}]
+
+  - date: 1889-08-12
+    title: Ontario's boundary settled
+    note: >-
+      Parliament confirms the Privy Council's ruling for Ontario. Its northern boundary becomes the
+      English and Albany rivers, and the dispute with Manitoba ends.
+    changes:
+      - alter: ontario
+        boundary: >-
+          Canada (Ontario Boundary) Act, 1889: from the North-West Angle of Lake of the Woods due north
+          (95°09'W) to the English River; up the English River (Canada1Water) to Lac Seul, through
+          Lac Seul and across to Lake St. Joseph (NRCan waypoints), and down the Albany River
+          (Canada1Water) to James Bay; the Ontario–Quebec line is unchanged. The disputed area south
+          of the English River becomes Ontario; NRCan gives the part north of it to Keewatin, and so
+          does this atlas.
+        geometry:
+          intersect:
+            - union:
+                - unit: ontario
+                - unit: ontario_manitoba_disputed_area
+                - unit: district_of_keewatin
+                - unit: northwest_territories
+            - modern: [ON]
+            - ring:
+                # The last few km to the Winnipeg River are unnamed in Canada1Water (NRCan waypoints).
+                - line: [[-95.1534, 41.0], [-95.1534, 50.189], [-95.076, 50.179], [-94.969, 50.248]]
+                - river: {names: [English River], region: nelson, from: [-94.969, 50.248], to: [-93.455, 50.584],
+                          bridge_km: 10}
+                - line: [[-93.455, 50.584], [-93.196, 50.630], [-93.013, 50.549], [-92.915, 50.423],
+                         [-92.798, 50.415], [-92.763, 50.356], [-92.680, 50.309], [-92.445, 50.323],
+                         [-92.239, 50.290], [-92.180, 50.377], [-92.012, 50.390], [-91.911, 50.434],
+                         [-91.930, 50.542], [-91.412, 50.919], [-91.306, 50.953], [-90.983, 50.971],
+                         [-90.932, 51.033], [-90.692, 51.092], [-90.347, 51.083], [-89.815, 51.203]]
+                # The Albany's named reaches break at its lakes; NRCan waypoints cross them.
+                - river: {names: [Albany River], region: hudson, from: [-89.815, 51.203], to: [-88.546, 51.56],
+                          bridge_km: 5}
+                - line: [[-88.546, 51.56], [-88.417, 51.484], [-88.059, 51.495], [-87.841, 51.43]]
+                - river: {names: [Albany River], region: hudson, from: [-87.841, 51.43], to: [-87.02, 51.40]}
+                - line: [[-87.02, 51.40], [-86.978, 51.409], [-86.757, 51.422], [-86.696, 51.485], [-86.464, 51.577],
+                         [-86.378, 51.730], [-86.236, 51.761], [-86.132, 51.743], [-85.963, 51.626], [-85.547, 51.656]]
+                - river: {names: [Albany River], region: hudson, from: [-85.547, 51.656], to: [-81.554, 52.291]}
+                - line: [[-81.554, 52.291], [-80.8, 52.6], [-79.3, 51.8], [-70.0, 51.8], [-70.0, 41.0], [-95.1534, 41.0]]
+      - alter: district_of_keewatin
+        boundary: With the disputed area north of Ontario's new line.
+        geometry:
+          minus:
+            - union: [{unit: district_of_keewatin}, {unit: ontario_manitoba_disputed_area}]
+            - unit: ontario
+      - alter: northwest_territories
+        capital: Regina
+        boundary: Less Ontario's new northern lands.
+        geometry:
+          minus: [{unit: northwest_territories}, {unit: ontario}]
+      - dissolve: ontario_manitoba_disputed_area
+
+  - date: 1895-10-02
+    title: Districts of the North
+    note: >-
+      An order in council divides the northern territories into the districts of Ungava, Franklin,
+      Mackenzie and Yukon. Athabaska grows east to 100°W.
+    changes:
+      - create: yukon
+        name: District of Yukon
+        status: district
+        sovereign: Canada
+        boundary: >-
+          Order in council 2640 of 1895: 141°W from the Arctic coast to the Alaska boundary, 60°N to
+          the Liard River, then the mountain ranges west of the Liard and the Peel to 136°W and due
+          north to the Arctic (NRCan waypoints), with islands within three miles of the coast.
+        geometry:
+          intersect:
+            - unit: northwest_territories
+            - union: [{mainland: true}, {coastal_islands: 5.56}]
+            - shape: yukon_1895
+      - create: district_of_mackenzie
+        name: District of Mackenzie
+        status: district
+        sovereign: Canada
+        boundary: >-
+          From the District of Yukon east to 100°W, between 60°N (the 32nd correction line east of
+          120°W) and the Arctic coast, with islands within three miles of the coast.
+        geometry:
+          minus:
+            - intersect:
+                - unit: northwest_territories
+                - union: [{mainland: true}, {coastal_islands: 5.56}]
+                - box: [-141.5, 60.0, -100.0, 76.0]
+            - unit: yukon
+      - create: district_of_franklin
+        name: District of Franklin
+        status: district
+        sovereign: Canada
+        boundary: >-
+          The islands north of Hudson Strait, Foxe Channel, the Gulf of Boothia and the straits west
+          to Amundsen Gulf, and west to Banks and Prince Patrick. The Boothia and Melville peninsulas
+          stay in Keewatin under the Keewatin Act.
+        geometry:
+          intersect: [{unit: northwest_territories}, {shape: arctic_islands}]
+      - create: district_of_ungava
+        name: District of Ungava
+        status: district
+        sovereign: Canada
+        boundary: >-
+          North of Quebec to Hudson Strait, east of Hudson and James Bays to Newfoundland's coast, with
+          islands within three miles of the coast. NRCan also gives Ungava the far islands of Hudson
+          Bay (Southampton, Coats, Mansel, Belcher); the order did not, and they stay outside any
+          district here until 1897.
+        geometry:
+          intersect:
+            - unit: northwest_territories
+            - union: [{mainland: true}, {coastal_islands: 5.56}]
+            - box: [-80.5, 45.0, -55.0, 63.0]
+      - alter: district_of_athabasca
+        boundary: Extended east to 100°W between the 18th correction line and 60°N.
+        geometry:
+          union:
+            - unit: district_of_athabasca
+            - intersect: [{unit: northwest_territories}, {box: [-113.0, 55.1116, -100.0, 60.0]}]
+      - alter: northwest_territories
+        confidence: 0.85
+        instrument: >-
+          Order in Council P.C. 1895-2640 (2 October 1895, Canada Gazette 19 October 1895, p. 684), Keewatin
+          paragraph: the Minister "recommends that at the next Session of Parliament a Bill be introduced"
+          to add about 470,000 square miles to Keewatin; the Ungava paragraph includes only islands "within a
+          distance of three sea miles from the coast". Keewatin's limits were fixed by the Keewatin Act, 39
+          Vict. c. 21, s. 1 (R.S.C. 1886, c. 53).
+        rationale: >-
+          The 1895 order drew the four new districts directly but only proposed a bill to enlarge statutory
+          Keewatin, and no bill was introduced (recited in P.C. 1897-3388), so this land stays outside any
+          district until the 1897 order; NRCan draws the enlargement as if it had taken effect.
+        nrcan_overlay:
+          year: 1895
+          polygons:
+            - name: District of Keewatin
+              note: NRCan draws Keewatin with the enlargement the 1895 order only proposed.
+            - name: District of Ungava
+              clip: {unit: northwest_territories}
+              note: NRCan also puts the far islands of Hudson Bay in Ungava, beyond the order's three sea miles.
+        boundary: >-
+          The land in no district: north of Ontario east of statutory Keewatin, and the far islands
+          of Hudson Bay and Hudson Strait. The order proposed adding the first to Keewatin by bill;
+          no bill was introduced. NRCan draws both inside Keewatin and Ungava, so NRCan has no
+          polygon here.
+        geometry:
+          minus:
+            - unit: northwest_territories
+            - unit: yukon
+            - unit: district_of_mackenzie
+            - unit: district_of_franklin
+            - unit: district_of_ungava
+            - unit: district_of_athabasca
+
+  - date: 1897-12-18
+    title: Districts redrawn
+    note: >-
+      A new order in council redraws the northern districts along the middle of the bays and
+      straits. Keewatin takes Hudson Bay's western islands, and Franklin takes the Boothia and
+      Melville peninsulas.
+    changes:
+      - alter: district_of_keewatin
+        boundary: >-
+          Order in council 3388 of 1897 (provisional district): from the Ontario–Quebec line north
+          through the middle of James Bay (Akimiski and Bear islands west, Charlton and the Twin
+          Islands east), through Hudson Bay between Coats and Mansel, Foxe Channel, Frozen Strait and
+          Repulse Bay, across Rae Isthmus, through Committee Bay and the Gulf of Boothia, across
+          Boothia Isthmus to Spence Bay and the waters south of King William Island to 100°W; south
+          along 100°W to the 18th correction line, east to the Nelson River, and down the Nelson and
+          Lake Winnipeg to Manitoba and Ontario. Statutory Keewatin still existed inside it.
+        instrument: >-
+          Order in Council P.C. 1897-3388 (18 December 1897, Canada Gazette 14 May 1898, pp. 2613–2614),
+          annexed description "KEEWATIN"; cancelled from 1 January 1920 by the order of 16 March 1918.
+        note: >-
+          A provisional district created by order, alongside the statutory District of Keewatin of 1876. Unlike
+          the 1895 proposal, the 1897 order annexed a full description of the district, the Minister of Justice
+          advised in 1898 that provisional districts needed no statute, and the 1918 order recites it as having
+          defined "the provisional district of Keewatin". Statutory Keewatin rejoined the territories in 1905.
+        geometry:
+          union:
+            # Mainland: west of the line through James Bay and Hudson Bay, less the two peninsulas.
+            - minus:
+                - intersect:
+                    - shape: northern_pool_with_yukon
+                    - mainland: true
+                    - ring:
+                        - line: [[-100.0, 45.0], [-100.0, 76.0], [-84.0, 76.0], [-80.0, 70.0], [-79.5, 65.0], [-79.2, 63.7],
+                                 [-80.2, 63.0], [-81.0, 62.4], [-81.0, 54.9], [-80.6, 54.4], [-80.5, 53.2], [-79.8, 52.0],
+                                 [-79.52, 51.47]]
+                        - line: [[-79.52, 51.47], [-79.52, 45.0], [-100.0, 45.0]]
+                - shape: boothia_peninsula
+                - shape: melville_peninsula
+            # Islands: those on Keewatin's side of the middle of the bays and straits.
+            - minus:
+                - intersect:
+                    - shape: northern_pool_with_yukon
+                    - zone:
+                        ring:
+                          - line: [[-100.0, 68.2], [-97.3, 68.55], [-95.5, 68.8], [-93.6, 69.45], [-92.1, 69.6], [-89.3, 69.7],
+                                   [-87.5, 68.6], [-87.35, 67.45], [-86.3, 66.5], [-85.5, 66.3], [-84.5, 65.95], [-81.5, 65.3],
+                                   [-79.5, 65.0], [-79.2, 63.7], [-80.2, 63.0], [-81.0, 62.4], [-81.0, 54.9], [-80.6, 54.4],
+                                   [-80.5, 53.2], [-79.8, 52.0], [-79.52, 51.47]]
+                          - line: [[-79.52, 51.47], [-79.52, 45.0], [-100.0, 45.0], [-100.0, 68.2]]
+                - mainland: true
+      - alter: district_of_ungava
+        boundary: >-
+          East of Keewatin's line through James Bay and Hudson Bay, north to the middle of Hudson
+          Strait, the line continuing between Salisbury (Franklin) and Nottingham (Ungava) islands.
+          Belcher, Mansel, Nottingham and Charlton islands are Ungava's.
+        geometry:
+          minus:
+            - intersect:
+                - shape: northern_pool_with_yukon
+                - zone:
+                    ring:
+                      - line: [[-79.52, 51.47], [-79.8, 52.0], [-80.5, 53.2], [-80.6, 54.4], [-81.0, 54.9], [-81.0, 62.4],
+                               [-80.2, 63.0], [-79.2, 63.7], [-78.5, 63.8], [-77.4, 63.2], [-75.0, 62.9], [-72.0, 62.35],
+                               [-70.0, 61.8], [-65.2, 60.95], [-60.0, 60.5]]
+                      - line: [[-60.0, 60.5], [-50.0, 60.5], [-50.0, 45.0], [-79.52, 45.0], [-79.52, 51.47]]
+            - unit: district_of_keewatin
+      - alter: yukon
+        boundary: >-
+          The watershed version: the divides between the Mackenzie and the streams flowing to the
+          Arctic west of it and to the Yukon, and between the lower and upper Liard (NRCan waypoints),
+          with islands within 20 miles of the coast.
+        geometry:
+          intersect:
+            - shape: northern_pool_with_yukon
+            - union: [{mainland: true}, {coastal_islands: 32.2}]
+            - ring:
+                - line: [[-141.5, 58.0], [-141.5, 72.0], [-136.408, 72.0], [-136.408, 68.886], [-136.405, 68.812],
+                         [-136.632, 68.650], [-136.599, 68.478], [-136.838, 68.256], [-136.727, 68.050],
+                         [-136.426, 67.841], [-136.430, 67.656], [-136.114, 67.566], [-136.161, 67.427],
+                         [-136.053, 67.282], [-136.172, 67.139], [-135.873, 66.510], [-136.011, 66.441],
+                         [-136.042, 66.201], [-136.355, 66.128], [-136.392, 66.003], [-136.661, 66.061],
+                         [-137.108, 66.047], [-137.145, 65.972], [-137.383, 65.859], [-138.036, 65.736],
+                         [-138.329, 65.571], [-138.669, 65.592], [-139.934, 65.461], [-140.066, 65.378],
+                         [-139.926, 65.286], [-139.974, 65.229], [-139.797, 65.167], [-139.847, 65.102],
+                         [-139.809, 65.070], [-139.618, 65.044], [-139.161, 64.835], [-139.129, 64.761],
+                         [-138.844, 64.718], [-138.629, 64.482], [-138.055, 64.569], [-137.669, 64.408],
+                         [-137.444, 64.436], [-137.073, 64.282], [-136.488, 64.341], [-135.759, 64.247],
+                         [-135.678, 64.391], [-135.434, 64.406], [-135.403, 64.533], [-134.862, 64.560]]
+                - line: [[-134.862, 64.560], [-134.095, 64.377], [-133.946, 64.384], [-133.796, 64.564],
+                         [-133.653, 64.596], [-133.571, 64.420], [-132.886, 64.374], [-132.475, 64.282],
+                         [-132.401, 64.185], [-132.208, 64.243], [-131.946, 64.133], [-131.800, 64.158],
+                         [-131.743, 64.236], [-131.358, 64.238], [-131.047, 64.345], [-130.865, 64.186]]
+                - shape: yukon_ranges_south
+                - line: [[-123.785, 60.001], [-123.785, 58.0], [-141.5, 58.0]]
+      - alter: district_of_mackenzie
+        boundary: >-
+          From Yukon east to 100°W, between 60°N and the middle of the straits south of Banks and
+          Victoria islands, with islands within 20 miles of the coast; Victoria Island lies within
+          20 miles but the order names it as the limit, so it stays in Franklin.
+        geometry:
+          minus:
+            - intersect:
+                - shape: northern_pool_with_yukon
+                - union: [{mainland: true}, {minus: [{coastal_islands: 32.2}, {shape: arctic_islands}]}]
+                - box: [-141.5, 60.0, -100.0, 76.0]
+            - unit: yukon
+            - unit: district_of_keewatin
+      - alter: district_of_franklin
+        boundary: >-
+          Everything else: the Arctic islands, the Boothia and Melville peninsulas, Salisbury and
+          Resolution islands, and the islands of Hudson Strait north of Ungava's line.
+        geometry:
+          minus:
+            - shape: northern_pool_with_yukon
+            - unit: district_of_keewatin
+            - unit: district_of_ungava
+            - unit: yukon
+            - unit: district_of_mackenzie
+      - dissolve: northwest_territories
+
+  - date: 1898-06-13
+    title: Yukon Territory and Quebec's first extension
+    note: >-
+      The Klondike gold rush makes Yukon a separate territory with its capital at Dawson. Quebec
+      extends north to the Eastmain River and east to Hamilton Inlet.
+    changes:
+      - alter: yukon
+        name: Yukon Territory
+        nrcan: Yukon Territory
+        status: territory
+        capital: Dawson
+        boundary: >-
+          Yukon Territory Act: the 1895 district description (136°W version), which the Act adopted,
+          with islands within three miles of the coast.
+        geometry:
+          intersect:
+            - union: [{was: yukon}, {was: district_of_mackenzie}]
+            - union: [{mainland: true}, {coastal_islands: 5.56}]
+            - shape: yukon_1895
+      - alter: district_of_mackenzie
+        boundary: With the land between the 1897 and 1895 Yukon lines.
+        geometry:
+          minus:
+            - union: [{was: district_of_mackenzie}, {was: yukon}]
+            - unit: yukon
+      - alter: quebec
+        boundary: >-
+          Quebec Boundary Extension Act, 1898: from Lake Timiskaming's meridian at James Bay up the
+          Eastmain River (Canada1Water) to Patamisk Lake, due east along 52°55'N to the Hamilton
+          (Ashuanipi) River, and down it through its lakes to Hamilton Inlet (NRCan waypoints), then
+          Newfoundland's coast strip south to Blanc-Sablon.
+        geometry:
+          union:
+            - was: quebec
+            - intersect:
+                - was: district_of_ungava
+                - ring:
+                    - river: {names: [Rivière Eastmain], region: hudson, from: [-78.52, 52.25], to: [-70.829, 52.516],
+                              bridge_km: 10}
+                    - line: [[-70.829, 52.516], [-70.816, 52.9167], [-67.10, 52.9167]]
+                    - line: [[-67.10, 52.9167], [-66.808, 52.818], [-66.715, 52.788], [-66.704, 52.934],
+                             [-66.482, 53.035], [-66.290, 52.998], [-66.315, 53.082], [-66.238, 53.260],
+                             [-66.543, 53.688], [-66.502, 54.044], [-66.717, 54.424], [-66.469, 54.607],
+                             [-66.242, 54.453], [-66.201, 54.350], [-65.924, 54.248], [-65.856, 54.132],
+                             [-65.438, 53.894], [-64.973, 53.850], [-64.913, 53.751], [-64.477, 53.689],
+                             [-64.221, 53.541], [-63.662, 53.425], [-63.275, 53.221], [-62.435, 53.139],
+                             [-62.251, 53.056], [-62.200, 52.936], [-61.657, 52.874], [-61.630, 52.976],
+                             [-61.410, 52.975], [-60.969, 53.181]]
+                    - line: [[-60.969, 53.181], [-57.0, 53.0], [-57.0, 45.0], [-80.0, 45.0], [-80.0, 52.25], [-78.52, 52.25]]
+      - alter: district_of_ungava
+        boundary: Less Quebec's extension.
+        geometry:
+          minus: [{was: district_of_ungava}, {unit: quebec}]
+
+  - date: 1901-05-23
+    title: Yukon's boundary redrawn
+    note: >-
+      Parliament moves Yukon's eastern boundary onto the mountain divides. It is the line Yukon
+      still has.
+    changes:
+      - alter: yukon
+        boundary: >-
+          The 1901 Act's watershed line, which is the modern Yukon–Northwest Territories border.
+        geometry:
+          intersect:
+            - union: [{was: yukon}, {was: district_of_mackenzie}]
+            - modern: [YT]
+      - alter: district_of_mackenzie
+        boundary: Less Yukon's new line.
+        geometry:
+          minus:
+            - union: [{was: district_of_mackenzie}, {was: yukon}]
+            - unit: yukon
+
+  - date: 1903-10-20
+    title: The Alaska boundary award
+    note: >-
+      An international tribunal settles the Alaska panhandle boundary, mostly in favour of the
+      United States. The atlas draws the award line throughout, as NRCan does; the earlier claim
+      lines arrive with the disputed layer.
+    changes: []
+
+  - date: 1905-09-01
+    title: Alberta and Saskatchewan
+    note: >-
+      Two provinces are carved from the North-West Territories, each running from 49°N to 60°N.
+      Keewatin is folded back into the territories, now run from Ottawa.
+    changes:
+      - create: alberta
+        name: Alberta
+        status: province
+        sovereign: Canada
+        capital: Edmonton
+        boundary: >-
+          Alberta Act: 49°N to 60°N between 110°W and British Columbia. Modern Alberta.
+        geometry: {modern: [AB]}
+      - create: saskatchewan
+        name: Saskatchewan
+        status: province
+        sovereign: Canada
+        capital: Regina
+        boundary: >-
+          Saskatchewan Act: 49°N to 60°N between 110°W and Manitoba's west boundary continued north to
+          102°W. Modern Saskatchewan.
+        geometry: {modern: [SK]}
+      - alter: district_of_keewatin
+        note: Re-annexed to the North-West Territories, which were governed from Ottawa.
+        boundary: >-
+          With the pieces of the old Saskatchewan and Athabaska districts left east of the new
+          provinces, west to 102°W. No instrument assigned them before 1920; NRCan draws them in
+          Keewatin, and so does this atlas.
+        geometry:
+          minus:
+            - union:
+                - was: district_of_keewatin
+                - was: district_of_assiniboia
+                - was: district_of_saskatchewan
+                - was: district_of_alberta
+                - was: district_of_athabasca
+            - unit: alberta
+            - unit: saskatchewan
+      - dissolve: district_of_assiniboia
+      - dissolve: district_of_saskatchewan
+      - dissolve: district_of_alberta
+      - dissolve: district_of_athabasca
+
+  - date: 1912-05-15
+    title: Manitoba, Ontario and Quebec extended
+    note: >-
+      Three provinces extend north to Hudson Bay and Hudson Strait, taking most of Keewatin and the
+      mainland of Ungava. Manitoba reaches 60°N.
+    changes:
+      - alter: manitoba
+        boundary: >-
+          Manitoba Boundaries Extension Act, 1912: north to 60°N and Hudson Bay, east along 95°09'W
+          to the 12th base line, then straight lines to the east end of Island Lake and to 89°W on
+          Hudson Bay. The modern border; no islands.
+        geometry: {modern: [MB]}
+      - alter: ontario
+        boundary: >-
+          Ontario Boundaries Extension Act, 1912: from the Albany River north to Hudson Bay, west to
+          Manitoba's new line. The modern border.
+        geometry: {modern: [ON]}
+      - alter: quebec
+        boundary: >-
+          Quebec Boundaries Extension Act, 1912: the mainland of Ungava north to Hudson Strait and
+          east to Newfoundland's coast. Coastal islands stay in the territories.
+        geometry:
+          union:
+            - was: quebec
+            - intersect: [{was: district_of_ungava}, {mainland: true}]
+      - alter: district_of_keewatin
+        boundary: Less Manitoba's and Ontario's extensions.
+        geometry:
+          minus: [{was: district_of_keewatin}, {unit: manitoba}, {unit: ontario}]
+      - alter: district_of_ungava
+        confidence: 0.8
+        instrument: >-
+          Order in Council P.C. 1897-3388 (18 December 1897), description "UNGAVA" (bounded by the middle of
+          Hudson Strait and Keewatin's mid-water line); Quebec Boundaries Extension Act, 1912, 2 Geo. V c. 45,
+          s. 2 (the new boundary runs "along the shores"); Order in Council of 16 March 1918, cancelling the
+          1897 order and in force 1 January 1920.
+        rationale: >-
+          The 1912 Act moved only the mainland to Quebec and the 1897 order defining Ungava stood until 1
+          January 1920, so the islands remain a district until then; NRCan already splits them between
+          Keewatin and Franklin, and the Act excludes islands only by following the shore, hence 0.8.
+        nrcan_overlay:
+          year: 1912
+          polygons:
+            - name: District of Keewatin
+              clip: {unit: district_of_ungava}
+              note: NRCan's 1912 map puts these Ungava islands in Keewatin.
+            - name: District of Franklin
+              clip: {unit: district_of_ungava}
+              note: NRCan's 1912 map puts these Ungava islands in Franklin.
+        boundary: >-
+          The islands left of the district: the east side of Hudson and James Bays, the south half
+          of Hudson Strait and Ungava Bay. The 1897 order was not cancelled until 1920; NRCan already
+          splits these islands between Keewatin and Franklin as the 1918 order would.
+        geometry:
+          minus: [{was: district_of_ungava}, {unit: quebec}]
+
+  - date: 1920-01-01
+    title: Northwest Territories districts revised
+    note: >-
+      An order of 1918 comes into force, leaving three districts: Mackenzie, Keewatin and Franklin.
+      The District of Ungava disappears.
+    changes:
+      - alter: district_of_mackenzie
+        boundary: >-
+          Order in council of 16 March 1918: west, Yukon; south, 60°N; east, the 2nd Meridian (102°W);
+          north, the continental Arctic shore. Mainland only.
+        geometry:
+          intersect:
+            - shape: northern_pool
+            - mainland: true
+            - box: [-141.5, 59.9, -102.0, 76.0]
+      - alter: district_of_keewatin
+        boundary: >-
+          From 102°W east along the Arctic shore to Spence Bay, across Boothia Isthmus to Lord Mayor
+          Bay, along the Gulf of Boothia to its southern end, across Rae Isthmus to Repulse Bay,
+          through Repulse Bay and Frozen Strait to Foxe Channel, then straight to Cape Wolstenholme;
+          all islands in Hudson and James Bays south-west of that line; south to Manitoba and 60°N.
+        geometry:
+          union:
+            - minus:
+                - intersect: [{shape: northern_pool}, {mainland: true}, {box: [-102.0, 55.0, -60.0, 80.0]}]
+                - shape: boothia_peninsula
+                - shape: melville_peninsula
+            - minus:
+                - intersect:
+                    - shape: northern_pool
+                    - zone:
+                        ring:
+                          - line: [[-77.5, 62.58], [-81.0, 64.9], [-84.3, 65.9], [-85.5, 66.3], [-86.3, 66.5], [-95.0, 66.5]]
+                          - line: [[-95.0, 66.5], [-95.0, 50.0], [-76.0, 50.0], [-76.0, 62.58], [-77.5, 62.58]]
+                - mainland: true
+      - alter: district_of_franklin
+        boundary: >-
+          The rest: the Arctic islands, the Boothia and Melville peninsulas, and the islands of Hudson
+          Strait and Ungava Bay, Nottingham and Salisbury included. NRCan's maps from 1927 put
+          Nottingham in Keewatin, contrary to the order.
+        geometry:
+          minus:
+            - shape: northern_pool
+            - unit: district_of_mackenzie
+            - unit: district_of_keewatin
+      - dissolve: district_of_ungava
+
+  - date: 1927-03-01
+    title: The Labrador boundary
+    date_confidence: 0.9
+    note: >-
+      The Judicial Committee of the Privy Council sets the boundary between Canada and Newfoundland in
+      Labrador, and Newfoundland gets the whole Atlantic watershed. The report was delivered on 1 March
+      1927; His Majesty in Council approved it on 22 March 1927.
+    changes:
+      - alter: newfoundland
+        note: >-
+          A Dominion under a Commission of Government from 1934. The Privy Council's line of 1927 has
+          never been demarcated, and Quebec has not formally accepted it.
+        boundary: >-
+          Privy Council report of 1 March 1927: due north from Blanc-Sablon to 52°N, west to the
+          Romaine River, up it to its source, and along the crest of the Atlantic watershed to Cape
+          Chidley. The modern border.
+        geometry: {modern: [NL]}
+      - alter: quebec
+        boundary: Less Labrador as the Privy Council drew it. Modern Quebec.
+        geometry: {modern: [QC]}
+      - alter: district_of_franklin
+        confidence: 0.9
+        instrument: >-
+          Order in Council of 16 March 1918 (in force 1 January 1920), description of Keewatin: "thence
+          southeasterly in a straight line to the most northerly point of cape Wolstenholme"; Franklin is the
+          remainder of the Northwest Territories.
+        rationale: >-
+          Nottingham Island lies at least 8 km north-east of the Frozen Strait–Cape Wolstenholme line, so it
+          stays in Franklin; NRCan's maps from 1927 draw it in Keewatin.
+        nrcan_overlay:
+          year: 1927
+          polygons:
+            - name: District of Keewatin
+              clip: {island: [-77.9, 63.3]}
+              note: NRCan's maps from 1927 put Nottingham Island in Keewatin.
+        boundary: >-
+          Less a few coastal islets that modern Quebec (Atlas of Canada 1:1M) includes. No instrument
+          moved them; NRCan's 1927 Franklin shrinks by a similar area. Nottingham Island stays in
+          Franklin.
+        geometry:
+          minus: [{was: district_of_franklin}, {unit: quebec}]
+
+  - date: 1949-03-31
+    title: Newfoundland joins
+    note: >-
+      Newfoundland becomes Canada's tenth province after two referendums. Its boundaries, Labrador
+      included, are those of 1927.
+    changes:
+      - alter: newfoundland
+        status: province
+        sovereign: Canada
+
+  - date: 1953-04-01
+    title: Whitehorse becomes Yukon's capital
+    note: >-
+      Yukon's capital moves from Dawson to Whitehorse, on the highway and the railway. No boundary
+      changes.
+    changes:
+      - alter: yukon
+        capital: Whitehorse
+
+  - date: 1999-04-01
+    title: Nunavut
+    note: >-
+      Nunavut is created from the eastern and northern Northwest Territories, following the
+      Nunavut Land Claims Agreement. The old districts of Mackenzie, Keewatin and Franklin end.
+    changes:
+      - create: nunavut
+        name: Nunavut
+        status: territory
+        sovereign: Canada
+        capital: Iqaluit
+        boundary: >-
+          Nunavut Act, 1993: north of 60°N and east of the Schedule I line, with all the islands of
+          Hudson, James and Ungava Bays not in a province. The modern border.
+        geometry: {modern: [NU]}
+      - create: northwest_territories
+        name: Northwest Territories
+        status: territory
+        sovereign: Canada
+        capital: Yellowknife
+        boundary: The rest of the territories west of the Schedule I line. The modern border.
+        geometry: {modern: [NT]}
+      - dissolve: district_of_mackenzie
+      - dissolve: district_of_keewatin
+      - dissolve: district_of_franklin
+
+  - date: 2001-12-06
+    title: Newfoundland and Labrador
+    note: >-
+      A constitutional amendment renames the province Newfoundland and Labrador. Its boundaries are
+      unchanged.
+    changes:
+      - rename: newfoundland
+        name: Newfoundland and Labrador
+
+  - date: 2003-04-01
+    title: Yukon
+    note: >-
+      The new Yukon Act drops "Territory" from the name. Its boundaries are unchanged.
+    changes:
+      - rename: yukon
+        name: Yukon

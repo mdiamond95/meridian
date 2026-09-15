@@ -126,7 +126,14 @@ def atlas_example() -> dict:
                     "Two provinces are carved from the North-West Territories. Their northern limit is 60°N."
                 ),
                 "changes": [{"unit": "alberta", "kind": "create"}],
-            }
+            },
+            {
+                "date": "1927-03-01",
+                "title": "The Labrador boundary",
+                "note": "The Privy Council reports on 1 March 1927; the approving order is of 11 March.",
+                "dateConfidence": 0.8,
+                "changes": [],
+            },
         ],
         "units": [
             {
@@ -139,6 +146,19 @@ def atlas_example() -> dict:
                 "validTo": None,
                 "truth": "dejure",
                 "geometryRef": "alberta_1905",
+                "instrument": "Alberta Act, 4–5 Edw. VII, c. 3, s. 1 (in force 1 September 1905)",
+            }
+        ],
+        "references": [
+            {
+                "id": "nrcan_alberta_1905",
+                "name": "Alberta",
+                "unit": "alberta",
+                "source": "nrcan_te_1905",
+                "attribution": "Contains information licensed under the Open Government Licence – Canada.",
+                "validFrom": "1905-09-01",
+                "validTo": None,
+                "geometryRef": "nrcan_alberta_1905",
             }
         ],
     }

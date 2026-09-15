@@ -6,6 +6,7 @@ interface UiState {
   layersOpen: boolean;
   togglePanel: () => void;
   toggleLayers: () => void;
+  openPanel: () => void;
 }
 
 export const useUiStore = create<UiState>()((set) => ({
@@ -13,4 +14,5 @@ export const useUiStore = create<UiState>()((set) => ({
   layersOpen: false,
   togglePanel: () => set((s) => ({ panelOpen: !s.panelOpen })),
   toggleLayers: () => set((s) => ({ layersOpen: !s.layersOpen })),
+  openPanel: () => set({ panelOpen: true }),
 }));
