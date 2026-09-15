@@ -1,0 +1,289 @@
+"""Build data/build/layers/*.topojson.gz: simplified overlay and snap layers (gzipped TopoJSON).
+
+    make layers
+
+Each layer is exported to GeoJSON (WGS84, only the properties the app needs) and simplified
+with mapshaper (pinned version, Visvalingam weighted, shapes kept) into TopoJSON. Provinces,
+census divisions and census subdivisions share one topology per tier (low/mid/high) for
+zoom-dependent loading.
+"""
+
+from __future__ import annotations
+
+import shutil
+import subprocess
+import sys
+import tempfile
+import time
+from pathlib import Path
+
+import geopandas as gpd
+import numpy as np
+import pandas as pd
+import shapely
+
+from common import BUILD, EQUAL_AREA_CRS, MESH_VERSION, WGS84, gzip_bytes, raw_file, write_bytes
+from geo import read_vector, zip_dataset
+from mesh import PRUID_TO_CODE
+
+MAPSHAPER_VERSION = "0.7.61"
+LAYERS = BUILD / "layers"
+# Simplification interval in metres per tier (mapshaper -simplify interval=).
+# Tier → (simplification interval in metres, layers included). Province and CD edges are CSD edges,
+# so each tier is one topology with shared arcs.
+TIERS = {
+    "low": (5000, ["provinces"]),
+    "mid": (1000, ["provinces", "cd"]),
+    "high": (400, ["provinces", "cd", "csd"]),
+}
+SINGLE_INTERVAL = {"treaties": 1000, "ecozones": 1500, "basins": 1500, "rivers": 150, "ridings": 500}
+BASIN_TOLERANCE_M = 1000
+BASIN_MIN_PART_KM2 = 50
+RIVER_MIN_STRAHLER = 7  # on the 1:50K Canada1Water network; see docs/decisions.md
+RIVER_REGIONS = ["arctic", "atlantic", "baffin", "hudson", "islands", "mackenzie", "nelson", "pacific"]
+
+
+def log(message: str) -> None:
+    print(f"[layers {time.strftime('%H:%M:%S')}] {message}", flush=True)
+
+
+def mapshaper_cmd() -> list[str]:
+    exe = shutil.which("mapshaper")
+    if exe:
+        version = subprocess.run([exe, "-v"], capture_output=True, text=True).stdout.strip()
+        if version == MAPSHAPER_VERSION:
+            return [exe]
+    return ["npx", "--yes", f"mapshaper@{MAPSHAPER_VERSION}"]
+
+
+def polygonal(geom):
+    """Polygon parts only: make_valid can leave line or point slivers in a GeometryCollection,
+    and mapshaper splits mixed geometry types into separate layers."""
+    if geom is None or geom.is_empty:
+        return None
+    if geom.geom_type in ("Polygon", "MultiPolygon"):
+        return geom
+    parts = [g for g in getattr(geom, "geoms", []) if g.geom_type in ("Polygon", "MultiPolygon")]
+    return shapely.union_all(parts) if parts else None
+
+
+def export(gdf: gpd.GeoDataFrame, path: Path, keep: list[str], sort: str, lines: bool = False) -> None:
+    gdf = gdf.sort_values(sort, kind="stable")[[*keep, "geometry"]].copy()
+    if not lines:
+        gdf["geometry"] = [polygonal(g) for g in gdf.geometry]
+        gdf = gdf[gdf.geometry.notna()]
+    gdf = gdf.to_crs(WGS84)
+    path.unlink(missing_ok=True)
+    gdf.to_file(path, driver="GeoJSON", COORDINATE_PRECISION=6)
+
+
+def simplify(inputs: dict[str, Path], out: Path, interval: int, lines: bool = False) -> None:
+    """mapshaper: one TopoJSON with one object per input. Object names come from the input file
+    stems, so each input must be written as <name>.geojson."""
+    for name, path in inputs.items():
+        if path.stem != name:
+            raise ValueError(f"input for {name!r} must be named {name}.geojson")
+    cmd = [*mapshaper_cmd(), "-i", *[str(p) for p in inputs.values()], "combine-files", "snap"]
+    cmd += ["-simplify", "weighted", f"interval={interval}", "keep-shapes" if not lines else "", "target=*"]
+    plain = out.parent / f".{out.name.removesuffix('.gz')}"
+    cmd += ["-o", str(plain), "format=topojson", "quantization=100000", "target=*"]
+    cmd = [c for c in cmd if c]
+    result = subprocess.run(cmd, capture_output=True, text=True)
+    if result.returncode != 0:
+        raise RuntimeError(f"mapshaper failed for {out.name}:\n{result.stderr[-2000:]}")
+    # TopoJSON compresses 3-4x; layers ship gzipped like the mesh and attributes.
+    write_bytes(out, gzip_bytes(plain.read_bytes().rstrip(b"\n") + b"\n"))
+    plain.unlink()
+
+
+def csd_layers() -> dict[str, gpd.GeoDataFrame]:
+    csd = read_vector(raw_file("statcan_csd_2021"), crs=EQUAL_AREA_CRS)
+    csd["geometry"] = shapely.make_valid(csd.geometry.to_numpy())
+    csd = csd.rename(columns={"CSDUID": "csd", "CSDNAME": "name"})
+    csd["province"] = csd["PRUID"].map(PRUID_TO_CODE)
+    csd["cd"] = csd["csd"].str[:4]
+    cd = csd.dissolve("cd", as_index=False, aggfunc={"province": "first"})
+    provinces = csd.dissolve("province", as_index=False)
+    return {
+        "provinces": (provinces, ["province"], "province"),
+        "cd": (cd, ["cd", "province"], "cd"),
+        "csd": (csd, ["csd", "cd", "province", "name"], "csd"),
+    }
+
+
+def river_network(canada) -> gpd.GeoDataFrame:
+    """Canada1Water reaches at or above the order threshold, clipped to Canada and merged into
+    one line per (order, name) so the layer is a few thousand features, not a million reaches."""
+    import zipfile
+
+    frames = []
+    for region in RIVER_REGIONS:
+        # Reading a multi-GB GeoPackage through /vsizip/ takes ~20 min per region; extracting it to
+        # a scratch directory first takes about a minute.
+        with tempfile.TemporaryDirectory(prefix=f"meridian-c1w-{region}-") as scratch:
+            with zipfile.ZipFile(raw_file(f"nrcan_c1w_strahler_{region}")) as zf:
+                member = next(m for m in zf.namelist() if m.endswith(".gpkg"))
+                path = zf.extract(member, scratch)
+            reaches = read_vector(
+                path, columns=["Strahler", "NAME_1"], where=f"Strahler >= {RIVER_MIN_STRAHLER}"
+            )
+        log(f"  {region}: {len(reaches):,} reaches")
+        frames.append(reaches.to_crs(EQUAL_AREA_CRS))
+    rivers = gpd.GeoDataFrame(pd.concat(frames, ignore_index=True), crs=EQUAL_AREA_CRS)
+    rivers["geometry"] = shapely.force_2d(rivers.geometry.to_numpy())
+    rivers["order"] = rivers["Strahler"].astype(int)
+    rivers["name"] = rivers["NAME_1"].fillna("")
+    merged = []
+    for (order, name), group in rivers.groupby(["order", "name"], sort=True):
+        lines = shapely.line_merge(shapely.union_all(group.geometry.to_numpy()))
+        lines = shapely.intersection(lines, canada)
+        if not lines.is_empty:
+            merged.append({"order": order, "name": name or None, "geometry": lines})
+    out = gpd.GeoDataFrame(merged, crs=EQUAL_AREA_CRS)
+    out["key"] = np.arange(len(out))
+    return out
+
+
+def canada_outline() -> shapely.Geometry:
+    """Canada from the drainage regions, simplified to 500 m for fast clipping."""
+    drainage = read_vector(zip_dataset(raw_file("statcan_drainage_regions"), r"\.gdb/?$"), columns=[])
+    return shapely.union_all(drainage.to_crs(EQUAL_AREA_CRS).geometry.simplify(500).to_numpy())
+
+
+def layer_boundaries(tmp: Path) -> list[Path]:
+    sources = {}
+    for name, (gdf, keep, sort) in csd_layers().items():
+        sources[name] = tmp / f"{name}.geojson"
+        export(gdf, sources[name], keep, sort)
+    written = []
+    for tier, (interval, names) in TIERS.items():
+        out = LAYERS / f"boundaries.{tier}.{MESH_VERSION}.topojson.gz"
+        simplify({n: sources[n] for n in names}, out, interval)
+        written.append(out)
+    return written
+
+
+def layer_treaties(tmp: Path) -> list[Path]:
+    historic = read_vector(zip_dataset(raw_file("cirnac_historic_treaties")))
+    modern = read_vector(zip_dataset(raw_file("cirnac_modern_treaties")))
+    historic["kind"] = np.where(
+        historic["SBTP_ENAME"].str.strip() == "Numbered Treaty", "numbered", "historic"
+    )
+    modern["kind"] = "modern"
+    for gdf, file in ((historic, "historic"), (modern, "modern")):
+        gdf["geometry"] = shapely.make_valid(gdf.geometry.to_numpy())
+        renamed = gdf.rename(columns={"TAG_ID": "tag", "ENAME": "name"})
+        export(renamed, tmp / f"{file}.geojson", ["tag", "name", "kind"], "tag")
+    out = LAYERS / f"treaties.{MESH_VERSION}.topojson.gz"
+    inputs = {"historic": tmp / "historic.geojson", "modern": tmp / "modern.geojson"}
+    simplify(inputs, out, SINGLE_INTERVAL["treaties"])
+    return [out]
+
+
+def layer_ecozones(tmp: Path) -> list[Path]:
+    eco = read_vector(raw_file("aafc_ecozones")).dissolve("ECOZONE_ID", as_index=False, aggfunc="first")
+    eco = eco.rename(columns={"ECOZONE_ID": "id", "ECOZONE_NAME_EN": "name"})
+    export(eco, tmp / "ecozones.geojson", ["id", "name"], "id")
+    out = LAYERS / f"ecozones.{MESH_VERSION}.topojson.gz"
+    simplify({"ecozones": tmp / "ecozones.geojson"}, out, SINGLE_INTERVAL["ecozones"])
+    return [out]
+
+
+def generalize(gdf: gpd.GeoDataFrame, key: str, tolerance_m: float, min_part_km2: float) -> gpd.GeoDataFrame:
+    """Drop polygon parts smaller than min_part_km2 and coverage-simplify so neighbouring polygons
+    keep identical shared edges. For drainage layers, where Arctic island coastline is noise."""
+    parts = gdf[[key, "geometry"]].to_crs(EQUAL_AREA_CRS).explode(index_parts=False, ignore_index=True)
+    parts = parts[parts.geometry.area >= min_part_km2 * 1e6]
+    merged = parts.dissolve(key, as_index=False, sort=True)
+    merged["geometry"] = shapely.coverage_simplify(merged.geometry.to_numpy(), tolerance_m)
+    rest = pd.DataFrame(gdf.drop(columns="geometry")).drop_duplicates(key)
+    return gpd.GeoDataFrame(merged.merge(rest, on=key), geometry="geometry", crs=EQUAL_AREA_CRS)
+
+
+def layer_basins(tmp: Path) -> list[Path]:
+    drainage = read_vector(zip_dataset(raw_file("statcan_drainage_regions"), r"\.gdb/?$"))
+    names = {
+        "Drainage_region_code": "code",
+        "Drainage_region_name": "name",
+        "Ocean_drainage_area_name": "ocean",
+    }
+    drainage = drainage.rename(columns=names)[["code", "name", "ocean", "geometry"]]
+    drainage["geometry"] = shapely.make_valid(drainage.geometry.to_numpy())
+    regions = generalize(drainage, "code", BASIN_TOLERANCE_M, BASIN_MIN_PART_KM2)
+    export(regions, tmp / "regions.geojson", ["code", "name", "ocean"], "code")
+
+    # NHN work units: 25M vertices. Simplify to 100 m before dissolving to sub-drainage areas and
+    # clipping the US parts away.
+    nhn = read_vector(
+        zip_dataset(raw_file("nrcan_nhn_workunits")), columns=["WSCSDA", "WSCSDANAME", "WSCMDA"]
+    )
+    nhn = nhn[nhn["WSCSDA"].notna()].to_crs(EQUAL_AREA_CRS)
+    nhn["geometry"] = shapely.make_valid(shapely.simplify(nhn.geometry.to_numpy(), 100))
+    nhn = nhn.dissolve("WSCSDA", as_index=False, aggfunc="first")
+    nhn["geometry"] = shapely.intersection(nhn.geometry.to_numpy(), canada_outline())
+    nhn["geometry"] = [polygonal(g) for g in nhn.geometry]
+    nhn = nhn[nhn.geometry.notna()].rename(
+        columns={"WSCSDA": "code", "WSCSDANAME": "name", "WSCMDA": "major"}
+    )
+    subbasins = generalize(
+        nhn[["code", "name", "major", "geometry"]], "code", BASIN_TOLERANCE_M, BASIN_MIN_PART_KM2
+    )
+    export(subbasins, tmp / "subbasins.geojson", ["code", "name", "major"], "code")
+
+    out = LAYERS / f"basins.{MESH_VERSION}.topojson.gz"
+    inputs = {"regions": tmp / "regions.geojson", "subbasins": tmp / "subbasins.geojson"}
+    simplify(inputs, out, SINGLE_INTERVAL["basins"])
+    return [out]
+
+
+def layer_rivers(tmp: Path) -> list[Path]:
+    export(river_network(canada_outline()), tmp / "rivers.geojson", ["order", "name"], "key", lines=True)
+    out = LAYERS / f"rivers.{MESH_VERSION}.topojson.gz"
+    simplify({"rivers": tmp / "rivers.geojson"}, out, SINGLE_INTERVAL["rivers"], lines=True)
+    return [out]
+
+
+def layer_ridings(tmp: Path) -> list[Path]:
+    feds = read_vector(zip_dataset(raw_file("elections_fed_2023"), r"\.shp$"))
+    feds = feds.rename(columns={"FED_NUM": "fed", "ED_NAMEE": "name"})
+    feds["geometry"] = shapely.make_valid(feds.geometry.to_numpy())
+    export(feds, tmp / "ridings.geojson", ["fed", "name"], "fed")
+    out = LAYERS / f"ridings.{MESH_VERSION}.topojson.gz"
+    simplify({"ridings": tmp / "ridings.geojson"}, out, SINGLE_INTERVAL["ridings"])
+    return [out]
+
+
+BUILDERS = {
+    "boundaries": layer_boundaries,
+    "treaties": layer_treaties,
+    "ecozones": layer_ecozones,
+    "basins": layer_basins,
+    "rivers": layer_rivers,
+    "ridings": layer_ridings,
+}
+
+
+def build(only: list[str] | None = None) -> list[Path]:
+    written: list[Path] = []
+    for name, builder in BUILDERS.items():
+        if only and name not in only:
+            continue
+        log(name)
+        with tempfile.TemporaryDirectory(prefix=f"meridian-{name}-") as tmp_dir:
+            for path in builder(Path(tmp_dir)):
+                log(f"  {path.relative_to(BUILD)}: {path.stat().st_size:,} bytes")
+                written.append(path)
+    return written
+
+
+def main(argv: list[str] | None = None) -> int:
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Build data/build/layers/*.topojson.gz")
+    parser.add_argument("--only", nargs="*", choices=sorted(BUILDERS), help="layers to build (default: all)")
+    build(parser.parse_args(argv).only)
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

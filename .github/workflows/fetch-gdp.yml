@@ -1,0 +1,51 @@
+name: Fetch StatCan GDP table
+
+# Statistics Canada's www150 host drops connections from the development Codespace. GitHub-hosted
+# runners egress from different addresses, so this job downloads table 36-10-0711-01 and publishes
+# it as an artifact for `gh run download` (see pipeline/README.md, "Refreshing GDP").
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - .github/workflows/fetch-gdp.yml
+
+permissions:
+  contents: read
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download 36100711-eng.zip
+        run: |
+          set -euo pipefail
+          url="https://www150.statcan.gc.ca/n1/tbl/csv/36100711-eng.zip"
+          for attempt in 1 2 3 4 5; do
+            if curl -fsSL --retry 2 -m 600 -A "meridian-pipeline/1 (+https://github.com/mdiamond95/meridian)" -o 36100711-eng.zip "$url"; then
+              break
+            fi
+            echo "attempt $attempt failed"; sleep $((attempt * 20))
+          done
+          test -s 36100711-eng.zip
+      - name: Verify it is a zip containing 36100711.csv
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import zipfile, csv, io
+          with zipfile.ZipFile("36100711-eng.zip") as zf:
+              names = zf.namelist()
+              print("members:", names)
+              assert "36100711.csv" in names, "36100711.csv missing"
+              with zf.open("36100711.csv") as fh:
+                  header = next(csv.reader(io.TextIOWrapper(fh, encoding="utf-8-sig")))
+              print("header:", header)
+              assert "REF_DATE" in header and "VALUE" in header, "unexpected CSV layout"
+          PY
+          sha256sum 36100711-eng.zip | tee 36100711-eng.zip.sha256
+      - uses: actions/upload-artifact@v7
+        with:
+          name: statcan-gdp-36100711
+          path: |
+            36100711-eng.zip
+            36100711-eng.zip.sha256
+          retention-days: 14

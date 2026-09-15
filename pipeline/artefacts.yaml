@@ -9,34 +9,49 @@
 
 plan_version: 1
 
+# Permission gates. download.py fetches native_land_* sources only when this is `granted`:
+# the Native Land Digital API terms forbid storing or redistributing their data without explicit
+# permission (docs/data-sources.md, docs/native-land-permission-request.md).
+permissions:
+  native_land_permission: pending # pending | granted | refused
+
+# Sources fetched by a route other than their official URL. The official URL is authoritative;
+# the route is how this repository obtains the identical file (see pipeline/README.md).
+source_routes:
+  statcan_gdp_36100711:
+    official_url: https://www150.statcan.gc.ca/n1/tbl/csv/36100711-eng.zip
+    route: github-actions .github/workflows/fetch-gdp.yml → artifact statcan-gdp-36100711
+
 artefacts:
   - id: mesh
     phase: 1
     step: pipeline/mesh.py
-    description: H3 res-5 cells over Canada with province/CD/CSD and neighbour graph
-    inputs: [statcan_pr_2021, statcan_cd_2021, statcan_csd_2021]
+    description: H3 res-5 cells over Canada (land + inland water) with province/CD/CSD and neighbour graph
+    inputs: [nrcan_atlas_boundaries_1m, statcan_csd_2021]
     outputs:
       - { path: data/build/mesh.v1.json.gz, schema: docs/schemas/mesh.schema.json }
 
   - id: attrs
     phase: 1
-    step: pipeline/attrs.py
+    step: pipeline/attributes.py
     description: Per-cell attribute columns (population, language, industry, GDP allocation, treaties, ...)
     inputs:
+      - statcan_csd_2021
       - statcan_da_2021
-      - statcan_cmaca_2021
+      - statcan_cma_2021
       - statcan_profile_da_2021
       - statcan_profile_csd_2021
-      - statcan_gdp_36100402
-      - cirnac_pre1975_treaties
+      - statcan_gdp_36100711
+      - cirnac_historic_treaties
       - cirnac_modern_treaties
-      - cirnac_reserves
+      - nrcan_aboriginal_lands
       - ab_metis_settlements
-      - itk_inuit_nunangat
-      - nrcan_ecozones
-      - nrcan_drainage_areas
+      - cirnac_inuit_regions
+      - aafc_ecozones
+      - statcan_drainage_regions
+      - nrcan_nhn_workunits
       - elections_fed_2023
-      - elections_results_latest
+      - elections_results_ge45
       - native_land_territories
     outputs:
       - { path: data/build/attrs.v1.json.gz, schema: docs/schemas/attrs.schema.json }
@@ -44,32 +59,38 @@ artefacts:
   - id: layers
     phase: 1
     step: pipeline/polygons.py
-    description: Simplified TopoJSON overlay and snap layers (mapshaper, three zoom tiers where noted)
+    description: Simplified TopoJSON overlay and snap layers (mapshaper; provinces/CD/CSD share one topology per zoom tier)
     inputs:
-      - statcan_pr_2021
-      - statcan_cd_2021
       - statcan_csd_2021
-      - cirnac_pre1975_treaties
+      - cirnac_historic_treaties
       - cirnac_modern_treaties
-      - nrcan_ecozones
-      - nrcan_drainage_areas
-      - nrcan_rivers
+      - aafc_ecozones
+      - statcan_drainage_regions
+      - nrcan_nhn_workunits
+      - nrcan_c1w_strahler_arctic
+      - nrcan_c1w_strahler_atlantic
+      - nrcan_c1w_strahler_baffin
+      - nrcan_c1w_strahler_hudson
+      - nrcan_c1w_strahler_islands
+      - nrcan_c1w_strahler_mackenzie
+      - nrcan_c1w_strahler_nelson
+      - nrcan_c1w_strahler_pacific
       - elections_fed_2023
     outputs:
-      - { path: data/build/layers/provinces.v1.topojson, schema: docs/schemas/topojson.schema.json }
-      - { path: data/build/layers/cd.v1.topojson, schema: docs/schemas/topojson.schema.json }
-      - { path: data/build/layers/csd.v1.topojson, schema: docs/schemas/topojson.schema.json }
-      - { path: data/build/layers/treaties.v1.topojson, schema: docs/schemas/topojson.schema.json }
-      - { path: data/build/layers/ecozones.v1.topojson, schema: docs/schemas/topojson.schema.json }
-      - { path: data/build/layers/basins.v1.topojson, schema: docs/schemas/topojson.schema.json }
-      - { path: data/build/layers/rivers.v1.topojson, schema: docs/schemas/topojson.schema.json }
-      - { path: data/build/layers/ridings.v1.topojson, schema: docs/schemas/topojson.schema.json }
+      - { path: data/build/layers/boundaries.low.v1.topojson.gz, schema: docs/schemas/topojson.schema.json }
+      - { path: data/build/layers/boundaries.mid.v1.topojson.gz, schema: docs/schemas/topojson.schema.json }
+      - { path: data/build/layers/boundaries.high.v1.topojson.gz, schema: docs/schemas/topojson.schema.json }
+      - { path: data/build/layers/treaties.v1.topojson.gz, schema: docs/schemas/topojson.schema.json }
+      - { path: data/build/layers/ecozones.v1.topojson.gz, schema: docs/schemas/topojson.schema.json }
+      - { path: data/build/layers/basins.v1.topojson.gz, schema: docs/schemas/topojson.schema.json }
+      - { path: data/build/layers/rivers.v1.topojson.gz, schema: docs/schemas/topojson.schema.json }
+      - { path: data/build/layers/ridings.v1.topojson.gz, schema: docs/schemas/topojson.schema.json }
 
   - id: atlas
     phase: 2
     step: pipeline/atlas/build.py
     description: Historical event list resolved to first-order unit polygons
-    inputs: [statcan_pr_2021, nrcan_rivers, nrcan_drainage_areas, native_land_territories, native_land_languages]
+    inputs: [nrcan_atlas_boundaries_1m, statcan_csd_2021, statcan_drainage_regions, nrcan_c1w_strahler_nelson]
     outputs:
       - { path: data/build/atlas.v1.json, schema: docs/schemas/atlas.schema.json }
       - { path: data/build/atlas.v1.topojson, schema: docs/schemas/topojson.schema.json }
