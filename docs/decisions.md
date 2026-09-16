@@ -385,3 +385,12 @@ Mark's decisions on PR #5, and what they changed.
 - **The timeline's start is 1000, 1497 or the contact frontier,** defaulting to 1497. Before the
   first event of 1670 the atlas has no units, which is the point: that is where the pre-contact
   base and, with "frontier", the moving contact line do the talking.
+- **The Alaska panhandle claim is not drawn, and the atlas says why.** The 1825 convention fixes no
+  coordinate between 56°N and 141°W ("la crête des montagnes", "les sinuosités de la côte"), and
+  the 1903 tribunal answered by marking a map, so the Canadian claim survives only on Map 37 of the
+  British atlas filed on 23 September 1903. A ±5–10 km tracing of that map is the one thing this
+  atlas refuses to do, so the 1903 event carries the explanation instead of a polygon.
+- **Hans Island's 2022 division is in the row, not the picture.** The Greenlandic part is about
+  0.57 km², under the 2 km² minimum that keeps thousands of Arctic islets out of the display
+  topology, so both Nunavut rows share one drawn polygon. The event, its date and its instrument
+  are what the artefact carries.
