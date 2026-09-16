@@ -59,6 +59,12 @@ function PanelContent() {
             {unit.confidence !== undefined && ` · confidence ${unit.confidence}`}
           </dd>
         </dl>
+        {unit.dispute && (
+          <p className="source" data-testid="unit-claimants">
+            <span className="eyebrow">Claimed by</span>{' '}
+            {[unit.sovereign, ...otherClaimants(data.atlas, date, unit)].join(' · ')}
+          </p>
+        )}
         {unit.note && <p className="note">{unit.note}</p>}
         {unit.instrument && (
           <p className="source">
@@ -87,4 +93,17 @@ function PanelContent() {
       <p className="placeholder">Tap a unit for its details.</p>
     </article>
   );
+}
+
+/** The other powers claiming the same ground on this date, so a hatch is never anonymous. */
+function otherClaimants(
+  atlas: Parameters<typeof resolveUnits>[0],
+  date: string,
+  unit: { id: string; dispute?: string },
+): string[] {
+  if (!unit.dispute) return [];
+  const claims = resolveUnits(atlas, date, TRUTH_LAYERS).filter(
+    (u) => u.dispute === unit.dispute && u.id !== unit.id,
+  );
+  return [...new Set(claims.map((u) => u.sovereign))];
 }

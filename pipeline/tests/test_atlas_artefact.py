@@ -171,7 +171,10 @@ DIVERGENCES = {
 
 def test_every_divergence_cites_its_instrument_and_ships_nrcans_drawing():
     units = {(u["id"], u["validFrom"]): u for u in atlas()["units"]}
-    departing = {key for key, u in units.items() if "rationale" in u}
+    # A claim also explains itself, but it departs from nothing: NRCan draws boundaries, not claims.
+    departing = {
+        key for key, u in units.items() if "rationale" in u and u["truth"] == "dejure" and "dispute" not in u
+    }
     assert departing == DIVERGENCES
     references = atlas()["references"]
     for key in DIVERGENCES:
@@ -252,3 +255,62 @@ def test_de_facto_layer_covers_1670_to_1870_and_never_counts_as_de_jure():
     for unit in atlas()["units"]:
         if unit["truth"] == "defacto":
             assert unit["confidence"] < 1
+
+
+# Dispute id → the claimants the shipped atlas must name, and a date each is open.
+DISPUTES = {
+    "oregon": ({"United States", "Britain"}, "1830-01-01"),
+    "san_juan": ({"Britain and the United States"}, "1860-01-01"),
+    "labrador": ({"Canada (for Quebec)", "Newfoundland"}, "1900-01-01"),
+    "ontario_manitoba": ({"Canada (Manitoba)", "Canada (Ontario)"}, "1885-01-01"),
+    "sverdrup": ({"Norway (Sverdrup claim)"}, "1920-01-01"),
+    "hans_island": ({"Canada", "Kingdom of Denmark (Greenland)"}, "2000-01-01"),
+    "machias_seal": ({"Canada and the United States"}, "2000-01-01"),
+}
+
+
+def test_every_dispute_names_its_claimants_and_cites_its_instrument():
+    claims = [u for u in atlas()["units"] if u["truth"] == "disputed"]
+    assert {c["dispute"] for c in claims} == set(DISPUTES)
+    for dispute, (claimants, date) in DISPUTES.items():
+        open_now = [c for c in resolve(date, "disputed").values() if c["dispute"] == dispute]
+        assert open_now, f"{dispute} should be open on {date}"
+        assert {c["sovereign"] for c in open_now} == claimants, dispute
+    for claim in claims:
+        # A claim without its instrument is just a shape someone drew.
+        assert claim["instrument"].strip(), claim["id"]
+        assert claim["rationale"].strip(), claim["id"]
+        assert 0 < claim["confidence"] <= 1, claim["id"]
+
+
+def test_the_open_dispute_is_still_open_and_the_closed_ones_closed():
+    claims = {u["id"]: u for u in atlas()["units"] if u["truth"] == "disputed"}
+    assert claims["machias_grey_zone"]["validTo"] is None  # Machias Seal has never been settled
+    assert all(c["validTo"] for i, c in claims.items() if i != "machias_grey_zone")
+
+
+def test_the_2022_agreement_takes_the_east_of_hans_island_out_of_nunavut():
+    """The last event in the atlas, and Canada's first new land boundary since 1949.
+
+    It is a real de jure change that the *display* copy cannot show: the Greenlandic part is about
+    0.57 km², well under the 2 km² part minimum that keeps thousands of Arctic islets out of the
+    topology, so both Nunavut rows share one drawn polygon. What the artefact must carry is the
+    row, its date and its instrument.
+    """
+    rows = [u for u in atlas()["units"] if u["id"] == "nunavut"]
+    assert [u["validFrom"] for u in rows] == ["1999-04-01", "2022-06-14"]
+    divided = rows[-1]
+    assert divided["validTo"] is None
+    assert "14 June 2022" in divided["instrument"]
+    assert divided["confidence"] == 0.6
+    event = next(e for e in atlas()["events"] if e["date"] == "2022-06-14")
+    assert [c["unit"] for c in event["changes"]] == ["hans_claim_canada", "hans_claim_denmark", "nunavut"]
+
+
+def test_claims_are_not_clipped_to_canada():
+    """The Oregon and San Juan claims cover ground that is American today; the point of drawing a
+    claim is that it was not yet settled."""
+    oregon = geometry(resolve("1830-01-01", "disputed")["oregon_claim_us"]["geometryRef"])
+    assert oregon.bounds[1] < 48.0  # well south of the 49th parallel
+    san_juan = geometry(resolve("1860-01-01", "disputed")["san_juan_claim"]["geometryRef"])
+    assert san_juan.bounds[3] < 49.0

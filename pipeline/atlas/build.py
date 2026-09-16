@@ -798,7 +798,13 @@ def checklist(events: list[dict], rows: list[Row], checks: list[tuple[dict, str 
         for iou, row in worst:
             lines.append(f"- {row.valid_from} **{row.fields['name']}**: {iou:.1%} overlap with NRCan")
         for row in missing:
-            lines.append(f"- {row.valid_from} **{row.fields['name']}**: no NRCan polygon named “{row.nrcan}”")
+            # A claim has no NRCan counterpart by construction: their maps draw settled boundaries.
+            why = (
+                "no NRCan counterpart (their maps draw boundaries, not claims)"
+                if row.fields["truth"] == "disputed"
+                else f"no NRCan polygon named “{row.nrcan}”"
+            )
+            lines.append(f"- {row.valid_from} **{row.fields['name']}**: {why}")
         lines.append("")
     if checks:
         lines += [

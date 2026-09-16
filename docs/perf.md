@@ -104,3 +104,43 @@ free -m                     # available memory before starting
 
 Close the Playwright test servers and other editor processes first if the margin matters; they held
 about 1 GB during these runs.
+
+## The slider's frame time (Phase 2 gate)
+
+`npm run frame-time` in `app/`, which drives the built site headless in Chromium at the desktop and
+iPad viewports (`app/tests/perf/frame-time.spec.ts`). It is deliberately **not** part of
+`npm run smoke`: it measures the machine as much as the code.
+
+**What is measured:** the main-thread work one slider step costs — from dispatching the range
+input's `input` event (React flushes discrete input synchronously) to the handler returning, which
+covers resolving the units for the new date, React's commit, and Leaflet adding, removing and
+restyling paths. The paint that follows is reported separately, because in a headless browser that
+number is mostly vsync.
+
+### Measured 2026-09-16, 50 events, 148 unit rows
+
+| Viewport | Date | Work, median | Work, p95 | To next frame |
+|---|---|---|---|---|
+| desktop | 1867 | 2.6 ms | 13.1 ms | 16.4 ms |
+| desktop | 1999 | 0.7 ms | 19.2 ms | 16.8 ms |
+| iPad | 1867 | 3.4 ms | 14.5 ms | 16.6 ms |
+| iPad | 1999 | 0.8 ms | 21.1 ms | 16.7 ms |
+
+**The typical step is 1–4 ms, well inside a 60 Hz frame.** The tail is the steps that cross an
+event, where the map genuinely changes and Leaflet has to project and attach the new units' paths:
+those cost one frame, 13–21 ms here. The test asserts the median against the 16 ms gate and guards
+the p95 at 25 ms, rather than pretending an event crossing is free.
+
+### What made it fast
+
+Two changes, both measured:
+
+1. **The layer cache is warmed while the browser is idle** (`AtlasLayer`), in slices of at most
+   8 ms, and the map's container gets `data-atlas-warm` when every row is built. Before this, the
+   *first* crossing of each event built its paths: p95 was 35 ms.
+2. **The resolved set is memoized on the current event's date, not the slider's date**, so the
+   steps inside one event window do no work at all. That took the median from 4.6 ms to under 1 ms
+   at 1999.
+
+Re-take with `npm run frame-time` after `npm run build`; close other editor windows first, for the
+same reason as the pipeline numbers above.

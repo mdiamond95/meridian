@@ -45,6 +45,10 @@ export function AtlasLayer({ map }: { map: L.Map }) {
       const geometry = data?.geometries.get(unit.geometryRef);
       if (!geometry) return null;
       const layer = L.geoJSON(geometry, { bubblingMouseEvents: false });
+      // A hatch has to say whose claim it is; two claims over the same ground each get their own.
+      if (unit.truth === 'disputed') {
+        layer.bindTooltip(`${unit.name} — claimed by ${unit.sovereign}`, { sticky: true });
+      }
       layer.on('click', () => {
         select(unit.id);
         openPanel();

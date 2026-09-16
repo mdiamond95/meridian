@@ -1,11 +1,12 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { AtlasFile, AtlasUnit } from '../schema/atlas';
-import { initialAtlasState, useAtlasStore } from '../state/atlasStore';
+import { initialAtlasState, startYear, useAtlasStore } from '../state/atlasStore';
 import {
   currentEvent,
   dateToYear,
   formatDate,
   resolveReferences,
+  resolvedAt,
   resolveUnits,
   unitHistory,
   yearRange,
@@ -145,5 +146,55 @@ describe('atlasStore', () => {
     expect(useAtlasStore.getState()).toMatchObject({ visible: false, selected: null });
     store.toggleTruth('disputed');
     expect(useAtlasStore.getState().truth).toEqual({ dejure: true, defacto: false, disputed: true });
+  });
+});
+
+describe('the timeline start and the disputed layer', () => {
+  it('reaches back before the atlas when a start is chosen', () => {
+    expect(startYear(1000)).toBe(1000);
+    expect(startYear(1497)).toBe(1497);
+    // "frontier" starts at 1000 too; what differs is that each area is shaded until contact.
+    expect(startYear('frontier')).toBe(1000);
+  });
+
+  it('resolves at the current event, so a date inside one window gives the same rows', () => {
+    expect(resolvedAt(ATLAS, '1875-06-01')).toBe('1870-07-15');
+    expect(resolvedAt(ATLAS, '1870-07-15')).toBe('1870-07-15');
+    expect(resolvedAt(ATLAS, '1600-01-01')).toBe(''); // before the first event: nothing to draw
+  });
+
+  it('keeps the claims of one dispute apart from the units', () => {
+    const claims: AtlasUnit[] = [
+      unit({
+        id: 'oregon_claim_us',
+        name: "Oregon Country (United States' claim)",
+        truth: 'disputed',
+        dispute: 'oregon',
+        sovereign: 'United States',
+        status: 'disputed',
+        validFrom: '1819-01-30',
+        validTo: '1846-07-17',
+        geometryRef: 'oregon_us',
+      }),
+      unit({
+        id: 'oregon_claim_britain',
+        name: 'Columbia District (British claim)',
+        truth: 'disputed',
+        dispute: 'oregon',
+        sovereign: 'Britain',
+        status: 'disputed',
+        validFrom: '1819-01-30',
+        validTo: '1846-07-17',
+        geometryRef: 'oregon_gb',
+      }),
+    ];
+    const atlas: AtlasFile = { ...ATLAS, units: [...ATLAS.units, ...claims] };
+    // De jure by default: a claim never joins the map of what was.
+    expect(resolveUnits(atlas, '1830-01-01').length).toBe(0);
+    const disputed = resolveUnits(atlas, '1830-01-01', ['disputed']);
+    expect(disputed.map((u) => u.sovereign).sort()).toEqual(['Britain', 'United States']);
+    expect(new Set(disputed.map((u) => u.dispute))).toEqual(new Set(['oregon']));
+    // Both claims end with the treaty.
+    expect(resolveUnits(atlas, '1846-07-17', ['disputed'])).toEqual([]);
   });
 });
