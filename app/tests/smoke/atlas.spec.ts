@@ -15,18 +15,21 @@ test('atlas loads and resolves the timeline to units', async ({ page }, testInfo
   expect(count1867).toBeGreaterThanOrEqual(9);
   await page.screenshot({ path: testInfo.outputPath('atlas-1867.png') });
 
-  // An event tick jumps to its exact date: Nunavut on 1 April 1999.
-  await page.getByRole('button', { name: '1 Apr 1999: Nunavut' }).click();
+  // An event tick jumps to its exact date: Nunavut on 1 April 1999. With 50 events the ticks
+  // overlap, so dispatch the click rather than aim the pointer.
+  await page.getByRole('button', { name: '1 Apr 1999: Nunavut' }).dispatchEvent('click');
   await expect(page.getByTestId('timeline-year')).toHaveText('1999');
   await expect(page.getByTestId('timeline-event')).toContainText('Nunavut');
   await expect(units).toHaveCount(13);
   await page.screenshot({ path: testInfo.outputPath('atlas-1999.png') });
 
-  // The slider moves by year from the keyboard.
+  // The slider moves by year from the keyboard. Home is the atlas's first year: 1670, the charter.
   const slider = page.getByRole('slider', { name: 'Year' });
   await slider.focus();
   await page.keyboard.press('Home');
-  await expect(page.getByTestId('timeline-year')).toHaveText('1867');
+  await expect(page.getByTestId('timeline-year')).toHaveText('1670');
+  await page.keyboard.press('ArrowRight');
+  await expect(page.getByTestId('timeline-year')).toHaveText('1671');
   expect(errors).toEqual([]);
 });
 

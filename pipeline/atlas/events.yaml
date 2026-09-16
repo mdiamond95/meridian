@@ -1,4 +1,4 @@
-# The historical atlas: every first-order boundary change from Confederation to today.
+# The historical atlas: every first-order boundary change from the Hudson's Bay Company charter to today.
 #
 #   make atlas           build data/build/atlas.v1.json, atlas.v1.topojson.gz, docs/atlas/checklist.md
 #   python -m atlas.build --check    validate and compare with NRCan without writing
@@ -113,7 +113,910 @@ shapes:
            [-111.4938, 53.7151], [-111.4938, 54.0644], [-111.5064, 54.0644], [-111.5064, 54.4136],
            [-111.5193, 54.4136], [-111.5193, 54.7626], [-111.5324, 54.7626], [-111.5324, 55.1116]]
 
+  # ---- Sitting B shapes (1670–1867) ----
+
+  # Everything not draining to Hudson Bay or through the St. Lawrence and Atlantic basins: the Pacific,
+  # Arctic and Missouri drainage regions (StatCan codes 01–09), with the Arctic islands.
+  west_and_north:
+    minus: [{drainage: ["01", "02", "03", "04", "05", "06", "07", "08", "09"]}, {shape: hudson_bay}]
+
+  # Labrador's coastal islands (for the Labrador coast units), not the island of Newfoundland.
+  labrador_islands:
+    minus:
+      - zone:
+          ring:
+            - line: [[-57.30, 51.35], [-56.20, 51.62], [-55.60, 51.75], [-55.00, 52.20], [-55.00, 61.00]]
+            - line: [[-55.00, 61.00], [-66.00, 61.00], [-66.00, 51.30], [-57.30, 51.35]]
+      - mainland: true
+
+  newfoundland_island:
+    minus: [{modern: [NL]}, {mainland: true}, {shape: labrador_islands}]
+
+  anticosti:
+    island: [-63.0, 49.5]
+
+  magdalen_islands:
+    minus: [{zone: {box: [-62.2, 47.1, -61.3, 47.9]}}, {mainland: true}]
+
+  cape_breton_island:
+    minus: [{zone: {box: [-61.6, 45.4, -59.6, 47.1]}}, {mainland: true}]
+
+  # "The coast of Labrador" from the River St. John (Minganie) to Hudson Strait, with no inland limit in
+  # law: a 40 km strip along the Gulf shore east of the river, then NRCan's strip east of Blanc-Sablon.
+  gulf_and_labrador_coast:
+    union:
+      - near_coast: {area: {box: [-64.34, 49.9, -57.12, 52.3]}, km: 40}
+      - shape: labrador_coast_strip
+
+  vancouver_island_group:
+    minus:
+      - zone:
+          ring:
+            - line: [[-129.5, 50.5], [-128.0, 51.1], [-127.0, 50.9], [-126.0, 50.55], [-125.3, 50.35], [-124.9, 49.95],
+                     [-124.3, 49.55], [-123.6, 49.15], [-123.2, 48.8], [-123.15, 48.3]]
+            - line: [[-123.15, 48.3], [-124.8, 48.3], [-126.5, 48.6], [-129.5, 50.5]]
+      - mainland: true
+
+  # The land British Columbia did not include in 1858: east of the main chain of the Rocky Mountains north
+  # of 120°W (BCGNIS crest vertices from Intersection Mountain to the Peace), north of the Peace from there
+  # to Finlay Forks, the Finlay to its source at Thutade Lake, a straight line (the Act names none) to the
+  # source of Simpson's River (the Nass, at Nass Lake), and the Nass to the sea.
+  outside_bc_1858:
+    ring:
+      - line: [[-120.0011, 53.7989], [-120.078, 53.980], [-120.143, 53.967], [-120.212, 53.966], [-120.263, 53.982],
+               [-120.173, 54.085], [-120.553, 54.147], [-120.731, 54.300], [-120.807, 54.434], [-121.075, 54.449],
+               [-121.250, 54.550], [-121.432, 54.569], [-121.528, 54.799], [-121.615, 54.835], [-121.946, 55.007],
+               [-122.249, 55.195], [-122.627, 55.393], [-122.722, 55.342], [-122.994, 55.402], [-122.958, 55.585],
+               [-122.708, 55.694], [-122.433, 55.819], [-122.637, 56.050], [-122.650, 56.120]]
+      - line: [[-122.650, 56.120], [-122.850, 56.092], [-123.000, 56.082], [-123.100, 56.013], [-123.200, 55.979],
+               [-123.350, 56.017], [-123.600, 56.037], [-123.800, 55.982]]
+      - line: [[-123.800, 55.982], [-123.990, 56.030], [-124.260, 56.230], [-124.400, 56.330], [-124.586, 56.580],
+               [-124.880, 56.785], [-124.951, 56.904], [-125.121, 57.029], [-125.604, 57.416], [-125.682, 57.430],
+               [-125.913, 57.437], [-126.361, 57.635], [-126.560, 57.557], [-126.549, 57.398], [-126.920, 57.132],
+               [-126.891, 57.075]]
+      - line: [[-126.891, 57.075], [-129.102, 57.166]]
+      - line: [[-129.102, 57.166], [-128.822, 56.862], [-128.317, 56.532], [-128.699, 56.334], [-129.028, 56.164],
+               [-129.201, 56.147], [-129.148, 56.025], [-128.740, 55.609], [-128.842, 55.536], [-128.913, 55.504],
+               [-129.121, 55.228], [-129.220, 55.192], [-129.364, 55.158], [-129.575, 55.024], [-129.889, 54.977]]
+      - line: [[-129.889, 54.977], [-131.0, 54.9], [-141.5, 54.9], [-141.5, 61.5], [-114.0, 61.5], [-114.0, 53.7989],
+               [-120.0011, 53.7989]]
+
+
+# Control points: a place, a date, and the unit the instruments put it in. The build fails if a point
+# falls elsewhere. Before 1867, when NRCan has no vector map, they are the test of the drawing.
+checks:
+  - {date: 1690-01-01, point: [-71.21, 46.81], unit: new_france, source: "Québec, capital of New France (Conseil souverain, 1663)"}
+  - {date: 1690-01-01, point: [-92.31, 57.00], unit: ruperts_land, source: "York Factory, on the Hayes River draining to Hudson Bay (HBC charter, 1670)"}
+  - {date: 1700-01-01, point: [-113.49, 53.54], unit: ruperts_land, source: "Edmonton, in the North Saskatchewan basin draining to Hudson Bay (HBC charter, 1670)"}
+  - {date: 1700-01-01, point: [-111.16, 58.71], unit: north_western_territory, source: "Fort Chipewyan site, Arctic drainage outside the charter"}
+  - {date: 1720-01-01, point: [-59.98, 45.89], unit: ile_royale, source: "Louisbourg (Treaty of Utrecht, art. XIII)"}
+  - {date: 1720-01-01, point: [-65.52, 44.74], unit: nova_scotia, source: "Annapolis Royal (Treaty of Utrecht, art. XII)"}
+  - {date: 1720-01-01, point: [-66.64, 45.96], unit: acadia_mainland, source: "Fredericton site, in the disputed mainland of Acadia (Historical Atlas of Canada, 1713)"}
+  - {date: 1765-01-01, point: [-77.12, 45.83], unit: quebec, source: "Pembroke, east of the Nipissing line (Royal Proclamation, 1763)"}
+  - {date: 1765-01-01, point: [-61.69, 56.54], unit: newfoundland, source: "Nain, on the Labrador coast (Royal Proclamation, 1763)"}
+  - {date: 1765-01-01, point: [-63.00, 49.50], unit: newfoundland, source: "Anticosti (Royal Proclamation, 1763)"}
+  - {date: 1765-01-01, point: [-63.13, 46.24], unit: nova_scotia, source: "Charlottetown, St. John's Island annexed to Nova Scotia (Royal Proclamation, 1763)"}
+  - {date: 1765-01-01, point: [-89.25, 48.38], unit: north_western_territory, source: "Thunder Bay, in the Indian Reserve west of the Nipissing line (Royal Proclamation, 1763)"}
+  - {date: 1770-01-01, point: [-63.13, 46.24], unit: prince_edward_island, source: "Charlottetown (Order in Council, 28 June 1769)"}
+  - {date: 1780-01-01, point: [-61.69, 56.54], unit: quebec, source: "Nain (Quebec Act, 1774, s. I)"}
+  - {date: 1780-01-01, point: [-89.25, 48.38], unit: quebec, source: "Thunder Bay, Lake Superior basin (Quebec Act, 1774, s. I)"}
+  - {date: 1790-01-01, point: [-66.64, 45.96], unit: new_brunswick, source: "Fredericton (Order in Council, 18 June 1784)"}
+  - {date: 1790-01-01, point: [-60.19, 46.14], unit: cape_breton, source: "Sydney (DesBarres commission, 1784)"}
+  - {date: 1795-01-01, point: [-79.38, 43.65], unit: upper_canada, source: "Toronto (Constitutional Act, 1791)"}
+  - {date: 1795-01-01, point: [-75.71, 45.48], unit: lower_canada, source: "Gatineau, east of the Ottawa River line (Order in Council, 24 August 1791)"}
+  - {date: 1815-01-01, point: [-61.69, 56.54], unit: newfoundland, source: "Nain (49 Geo. III c. 27, s. XIV)"}
+  - {date: 1815-01-01, point: [-63.00, 49.50], unit: newfoundland, source: "Anticosti (49 Geo. III c. 27, s. XIV)"}
+  - {date: 1815-01-01, point: [-61.79, 47.42], unit: lower_canada, source: "Havre-aux-Maisons, Magdalen Islands, excepted from the 1809 Act (49 Geo. III c. 27, s. XIV)"}
+  - {date: 1822-01-01, point: [-60.19, 46.14], unit: nova_scotia, source: "Sydney (Kempt's proclamation, 16 October 1820)"}
+  - {date: 1830-01-01, point: [-63.00, 49.50], unit: lower_canada, source: "Anticosti (6 Geo. IV c. 59, s. IX)"}
+  - {date: 1830-01-01, point: [-61.69, 56.54], unit: newfoundland, source: "Nain, east of the Anse-Sablon line and north of 52°N (6 Geo. IV c. 59, s. IX)"}
+  - {date: 1850-01-01, point: [-76.48, 44.23], unit: province_of_canada, source: "Kingston (Act of Union, 1840, s. I)"}
+  - {date: 1850-01-01, point: [-123.37, 48.43], unit: vancouver_island, source: "Victoria (grant of Vancouver's Island, 1849)"}
+  - {date: 1860-01-01, point: [-120.34, 50.68], unit: british_columbia, source: "Kamloops (21 & 22 Vict. c. 99, s. I)"}
+  - {date: 1860-01-01, point: [-120.85, 56.25], unit: north_western_territory, source: "Fort St. John, east of the main chain of the Rockies (21 & 22 Vict. c. 99, s. I)"}
+  - {date: 1860-01-01, point: [-133.70, 59.58], unit: north_western_territory, source: "Atlin, north of the Nass–Finlay line (21 & 22 Vict. c. 99, s. I)"}
+  - {date: 1863-01-01, point: [-133.70, 59.58], unit: stickeen_territories, source: "Atlin, south of 62°N and west of 125°W (Order in Council, 19 July 1862)"}
+  - {date: 1865-01-01, point: [-120.85, 56.25], unit: british_columbia, source: "Fort St. John, west of 120°W (26 & 27 Vict. c. 83, s. 3)"}
+  - {date: 1865-01-01, point: [-135.06, 60.72], unit: north_western_territory, source: "Whitehorse, north of 60°N (26 & 27 Vict. c. 83, s. 3)"}
+  - {date: 1867-12-31, point: [-123.37, 48.43], unit: british_columbia, source: "Victoria (British Columbia Act, 1866, s. 8)"}
+
 events:
+  - date: 1670-05-12
+    title: The Hudson's Bay Company charter
+    note: >-
+      Charles II grants the Hudson's Bay Company the lands draining into Hudson Bay, as Rupert's Land.
+      France holds Canada and Acadia, and England and France both fish and claim Newfoundland. The charter
+      is dated 2 May 1670 in the Old Style calendar England then used.
+    changes:
+      - create: ruperts_land
+        name: Rupert's Land
+        status: hbc_charter
+        sovereign: Hudson's Bay Company
+        note: Granted to the Hudson's Bay Company by royal charter; France contested the bay posts until 1713.
+        instrument: >-
+          Royal Charter of the Hudson's Bay Company, 2 May 1670 (Old Style): "all the Landes Countryes and
+          Territoryes upon the Coastes and Confynes of the Seas ... that lye within the entrance of the Streightes
+          commonly called Hudsons Streightes".
+        boundary: >-
+          The lands draining to Hudson Bay and Hudson Strait (StatCan ocean drainage area Hudson Bay), including
+          the bay's islands and southern Baffin Island. The charter names no watershed; the drainage basin is the
+          standard reading (Historical Atlas of Canada). NRCan's 1667 and 1713 plates stripe a disputed band along
+          its southern margin; that band is not drawn.
+        geometry:
+          shape: hudson_bay
+
+      - create: acadia
+        name: Acadia
+        status: colony
+        sovereign: France
+        capital: Port-Royal
+        note: Restored to France by the Treaty of Breda (1667) and handed over in 1670; its seat moved several times.
+        instrument: Treaty of Breda, 31 July 1667, art. X (restitution of Acadia to France).
+        boundary: >-
+          Modern Nova Scotia, New Brunswick and Prince Edward Island, with Cape Breton. Its limit against Canada was
+          never defined.
+        geometry:
+          modern: [NS, NB, PE]
+
+      - create: newfoundland
+        name: Newfoundland
+        status: disputed
+        sovereign: England and France
+        note: >-
+          English fishing settlements on the east coast and the French colony of Plaisance, founded 1662. NRCan's
+          1667 plate stripes the whole island.
+        instrument: >-
+          No instrument settled it: England's claim rested on Cabot (1497) and Gilbert (1583), France's on its
+          colony at Plaisance (1662).
+        boundary: The island of Newfoundland and its islands.
+        geometry:
+          shape: newfoundland_island
+
+      - create: north_western_territory
+        name: Lands outside European claims
+        status: unorganized
+        sovereign: Indigenous nations
+        nrcan: Northwest Territories
+        note: The Pacific slope, the Arctic and Missouri drainage, and the Arctic islands, held by Indigenous nations.
+        boundary: The Pacific, Arctic and Missouri drainage regions (StatCan 01–09), with the Arctic islands.
+        geometry:
+          shape: west_and_north
+
+      - create: new_france
+        name: Canada (New France)
+        status: colony
+        sovereign: France
+        capital: Québec
+        note: The colony of Canada, claiming the St. Lawrence and Great Lakes basins (the pays d'en haut) and Labrador's Atlantic slope.
+        instrument: >-
+          French royal government of New France from 1663 (Édit de création du Conseil souverain, April 1663);
+          no instrument fixed its limits.
+        boundary: >-
+          The rest of modern Canada: the Great Lakes, Ottawa, St. Lawrence and North Shore basins, the Gaspé, and the
+          Atlantic slope of Labrador, as NRCan's 1667 plate draws New France.
+        geometry:
+          minus:
+            - canada: true
+            - unit: ruperts_land
+            - unit: acadia
+            - unit: newfoundland
+            - unit: north_western_territory
+
+      - create: defacto_french_settlement
+        name: French settlement
+        status: colony
+        sovereign: France
+        truth: defacto
+        confidence: 0.8
+        boundary: >-
+          Settlement belts open in 1670 (pipeline/atlas/defacto.yaml): the St. Lawrence seigneurial belt, the
+          Richelieu, Port-Royal, and Plaisance.
+        geometry: {belts: {as_of: 1670, power: french}}
+      - create: defacto_french_posts
+        name: French trading posts
+        status: colony
+        sovereign: France
+        truth: defacto
+        confidence: 0.3
+        boundary: Catchments of French posts open in 1670 (Tadoussac, Mingan).
+        geometry: {posts: {as_of: 1670, power: french}}
+      - create: defacto_english_settlement
+        name: English settlement
+        status: colony
+        sovereign: England
+        truth: defacto
+        confidence: 0.7
+        boundary: The English Shore of Newfoundland, Trepassey to Bonavista.
+        geometry: {belts: {as_of: 1670, power: british}}
+      - create: defacto_english_posts
+        name: Hudson's Bay Company posts
+        status: hbc_charter
+        sovereign: Hudson's Bay Company
+        truth: defacto
+        confidence: 0.35
+        boundary: Catchments of posts open in 1670 (Charles Fort on James Bay).
+        geometry: {posts: {as_of: 1670, power: british}}
+
+  - date: 1713-04-11
+    title: The Treaty of Utrecht
+    note: >-
+      France gives up Hudson Bay, Newfoundland and "Nova Scotia or Acadia, with its ancient boundaries" to Great
+      Britain, and keeps Cape Breton and the islands of the Gulf as Île Royale. The two powers never agree what
+      Acadia's ancient boundaries were. Signed 31 March 1713 in the Old Style calendar; the exchange of
+      ratifications was within four weeks but its day is not established.
+    date_confidence: 0.8
+    changes:
+      - create: nova_scotia
+        name: Nova Scotia
+        status: colony
+        sovereign: Britain
+        capital: Annapolis Royal
+        note: Captured in 1710 and ceded in 1713; Halifax replaced Annapolis Royal as capital in 1749.
+        instrument: >-
+          Treaty of Utrecht, 11 April 1713 (31 March Old Style), art. XII: "all Nova Scotia or Acadia, with its
+          ancient boundaries, as also the city of Port Royal, now called Annapolis Royal".
+        boundary: The peninsula of modern Nova Scotia; Britain's claim to the mainland north of it was disputed.
+        geometry:
+          minus:
+            - intersect: [{was: acadia}, {modern: [NS]}]
+            - shape: cape_breton_island
+      - create: acadia_mainland
+        name: Mainland Acadia (disputed)
+        status: disputed
+        sovereign: Britain and France
+        note: Britain read Acadia's "ancient boundaries" to include this land; France held that it had ceded only the peninsula.
+        instrument: Treaty of Utrecht, art. XII ("with its ancient boundaries"); Historical Atlas of Canada timeline, 1713.
+        boundary: Modern New Brunswick, as NRCan's 1713 plate stripes it.
+        geometry:
+          intersect: [{was: acadia}, {modern: [NB]}]
+      - create: ile_royale
+        name: Île Royale
+        status: colony
+        sovereign: France
+        capital: Louisbourg
+        note: Cape Breton, with Île Saint-Jean (Prince Edward Island) as a dependency from 1720.
+        instrument: >-
+          Treaty of Utrecht, art. XIII: "the island called Cape Breton, as also all others, both in the mouth of the
+          river of St. Lawrence, and in the gulph of the same name, shall hereafter belong of right to the French".
+        boundary: Cape Breton Island and Prince Edward Island.
+        geometry:
+          intersect:
+            - was: acadia
+            - union: [{shape: cape_breton_island}, {modern: [PE]}]
+      - dissolve: acadia
+      - alter: newfoundland
+        status: colony
+        sovereign: Britain
+        capital: St. John's
+        note: >-
+          British, with French fishing rights on the French Shore; governed by naval commodores, with no formal
+          colonial government until 1825. St. John's was the seat in practice.
+        instrument: >-
+          Treaty of Utrecht, art. XIII: "The island called Newfoundland, with the adjacent islands, shall from this
+          time forward, belong of right wholly to Britain".
+      - alter: defacto_french_settlement
+        confidence: 0.8
+        boundary: Belts open in 1713, Plaisance evacuated to Louisbourg and Île Royale's harbours settled.
+        geometry: {belts: {as_of: 1713, power: french}}
+      - alter: defacto_french_posts
+        confidence: 0.3
+        boundary: French posts open in 1713, including York Factory, held by France until 1714.
+        geometry: {posts: {as_of: 1713, power: french}}
+      - alter: defacto_english_settlement
+        confidence: 0.7
+        name: British settlement
+        sovereign: Britain
+        boundary: The English Shore and Annapolis Royal.
+        geometry: {belts: {as_of: 1713, power: british}}
+      - alter: defacto_english_posts
+        confidence: 0.35
+        boundary: Hudson's Bay Company posts open in 1713 (Albany; Rupert House and Moose Factory stood empty).
+        geometry: {posts: {as_of: 1713, power: british}}
+
+  - date: 1763-03-10
+    title: The Treaty of Paris
+    note: >-
+      France cedes Canada, Cape Breton and all the islands of the Gulf and River St. Lawrence to Great Britain.
+      French rule in what is now Canada ends, except for fishing rights. Signed on 10 February; ratifications
+      were exchanged on 10 March 1763.
+    date_confidence: 0.8
+    changes:
+      - alter: new_france
+        name: Canada
+        sovereign: Britain
+        note: Under British military government since the capitulation of Montreal (8 September 1760).
+        instrument: >-
+          Treaty of Paris, 10 February 1763, art. IV: "his Most Christian Majesty cedes and guaranties to his said
+          Britannick Majesty, in full right, Canada, with all its dependencies, as well as the island of Cape Breton,
+          and all the other islands and coasts in the gulph and river of St. Lawrence".
+      - alter: ile_royale
+        name: Cape Breton and St. John's Island
+        sovereign: Britain
+        instrument: Treaty of Paris, 10 February 1763, art. IV.
+      - alter: nova_scotia
+        capital: Halifax
+        note: The dispute over mainland Acadia ends with the French cession.
+        instrument: Treaty of Paris, 10 February 1763, art. IV.
+        boundary: The peninsula and the mainland north of it (modern New Brunswick).
+        geometry:
+          union: [{was: nova_scotia}, {was: acadia_mainland}]
+      - dissolve: acadia_mainland
+      - dissolve: defacto_french_settlement
+      - dissolve: defacto_french_posts
+
+  - date: 1763-10-07
+    title: The Royal Proclamation
+    note: >-
+      Britain creates the Province of Quebec as a narrow band along the St. Lawrence and reserves the lands
+      beyond the colonies for Indigenous nations. Newfoundland is given the Labrador coast, and Nova Scotia the
+      islands of the Gulf.
+    changes:
+      - create: quebec
+        name: Province of Quebec
+        status: colony
+        sovereign: Britain
+        capital: Québec
+        instrument: >-
+          Royal Proclamation, 7 October 1763: "bounded on the Labrador Coast by the River St. John, and from thence by
+          a Line drawn from the Head of that River through the Lake St. John, to the South end of the Lake Nipissim;
+          from whence the said Line, crossing the River St. Lawrence, and the Lake Champlain, in 45. Degrees of North
+          Latitude, passes along the High Lands ... and also along the North Coast of the Baye des Chaleurs, and the
+          Coast of the Gulph of St. Lawrence to Cape Rosieres, and from thence crossing the Mouth of the River St.
+          Lawrence by the West End of the Island of Anticosti, terminates at the aforesaid River of St. John."
+        boundary: >-
+          From the mouth of the Rivière Saint-Jean (Minganie) up to its head, straight lines through Lac Saint-Jean to
+          the south end of Lake Nipissing and to 45°N on the St. Lawrence, then 45°N and the highlands (as the modern
+          Quebec–United States and Quebec–New Brunswick borders) to Chaleur Bay, and the Gulf coast to Cap-des-Rosiers
+          and across to Anticosti's west end. The Nipissing line puts the Ottawa valley in Quebec. The river's head is
+          approximate (the Proclamation's draftsmen confused it with the Romaine's).
+        geometry:
+          intersect:
+            - was: new_france
+            - ring:
+                - line: [[-64.3344, 50.2833], [-64.1967, 51.6553], [-72.00, 48.60], [-79.75, 46.15], [-74.68, 45.00], [-74.68, 44.00],
+                         [-63.00, 44.00], [-63.00, 48.50], [-64.20, 48.86], [-64.55, 49.85], [-64.34, 50.29]]
+                - line: [[-64.34, 50.29], [-64.34, 50.30]]
+      - alter: newfoundland
+        boundary: >-
+          The island, with the Labrador coast from the Rivière Saint-Jean to Hudson Strait (a 40 km Gulf shore strip,
+          then NRCan's Labrador strip), Anticosti, the Magdalen Islands and the Labrador islands. The coast's inland
+          limit was undefined.
+        confidence: 0.6
+        instrument: >-
+          Royal Proclamation, 7 October 1763: "all that Coast, from the River St. John's to Hudson's Streights,
+          together with the Islands of Anticosti and Madelaine, and all other smaller Islands lying upon the said
+          Coast, under the care and Inspection of our Governor of Newfoundland."
+        geometry:
+          union:
+            - was: newfoundland
+            - minus:
+                - intersect:
+                    - was: new_france
+                    - union: [{shape: gulf_and_labrador_coast}, {shape: anticosti}, {shape: magdalen_islands},
+                              {shape: labrador_islands}]
+                # The 40 km Gulf strip laps west of the Rivière Saint-Jean; the Proclamation puts that
+                # bank in Quebec.
+                - unit: quebec
+      - alter: nova_scotia
+        instrument: >-
+          Royal Proclamation, 7 October 1763: "to annex the Islands of St. John's and Cape Breton, or Isle Royale, with
+          the lesser Islands adjacent thereto, to our Government of Nova Scotia."
+        boundary: The peninsula, modern New Brunswick, Cape Breton and St. John's Island.
+        geometry:
+          union: [{was: nova_scotia}, {was: ile_royale}]
+      - dissolve: ile_royale
+      - create: arctic_islands
+        name: British Arctic Islands
+        status: unorganized
+        sovereign: Britain
+        nrcan: Arctic Islands
+        confidence: 0.7
+        instrument: >-
+          British claims by discovery (Frobisher 1576–78, Davis, Hudson, Baffin), which NRCan's 1763 plate tints
+          British; Rupert's Land and North-Western Territory Order (Imperial Order in Council, 23 June 1870, in force
+          15 July 1870), operative paragraph, which names no boundaries; Adjacent Territories Order (Imperial Order in
+          Council, 31 July 1880), operative paragraph, transferring "all Islands adjacent" from 1 September 1880.
+        rationale: >-
+          London and Ottawa treated the Arctic islands as outside the 1870 transfer, which is why Britain transferred
+          them separately in 1880, so they are drawn apart from the North-Western Territory; the DCER editors note the
+          1821 and 1859 definitions could be read to include them, hence 0.7.
+        nrcan_overlay:
+          year: 1867
+          from: 1867-07-01
+          until: 1870-07-15
+          polygons:
+            - name: Northwest Territories
+              note: NRCan's 1867 map draws the Arctic islands inside the North-Western Territory.
+        boundary: >-
+          The Arctic Archipelago north of the straits the 1895 order names, less the parts draining to Hudson Bay.
+          NRCan's 1867 map folds these islands into the North-Western Territory; they were not part of it, and NRCan
+          separates them from 1870.
+        geometry:
+          intersect:
+            - was: north_western_territory
+            - minus: [{shape: arctic_islands}, {shape: hudson_bay}]
+      - alter: north_western_territory
+        name: Indian Reserve
+        sovereign: Britain
+        instrument: >-
+          Royal Proclamation, 7 October 1763: "all the Lands and Territories not included within the Limits of Our said
+          Three new Governments, or within the Limits of the Territory granted to the Hudson's Bay Company, as also all
+          the Lands and Territories lying to the Westward of the Sources of the Rivers which fall into the Sea from the
+          West and North West".
+        note: Reserved for Indigenous nations under the Crown's protection; settlement and private purchase forbidden.
+        boundary: >-
+          Everything outside Quebec, Nova Scotia, Newfoundland and Rupert's Land: the Great Lakes basin west of the
+          Nipissing line, the North Shore interior and Labrador's Atlantic slope inland of the coast, and the West and
+          North.
+        geometry:
+          minus:
+            - union: [{was: north_western_territory}, {was: new_france}]
+            - unit: quebec
+            - unit: newfoundland
+            - unit: arctic_islands
+      - dissolve: new_france
+      - alter: defacto_english_settlement
+        confidence: 0.7
+        boundary: British settlement belts open in 1763, including the St. Lawrence belt under British rule.
+        geometry: {belts: {as_of: 1763, power: british}}
+      - alter: defacto_english_posts
+        confidence: 0.35
+        name: British trading posts
+        sovereign: Britain
+        boundary: Posts open in 1763 under British rule, the former French posts of the Gulf and Labrador included.
+        geometry: {posts: {as_of: 1763, power: british}}
+
+  - date: 1769-06-28
+    title: St. John's Island
+    note: >-
+      An order in council makes St. John's Island a colony separate from Nova Scotia. Its first governor, Walter
+      Patterson, arrives in 1770.
+    changes:
+      - create: prince_edward_island
+        name: St. John's Island
+        status: colony
+        sovereign: Britain
+        capital: Charlottetown
+        instrument: Order of His Majesty in Council, 28 June 1769, approving a separate government for the island of St. John.
+        boundary: Modern Prince Edward Island.
+        geometry:
+          intersect: [{was: nova_scotia}, {modern: [PE]}]
+      - alter: nova_scotia
+        boundary: Less St. John's Island.
+        geometry:
+          minus: [{was: nova_scotia}, {unit: prince_edward_island}]
+
+  - date: 1774-06-22
+    title: The Quebec Act
+    note: >-
+      Parliament enlarges Quebec to the Ohio, the Mississippi and the Hudson's Bay Company lands, and gives it back the
+      Labrador coast. Its new civil government begins on 1 May 1775; the boundary took effect on assent.
+    date_confidence: 0.9
+    changes:
+      - alter: quebec
+        instrument: >-
+          Quebec Act, 14 Geo. III c. 83, s. I (assented 22 June 1774): Quebec extends "Northward to the Southern
+          Boundary of the Territory granted to the Merchants Adventurers of England, trading to Hudson's Bay; and also
+          all such Territories, Islands, and Countries, which have, since the tenth of February, one thousand seven
+          hundred and sixty-three, been made Part of the Government of Newfoundland".
+        boundary: >-
+          Within modern Canada: the old province, the Indian Reserve east of Rupert's Land (the Great Lakes basin and the
+          North Shore and Labrador interior), and Newfoundland's Labrador coast, Anticosti and the Magdalen Islands. The
+          western limit, "Northward" from the Mississippi, is read as the Lake Superior–Hudson Bay divide.
+        geometry:
+          union:
+            - was: quebec
+            - intersect:
+                - was: north_western_territory
+                - drainage: ["19", "20", "21", "22", "23", "24", "25"]
+            - minus: [{was: newfoundland}, {shape: newfoundland_island}]
+      - alter: newfoundland
+        boundary: The island of Newfoundland.
+        instrument: Quebec Act, 14 Geo. III c. 83, s. I (the Labrador coast, Anticosti and the Magdalens annexed to Quebec).
+        geometry:
+          intersect: [{was: newfoundland}, {shape: newfoundland_island}]
+      - alter: north_western_territory
+        boundary: The West and North, beyond Rupert's Land and the enlarged Quebec.
+        geometry:
+          minus: [{was: north_western_territory}, {unit: quebec}]
+      - alter: defacto_english_posts
+        confidence: 0.35
+        boundary: Posts open in 1774, now including Cumberland House, the first inland post of the Hudson's Bay Company.
+        geometry: {posts: {as_of: 1774, power: british}}
+
+  - date: 1784-05-12
+    title: The Treaty of Paris with the United States
+    note: >-
+      Britain recognizes the United States, with a boundary through the Great Lakes and along the highlands south of
+      the St. Lawrence. The treaty's vague lines leave disputes over New Brunswick and the country west of Lake
+      Superior; nothing inside modern Canada changes hands. Signed 3 September 1783; in force 12 May 1784.
+    changes: []
+
+  - date: 1784-06-18
+    title: New Brunswick
+    note: >-
+      Loyalists who fled the American Revolution press for their own colony, and an order in council divides Nova
+      Scotia at the Missiguash River. Thomas Carleton's commission as governor follows on 16 August.
+    changes:
+      - create: new_brunswick
+        name: New Brunswick
+        status: colony
+        sovereign: Britain
+        capital: Fredericton
+        note: Saint John served as capital until the government moved to Fredericton in 1788.
+        instrument: >-
+          Order of His Majesty in Council, 18 June 1784: the land north of the Missiguash "erected into a Government
+          under the Name of New Brunswick"; commission to Thomas Carleton, 16 August 1784.
+        boundary: >-
+          Modern New Brunswick. The northern line ran to "the Southern Boundary of our province of Quebec", which was
+          never located and was disputed until 1851; the modern Quebec–New Brunswick border stands in for it.
+        geometry:
+          intersect: [{was: nova_scotia}, {modern: [NB]}]
+      - alter: nova_scotia
+        boundary: Less New Brunswick.
+        geometry:
+          minus: [{was: nova_scotia}, {unit: new_brunswick}]
+
+  - date: 1784-08-09
+    title: Cape Breton
+    note: >-
+      Cape Breton is made a separate colony under Joseph DesBarres, who founds Sydney as its capital. The June order
+      had made it a lieutenant-governorship subordinate to Nova Scotia.
+    date_confidence: 0.8
+    changes:
+      - create: cape_breton
+        name: Cape Breton
+        status: colony
+        sovereign: Britain
+        capital: Sydney
+        instrument: Commission to J.F.W. DesBarres as lieutenant-governor of Cape Breton, 9 August 1784 (Dictionary of Canadian Biography).
+        boundary: Cape Breton Island and its adjacent islands.
+        geometry:
+          intersect: [{was: nova_scotia}, {shape: cape_breton_island}]
+      - alter: nova_scotia
+        boundary: The peninsula.
+        geometry:
+          minus: [{was: nova_scotia}, {unit: cape_breton}]
+      - alter: defacto_english_settlement
+        confidence: 0.7
+        boundary: Belts open in 1784, with the Loyalist settlements of the Saint John valley and Upper Canada.
+        geometry: {belts: {as_of: 1784, power: british}}
+
+  - date: 1791-12-26
+    title: Upper and Lower Canada
+    note: >-
+      The Constitutional Act divides Quebec in two along the Ottawa River, giving the Loyalists of the west their own
+      province. Upper Canada takes English law; Lower Canada keeps French civil law.
+    changes:
+      - create: upper_canada
+        name: Upper Canada
+        status: colony
+        sovereign: Britain
+        capital: York
+        note: Newark (Niagara-on-the-Lake) was the capital until 1796; York is now Toronto.
+        instrument: >-
+          Constitutional Act, 31 Geo. III c. 31, and Order in Council of 24 August 1791 (the dividing line), in force 26
+          December 1791 by proclamation of 18 November 1791.
+        boundary: >-
+          The old province west of the line from Pointe-au-Baudet up the Ottawa River to Lake Timiskaming and due north
+          to the Hudson Bay height of land (as surveyed, along the Rigaud limit): the modern Ontario–Quebec border.
+        geometry:
+          intersect: [{was: quebec}, {modern: [ON]}]
+      - create: lower_canada
+        name: Lower Canada
+        status: colony
+        sovereign: Britain
+        capital: Québec
+        instrument: Constitutional Act, 31 Geo. III c. 31, and Order in Council of 24 August 1791, in force 26 December 1791.
+        boundary: The old province east of the line, with the Labrador coast, Anticosti and the Magdalen Islands.
+        geometry:
+          minus: [{was: quebec}, {unit: upper_canada}]
+      - dissolve: quebec
+      - create: defacto_spanish_posts
+        name: Spanish post at Nootka
+        status: colony
+        sovereign: Spain
+        truth: defacto
+        confidence: 0.3
+        boundary: Santa Cruz de Nuca on Nootka Sound, held 1789–1795.
+        geometry: {posts: {as_of: 1791, power: spanish}}
+      - alter: defacto_english_settlement
+        confidence: 0.7
+        boundary: Belts open in 1791.
+        geometry: {belts: {as_of: 1791, power: british}}
+      - alter: defacto_english_posts
+        confidence: 0.35
+        boundary: Posts open in 1791, from Fort Chipewyan to Moose Factory.
+        geometry: {posts: {as_of: 1791, power: british}}
+
+  - date: 1799-02-01
+    title: Prince Edward Island
+    note: >-
+      The island's assembly renames St. John's Island after Prince Edward, and the King in Council confirms it. Its
+      boundaries are unchanged.
+    date_confidence: 0.8
+    changes:
+      - rename: prince_edward_island
+        name: Prince Edward Island
+
+  - date: 1809-03-30
+    title: The Labrador coast returns to Newfoundland
+    note: >-
+      Parliament gives the Labrador coast and Anticosti back to Newfoundland to put the fishery under one
+      government. Lower Canada keeps the Magdalen Islands.
+    changes:
+      - alter: newfoundland
+        confidence: 0.6
+        instrument: >-
+          49 Geo. III c. 27, s. XIV (30 March 1809): the coast of Labrador "from the river St. John to Hudson's
+          Streights, and the said Island of Anticosti" re-annexed to Newfoundland, "except the islands of Madelaine".
+        boundary: >-
+          The island, with the Labrador coast from the Rivière Saint-Jean to Hudson Strait (a 40 km Gulf shore strip,
+          then NRCan's strip), Anticosti and the Labrador islands; the inland limit was undefined. NRCan's 1809 plate
+          draws the same thin strip and leaves the interior in Lower Canada.
+        geometry:
+          union:
+            - was: newfoundland
+            - intersect:
+                - was: lower_canada
+                - union: [{shape: gulf_and_labrador_coast}, {shape: anticosti}, {shape: labrador_islands}]
+      - alter: lower_canada
+        boundary: Less the Labrador coast and Anticosti.
+        geometry:
+          minus: [{was: lower_canada}, {unit: newfoundland}]
+
+  - date: 1819-01-30
+    title: The Convention of 1818
+    note: >-
+      Britain and the United States draw their boundary along 49°N from Lake of the Woods to the Rocky Mountains, and
+      leave the Oregon Country west of the mountains open to both. Signed 20 October 1818; in force 30 January 1819.
+    changes: []
+
+  - date: 1820-10-16
+    title: Cape Breton rejoins Nova Scotia
+    note: >-
+      Cape Breton loses its separate government and is annexed to Nova Scotia again, over its residents' protests.
+      Lieutenant-Governor Kempt proclaimed the change on 16 October 1820.
+    date_confidence: 0.9
+    changes:
+      - alter: nova_scotia
+        instrument: >-
+          Commission to the Earl of Dalhousie, 27 April 1820, and Lieutenant-Governor Sir James Kempt's proclamation of 16
+          October 1820 ending Cape Breton's separate government.
+        boundary: Modern Nova Scotia.
+        geometry:
+          union: [{was: nova_scotia}, {was: cape_breton}]
+      - dissolve: cape_breton
+
+  - date: 1821-07-02
+    title: The fur trade merger
+    note: >-
+      The Hudson's Bay Company and the North West Company merge after years of violent rivalry. Parliament gives the
+      merged company an exclusive licence over the Indian Territories beyond Rupert's Land.
+    changes:
+      - alter: north_western_territory
+        name: Indian Territories
+        note: Under the Hudson's Bay Company's exclusive trading licence; named the North-Western Territory by the 1859 Indian Territories Act.
+        instrument: >-
+          An Act for regulating the Fur Trade, 1 & 2 Geo. IV c. 66 (2 July 1821), s. VI (jurisdiction "within the said
+          Indian Territories"); licence of exclusive trade, 5 December 1821.
+      - alter: defacto_english_posts
+        confidence: 0.35
+        boundary: Posts open in 1821, the year of the merger; many duplicate posts closed over the next few years.
+        geometry: {posts: {as_of: 1821, power: british}}
+      - alter: defacto_english_settlement
+        confidence: 0.7
+        boundary: Belts open in 1821, with the Red River Settlement.
+        geometry: {belts: {as_of: 1821, power: british}}
+      - dissolve: defacto_spanish_posts
+
+  - date: 1825-06-22
+    title: The Gulf shore returns to Lower Canada
+    note: >-
+      Parliament moves the Gulf of St. Lawrence shore west of Anse-Sablon, and Anticosti, back to Lower Canada.
+      Newfoundland keeps the coast east of the Anse-Sablon line and north of 52°N.
+    changes:
+      - alter: lower_canada
+        instrument: >-
+          6 Geo. IV c. 59, s. IX (22 June 1825): the coast "to the westward of a line to be drawn due north and south
+          from the bay or harbour of Ance Sablon inclusive, as far as the fifty-second degree of north latitude, with
+          the Island of Anticosti" re-annexed to Lower Canada.
+        boundary: With the Gulf shore west of the Anse-Sablon meridian and south of 52°N, and Anticosti.
+        geometry:
+          union:
+            - was: lower_canada
+            - intersect:
+                - was: newfoundland
+                - union: [{box: [-66.0, 49.0, -57.11, 52.0]}, {shape: anticosti}]
+      - alter: newfoundland
+        confidence: 0.5
+        boundary: >-
+          The island, and the coast of Labrador east of the Anse-Sablon line to Cape Chidley as NRCan's coastal strip.
+        geometry:
+          minus: [{was: newfoundland}, {unit: lower_canada}]
+
+  - date: 1841-02-10
+    title: The Province of Canada
+    note: >-
+      After the rebellions of 1837–38, Upper and Lower Canada are united as one province with one legislature. They
+      remain Canada West and Canada East in practice.
+    changes:
+      - create: province_of_canada
+        name: Province of Canada
+        status: colony
+        sovereign: Britain
+        capital: Kingston
+        note: >-
+          The seat moved: Kingston 1841, Montreal 1844, Toronto 1849, Quebec 1851, Toronto 1855, Quebec 1859, Ottawa
+          1865.
+        instrument: >-
+          Act of Union, 3 & 4 Vict. c. 35, s. I (assented 23 July 1840), proclaimed by Lord Sydenham on 10 February 1841.
+        boundary: Upper and Lower Canada together.
+        geometry:
+          union: [{was: upper_canada}, {was: lower_canada}]
+      - dissolve: upper_canada
+      - dissolve: lower_canada
+      - alter: defacto_english_settlement
+        confidence: 0.7
+        boundary: Belts open in 1841.
+        geometry: {belts: {as_of: 1841, power: british}}
+      - alter: defacto_english_posts
+        confidence: 0.35
+        boundary: Posts open in 1841.
+        geometry: {posts: {as_of: 1841, power: british}}
+
+  - date: 1842-10-13
+    title: The Webster–Ashburton Treaty
+    note: >-
+      Britain and the United States settle the Maine–New Brunswick boundary and the line west of Lake Superior. The
+      disputed claims arrive with the disputed layer; the ratifications were exchanged on 13 October 1842 by one
+      treaty series and 15 October by another.
+    date_confidence: 0.7
+    changes: []
+
+  - date: 1846-07-17
+    title: The Oregon Treaty
+    note: >-
+      The boundary along 49°N is continued to the Pacific, leaving Vancouver Island wholly British. The joint
+      occupation of the Oregon Country ends. Signed 15 June; in force 17 July 1846.
+    changes: []
+
+  - date: 1849-01-13
+    title: Vancouver Island
+    note: >-
+      Britain grants Vancouver Island to the Hudson's Bay Company as a colony, to be settled against American
+      expansion. Victoria becomes its capital.
+    changes:
+      - create: vancouver_island
+        name: Vancouver Island
+        status: colony
+        sovereign: Britain
+        capital: Victoria
+        instrument: Royal Grant of Vancouver's Island to the Hudson's Bay Company, letters patent of 13 January 1849.
+        boundary: Vancouver Island and the islands adjacent to it, the southern Gulf Islands included.
+        geometry:
+          intersect: [{was: north_western_territory}, {shape: vancouver_island_group}]
+      - alter: north_western_territory
+        boundary: Less Vancouver Island.
+        geometry:
+          minus: [{was: north_western_territory}, {unit: vancouver_island}]
+      - alter: defacto_english_settlement
+        confidence: 0.7
+        boundary: Belts open in 1849, with Victoria.
+        geometry: {belts: {as_of: 1849, power: british}}
+
+  - date: 1858-11-19
+    title: British Columbia
+    note: >-
+      The Fraser River gold rush brings thousands of miners, and Britain creates the mainland colony of British
+      Columbia. The Act was passed on 2 August and proclaimed at Fort Langley on 19 November 1858.
+    date_confidence: 0.9
+    changes:
+      - create: british_columbia
+        name: British Columbia
+        status: colony
+        sovereign: Britain
+        capital: New Westminster
+        confidence: 0.8
+        note: Proclaimed at Fort Langley; New Westminster was named the capital in 1859.
+        instrument: >-
+          An Act to provide for the Government of British Columbia, 21 & 22 Vict. c. 99, s. I (2 August 1858): "bounded
+          to the South by the Frontier of the United States of America, to the East by the main Chain of the Rocky
+          Mountains, to the North by Simpson's River, and the Finlay Branch of the Peace River, and to the West by the
+          Pacific Ocean, and shall include Queen Charlotte's Island"; proclaimed 19 November 1858.
+        boundary: >-
+          Mainland British Columbia south of the Nass and the Finlay and west of the main chain of the Rockies, with Haida
+          Gwaii. Simpson's River is taken as the Nass, and the Act names no line between the Nass and Finlay sources, so a
+          straight line joins them (BCGNIS vertices; confidence 0.8).
+        geometry:
+          minus:
+            - intersect: [{was: north_western_territory}, {modern: [BC]}]
+            - shape: outside_bc_1858
+      - alter: north_western_territory
+        boundary: Less British Columbia.
+        geometry:
+          minus: [{was: north_western_territory}, {unit: british_columbia}]
+      - alter: defacto_english_settlement
+        confidence: 0.7
+        boundary: Belts open in 1858, with the lower Fraser.
+        geometry: {belts: {as_of: 1858, power: british}}
+      - alter: defacto_english_posts
+        confidence: 0.35
+        boundary: Posts open in 1858.
+        geometry: {posts: {as_of: 1858, power: british}}
+
+  - date: 1862-07-19
+    title: The Stickeen Territories
+    note: >-
+      Gold on the Stikine River prompts Britain to organize the land north of British Columbia as a territory under
+      its governor. It lasts a year.
+    changes:
+      - create: stickeen_territories
+        name: Stickeen Territories
+        status: territory
+        sovereign: Britain
+        instrument: >-
+          Imperial Order in Council, 19 July 1862: "bounded to the West and South West by the Frontier of Russian
+          America, to the south and South East by the boundary of British Columbia, to the East by the 125th meridian of
+          West Longitude, and to the north by the 62nd parallel of North latitude".
+        boundary: North of British Columbia to 62°N, west of 125°W, to the Alaska frontier.
+        geometry:
+          intersect: [{was: north_western_territory}, {box: [-141.5, 54.5, -125.0, 62.0]}]
+      - alter: north_western_territory
+        boundary: Less the Stickeen Territories.
+        geometry:
+          minus: [{was: north_western_territory}, {unit: stickeen_territories}]
+
+  - date: 1863-07-28
+    title: British Columbia extended
+    note: >-
+      British Columbia takes in the Stickeen Territories south of 60°N and the Peace River country west of 120°W. The
+      land north of 60°N returns to the Indian Territories.
+    changes:
+      - alter: british_columbia
+        confidence: null
+        instrument: >-
+          An Act to define the Boundaries of the Colony of British Columbia, 26 & 27 Vict. c. 83, s. 3 (28 July 1863):
+          bounded "to the North by the Sixtieth Parallel of North Latitude, and to the East, from the Boundary of the
+          United States Northwards, by the Rocky Mountains and the One hundred and twentieth Meridian of West Longitude
+          ... except Vancouver's Island and the Islands adjacent thereto."
+        boundary: Modern British Columbia less Vancouver Island.
+        geometry:
+          minus:
+            - intersect:
+                - union: [{was: british_columbia}, {was: stickeen_territories}, {was: north_western_territory}]
+                - modern: [BC]
+            - unit: vancouver_island
+      - alter: north_western_territory
+        boundary: With the Stickeen Territories north of 60°N; less British Columbia's extension.
+        geometry:
+          minus:
+            - union: [{was: north_western_territory}, {was: stickeen_territories}]
+            - unit: british_columbia
+      - dissolve: stickeen_territories
+
+  - date: 1866-11-19
+    title: Vancouver Island and British Columbia united
+    note: >-
+      Debt and a slump after the gold rush force the two colonies into one, under the name British Columbia. New
+      Westminster is the capital of the united colony at first.
+    changes:
+      - alter: british_columbia
+        instrument: >-
+          British Columbia Act, 29 & 30 Vict. c. 67, ss. 3 and 8 (assented 6 August 1866), proclaimed 19 November 1866.
+        note: Vancouver Island and the mainland colony united; the capital moved from New Westminster to Victoria in 1868.
+        boundary: >-
+          Modern British Columbia: 49°N, the Rocky Mountain divide, 120°W and 60°N. The Alaska panhandle line is the 1903
+          award, as NRCan draws it for every year.
+        geometry: {modern: [BC]}
+      - alter: ruperts_land
+        boundary: >-
+          Less the sliver of Hudson Bay drainage inside modern British Columbia: the 1863 Act runs the colony's
+          eastern limit along the Rocky Mountains, which lie east of the drainage divide there.
+        geometry:
+          minus: [{was: ruperts_land}, {unit: british_columbia}]
+      - dissolve: vancouver_island
+
   - date: 1867-07-01
     title: Confederation
     note: >-
@@ -125,6 +1028,7 @@ events:
         status: province
         sovereign: Canada
         capital: Toronto
+        instrument: British North America Act, 1867, 30 & 31 Vict. c. 3, ss. 5 and 6 (Upper Canada becomes Ontario).
         boundary: >-
           The former Canada West: the Great Lakes–St. Lawrence side of the height of land (the
           Hudson Bay watershed), meeting the international boundary west of Lake Superior. Its
@@ -133,8 +1037,7 @@ events:
         geometry:
           minus: [{modern: [ON]}, {shape: hudson_bay}]
 
-      - create: newfoundland
-        name: Newfoundland
+      - alter: newfoundland
         status: colony
         sovereign: Britain
         capital: St. John's
@@ -154,6 +1057,7 @@ events:
         status: province
         sovereign: Canada
         capital: Québec
+        instrument: British North America Act, 1867, 30 & 31 Vict. c. 3, ss. 5 and 6 (Lower Canada becomes Quebec).
         boundary: >-
           The former Canada East: the St. Lawrence side of the height of land, north-east to the
           Blanc-Sablon meridian at 52°N. Taken as modern Quebec and Labrador less the Hudson Bay
@@ -166,48 +1070,19 @@ events:
             - drainage: ["25"]
             - unit: newfoundland
 
-      - create: nova_scotia
-        name: Nova Scotia
+      - dissolve: province_of_canada
+
+      - alter: nova_scotia
         status: province
         sovereign: Canada
-        capital: Halifax
-        boundary: Modern Nova Scotia.
-        geometry: {modern: [NS]}
+        instrument: British North America Act, 1867, 30 & 31 Vict. c. 3, ss. 5 and 7.
 
-      - create: new_brunswick
-        name: New Brunswick
+      - alter: new_brunswick
         status: province
         sovereign: Canada
-        capital: Fredericton
-        boundary: Modern New Brunswick.
-        geometry: {modern: [NB]}
+        instrument: British North America Act, 1867, 30 & 31 Vict. c. 3, ss. 5 and 7.
 
-      - create: prince_edward_island
-        name: Prince Edward Island
-        status: colony
-        sovereign: Britain
-        capital: Charlottetown
-        boundary: Modern Prince Edward Island.
-        geometry: {modern: [PE]}
-
-      - create: british_columbia
-        name: British Columbia
-        status: colony
-        sovereign: Britain
-        capital: Victoria
-        note: >-
-          Vancouver Island and the mainland colony were united in 1866; the capital moved from New
-          Westminster to Victoria in 1868.
-        boundary: >-
-          Modern British Columbia: 49°N, the Rocky Mountain divide, 120°W and 60°N. The Alaska
-          panhandle line is the 1903 award, as NRCan draws it for every year; the dispute is a
-          Sitting C overlay.
-        geometry: {modern: [BC]}
-
-      - create: ruperts_land
-        name: Rupert's Land
-        status: hbc_charter
-        sovereign: Hudson's Bay Company
+      - alter: ruperts_land
         note: Granted to the Hudson's Bay Company by royal charter in 1670.
         boundary: >-
           The lands draining to Hudson Bay and Hudson Strait (StatCan ocean drainage area Hudson
@@ -215,44 +1090,17 @@ events:
           inland of Newfoundland's coast, which drains to the Atlantic: NRCan draws it here, and no
           instrument assigns it elsewhere.
         geometry:
-          minus:
-            - union: [{shape: hudson_bay}, {intersect: [{drainage: ["25"]}, {mainland: true}]}]
-            - unit: ontario
-            - unit: quebec
-            - unit: newfoundland
-            - unit: british_columbia
+          union:
+            - was: ruperts_land
+            - minus:
+                - was: province_of_canada
+                - unit: ontario
+                - unit: quebec
+                - unit: newfoundland
 
-      - create: arctic_islands
-        name: British Arctic Islands
-        status: unorganized
-        sovereign: Britain
-        nrcan: Arctic Islands
-        confidence: 0.7
-        instrument: >-
-          Rupert's Land and North-Western Territory Order (Imperial Order in Council, 23 June 1870,
-          in force 15 July 1870), operative paragraph, which names no boundaries; Adjacent Territories
-          Order (Imperial Order in Council, 31 July 1880), operative paragraph, transferring "all Islands
-          adjacent" from 1 September 1880.
-        rationale: >-
-          London and Ottawa treated the Arctic islands as outside the 1870 transfer, which is why Britain
-          transferred them separately in 1880, so they are drawn apart from the North-Western Territory;
-          the DCER editors note the 1821 and 1859 definitions could be read to include them, hence 0.7.
-        nrcan_overlay:
-          year: 1867
-          until: 1870-07-15
-          polygons:
-            - name: Northwest Territories
-              note: NRCan's 1867 map draws the Arctic islands inside the North-Western Territory.
-        boundary: >-
-          The Arctic Archipelago north of the straits the 1895 order names, less the parts draining
-          to Hudson Bay. NRCan's 1867 map folds these islands into the North-Western Territory;
-          they were not part of it, and NRCan separates them from 1870.
-        geometry:
-          minus: [{shape: arctic_islands}, {shape: hudson_bay}]
-
-      - create: north_western_territory
+      - alter: north_western_territory
         name: North-Western Territory
-        status: unorganized
+        instrument: Indian Territories Act, 1859, 22 & 23 Vict. c. 26 (the name); no instrument defined its limits.
         sovereign: Britain
         note: Never defined in law; British territory under the Hudson's Bay Company's trade.
         nrcan: Northwest Territories
@@ -271,6 +1119,17 @@ events:
             - unit: newfoundland
             - unit: ruperts_land
             - unit: arctic_islands
+
+  - date: 1868-05-25
+    title: Victoria becomes British Columbia's capital
+    note: >-
+      The capital of the united colony moves from New Westminster to Victoria. No boundaries change.
+    changes:
+      - alter: british_columbia
+        capital: Victoria
+        instrument: >-
+          Proclamation of 25 May 1868 naming "the City of Victoria" the capital and seat of government of the united
+          Colony of British Columbia.
 
   - date: 1870-07-15
     title: Manitoba and the North-West Territories
@@ -312,6 +1171,8 @@ events:
 
       - dissolve: ruperts_land
       - dissolve: north_western_territory
+      - dissolve: defacto_english_settlement
+      - dissolve: defacto_english_posts
 
   - date: 1871-07-20
     title: British Columbia joins

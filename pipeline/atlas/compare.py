@@ -34,6 +34,17 @@ class Agreement:
     differ_km2: float
 
 
+FIRST_MAP_DATE = "1867-07-01"
+
+
+def comparison_date(valid_from: str, valid_to: str | None) -> str:
+    """Compare a row on its first day, or on NRCan's first map date if it began earlier and was
+    still valid then (a colony founded in 1784 is compared on 1 July 1867)."""
+    if valid_from < FIRST_MAP_DATE and (valid_to is None or valid_to > FIRST_MAP_DATE):
+        return FIRST_MAP_DATE
+    return valid_from
+
+
 def nrcan_year(date: str) -> int | None:
     """The NRCan map for a date: the latest map year on or before it."""
     year = int(date[:4])
@@ -93,7 +104,7 @@ def agreement(projected: shapely.Geometry, nrcan_name: str, date: str) -> Agreem
 
 def describe(result: Agreement | None) -> str:
     if result is None:
-        return "No NRCan map for this date."
+        return "No NRCan vector map before 1867 (NRCan publishes only scanned rasters for earlier dates)."
     if result.iou is None:
         return f"NRCan {result.year}: no polygon named “{result.nrcan_name}”."
     overlap = f"{result.iou:.1%} overlap, {result.differ_km2:,.0f} km² differ"

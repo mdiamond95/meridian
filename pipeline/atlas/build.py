@@ -21,6 +21,11 @@ Geometry expressions (events.yaml, `geometry:`), all in lon/lat degrees:
     drainage: ["22", "25"]           land in StatCan drainage regions, by code
     island: [lon, lat] | islands: [[lon, lat], ...]   the land parts under the points
     coastal_islands: 5.56            every island within that many km of the mainland
+    buffer: {points: [[lon, lat], ...] | line: [[lon, lat], ...], km: 150}
+                                     land within km of points or a polyline (post catchments, river belts)
+    near_coast: {area: expr, km: 40} mainland within km of the sea coast, inside `area`
+    posts: {as_of: 1774, power: british}   catchments of that power's posts open that year (defacto.yaml)
+    belts: {as_of: 1774, power: british}   corridors of that power's settlement belts open that year
     cut: {of: expr, line: [[lon, lat], ...], keep: [lon, lat]}
                                      the side of a line across an isthmus (ends in water) with `keep`
     zone: expr                       an area drawn through water: the mainland it covers, plus whole
@@ -49,6 +54,7 @@ import subprocess
 import sys
 import tempfile
 from dataclasses import dataclass, field
+from functools import cache
 from pathlib import Path
 from typing import Any
 
@@ -65,6 +71,8 @@ from polygons import mapshaper_cmd
 
 ATLAS_VERSION = "v1"
 EVENTS = Path(__file__).with_name("events.yaml")
+DEFACTO = Path(__file__).with_name("defacto.yaml")
+POWERS = ("french", "british", "spanish")
 CHECKLIST = ROOT / "docs" / "atlas" / "checklist.md"
 
 # Union of de jure units vs modern Canada, as a share of Canada's area.
@@ -80,6 +88,8 @@ COLLINEAR_DEG = 1e-9
 GRID_DEG = 1e-7
 # Longest edge (degrees) before reprojecting for areas and comparisons.
 PROJECT_SEGMENT_DEG = 0.02
+# Control points may sit on a coast the display generalizes away (degrees, ~1 km).
+CHECK_TOLERANCE_DEG = 0.01
 UNIT_FIELDS = (
     "name",
     "status",
@@ -113,6 +123,7 @@ class Evaluator:
     current: dict[str, shapely.Geometry] = field(default_factory=dict)
     # Unit geometries as they stood when the current event began, for `was:`.
     before: dict[str, shapely.Geometry] = field(default_factory=dict)
+    defacto_path: Path = DEFACTO
     _cache: dict[str, shapely.Geometry] = field(default_factory=dict)
 
     def __call__(self, expr: Any) -> shapely.Geometry:
@@ -159,6 +170,16 @@ class Evaluator:
             return shapely.union_all([p.island(src.canada, tuple(pt)) for pt in arg])
         if op == "cut":
             return p.cut(self.eval(arg["of"]), p.line([tuple(pt) for pt in arg["line"]]), tuple(arg["keep"]))
+        if op == "buffer":
+            return src.buffer(
+                [tuple(pt) for pt in arg.get("points", [])],
+                [tuple(pt) for pt in arg.get("line", [])],
+                float(arg["km"]),
+            )
+        if op in ("posts", "belts"):
+            return self.presence(op, arg)
+        if op == "near_coast":
+            return src.near_coast(self.eval(arg["area"]), float(arg["km"]))
         if op == "coastal_islands":
             return src.coastal_islands(float(arg))
         if op == "zone":
@@ -199,6 +220,40 @@ class Evaluator:
             return self.eval(self.shapes[arg])
         raise ValueError(f"unknown geometry operator {op!r}")
 
+    def presence(self, kind: str, arg: dict) -> shapely.Geometry:
+        """De facto presence of one power in one year (defacto.yaml): the catchments of its open posts,
+        or the corridors of its open settlement belts."""
+        if set(arg) != {"as_of", "power"} or arg["power"] not in POWERS:
+            raise ValueError(f"{kind} takes as_of (a year) and power ({', '.join(POWERS)})")
+        data = load_defacto(self.defacto_path)
+        year, power = int(arg["as_of"]), arg["power"]
+
+        def open_in(entry: dict) -> bool:
+            return any(
+                start <= year and (end is None or year < end) and who == power
+                for start, end, who in entry["periods"]
+            )
+
+        if kind == "posts":
+            by_km: dict[float, list[tuple[float, float]]] = {}
+            for post in data["posts"]:
+                if open_in(post):
+                    by_km.setdefault(float(data["tiers"][post["tier"]]), []).append(tuple(post["at"]))
+            geoms = [self.sources.buffer(points, [], km) for km, points in sorted(by_km.items())]
+        else:
+            geoms = [
+                self.sources.buffer(
+                    [tuple(pt) for pt in belt.get("points", [])],
+                    [tuple(pt) for pt in belt.get("line", [])],
+                    belt["km"],
+                )
+                for belt in data["belts"]
+                if open_in(belt)
+            ]
+        if not geoms:
+            raise ValueError(f"no {kind} open for {power} in {year}")
+        return shapely.union_all(geoms)
+
     def zone(self, area: shapely.Geometry) -> shapely.Geometry:
         """The land an area drawn through open water takes: the mainland cut by the area, plus every
         whole island whose representative point lies inside it. Islands are never split."""
@@ -235,6 +290,23 @@ class Evaluator:
                 raise ValueError(f"unknown shape {arg!r}")
             return self.piece(self.shapes[arg])
         raise ValueError(f"unknown ring piece {op!r}")
+
+
+@cache
+def load_defacto(path: Path) -> dict:
+    """defacto.yaml, checked: every post has a known tier and every period a known power."""
+    data = yaml.safe_load(path.read_text(encoding="utf-8"))
+    for entry in [*data["posts"], *data["belts"]]:
+        if "tier" in entry and entry["tier"] not in data["tiers"]:
+            raise ValueError(f"{entry['id']}: unknown tier {entry['tier']!r}")
+        for period in entry["periods"]:
+            start, end, power = period
+            if power not in POWERS or (end is not None and end <= start):
+                raise ValueError(f"{entry['id']}: bad period {period}")
+    ids = [entry["id"] for entry in [*data["posts"], *data["belts"]]]
+    if len(ids) != len(set(ids)):
+        raise ValueError("defacto.yaml: duplicate ids")
+    return data
 
 
 def rivers_needed(doc: dict) -> dict[str, list[str]]:
@@ -372,8 +444,10 @@ def apply_change(
 def nrcan_references(row: Row, spec: dict, evaluator: Evaluator) -> list[dict]:
     """NRCan's drawing where the atlas departs from it: the named polygons of NRCan's map for
     `year`, each optionally clipped to an expression (evaluated after this change)."""
-    if set(spec) - {"year", "polygons", "until"} or not spec.get("polygons"):
-        raise ValueError("nrcan_overlay takes year, a non-empty polygons list and an optional until date")
+    if set(spec) - {"year", "polygons", "from", "until"} or not spec.get("polygons"):
+        raise ValueError(
+            "nrcan_overlay takes year, a non-empty polygons list, and optional from and until dates"
+        )
     year = int(spec["year"])
     polygons = compare.nrcan_polygons_wgs84(year)
     refs = []
@@ -401,6 +475,8 @@ def nrcan_references(row: Row, spec: dict, evaluator: Evaluator) -> list[dict]:
                 "note": " ".join(item.get("note", "").split()),
                 # The divergence can end before the row does (NRCan changes its drawing).
                 "until": str(spec["until"]) if "until" in spec else None,
+                # ... or start after it (a unit older than NRCan's first map, 1867).
+                "from": str(spec["from"]) if "from" in spec else None,
             }
         )
     return refs
@@ -424,6 +500,29 @@ def active(rows: list[Row], date: str, truth: str = "dejure") -> list[Row]:
         for r in rows
         if r.fields["truth"] == truth and r.valid_from <= date and (r.valid_to is None or date < r.valid_to)
     ]
+
+
+def control_points(doc: dict, rows: list[Row]) -> list[tuple[dict, str | None]]:
+    """The `checks:` in events.yaml: places whose unit on a date the instruments settle. Returns
+    (check, problem or None)."""
+    results = []
+    for check_ in doc.get("checks", []):
+        if set(check_) - {"date", "point", "unit", "source"} or not {
+            "date",
+            "point",
+            "unit",
+            "source",
+        } <= set(check_):
+            raise ValueError(f"a check has date, point, unit and source: {check_}")
+        date, point = str(check_["date"]), shapely.Point(check_["point"])
+        holders = [r.id for r in active(rows, date) if r.geometry.buffer(CHECK_TOLERANCE_DEG).covers(point)]
+        problem = (
+            None
+            if check_["unit"] in holders
+            else f"{date}: {check_['point']} is in {holders or 'no unit'}, not {check_['unit']}"
+        )
+        results.append(({**check_, "date": date}, problem))
+    return results
 
 
 def validate(events: list[dict], rows: list[Row], canada: shapely.Geometry) -> list[str]:
@@ -561,7 +660,7 @@ def atlas_document(events: list[dict], rows: list[Row]) -> dict:
                 "unit": row.id,
                 "source": ref["source"],
                 "attribution": NRCAN_ATTRIBUTION,
-                "validFrom": row.valid_from,
+                "validFrom": max(d for d in (row.valid_from, ref["from"]) if d is not None),
                 "validTo": min(d for d in (row.valid_to, ref["until"]) if d is not None)
                 if row.valid_to or ref["until"]
                 else None,
@@ -581,15 +680,18 @@ def agreements(rows: list[Row]) -> dict[int, compare.Agreement | None]:
     if not compare.available():
         return {}
     projected = equal_area([r.geometry for r in rows])
-    return {id(r): compare.agreement(g, r.nrcan, r.valid_from) for r, g in zip(rows, projected, strict=True)}
+    return {
+        id(r): compare.agreement(g, r.nrcan, compare.comparison_date(r.valid_from, r.valid_to))
+        for r, g in zip(rows, projected, strict=True)
+    }
 
 
-def checklist(events: list[dict], rows: list[Row]) -> str:
+def checklist(events: list[dict], rows: list[Row], checks: list[tuple[dict, str | None]] = ()) -> str:
     """Markdown checklist of every polygon, for verification against the NRCan sheets."""
     areas = {id(r): g.area / 1e6 for r, g in zip(rows, equal_area([r.geometry for r in rows]), strict=True)}
     matches = agreements(rows)
     lines = [
-        "# Atlas checklist: every polygon, 1867 to today",
+        f"# Atlas checklist: every polygon, {events[0]['date'][:4]} to today",
         "",
         "Generated by `make atlas` from `pipeline/atlas/events.yaml`; do not edit by hand.",
         "Tick a box once the polygon matches the NRCan *Territorial Evolution of Canada* sheet for its",
@@ -598,7 +700,8 @@ def checklist(events: list[dict], rows: list[Row]) -> str:
         "",
         "Each polygon is also compared with NRCan's own polygon for that year (overlap = intersection",
         "over union). The comparison is a pointer, not the verdict: NRCan's maps are generalized, and",
-        "where the atlas follows the legal text instead of NRCan's drawing the row says so.",
+        "where the atlas follows the legal text instead of NRCan's drawing the row says so. Before",
+        "1867 there is no NRCan vector map at all, so the control points below take its place.",
         "",
     ]
     if matches:
@@ -618,6 +721,20 @@ def checklist(events: list[dict], rows: list[Row]) -> str:
             lines.append(f"- {row.valid_from} **{row.fields['name']}**: {iou:.1%} overlap with NRCan")
         for row in missing:
             lines.append(f"- {row.valid_from} **{row.fields['name']}**: no NRCan polygon named “{row.nrcan}”")
+        lines.append("")
+    if checks:
+        lines += [
+            "## Control points",
+            "",
+            "Places whose unit on a date the instruments settle (`checks:` in events.yaml). They are",
+            "the test for dates before 1867, which NRCan has no vector map for.",
+            "",
+        ]
+        for check_, problem in checks:
+            mark = "✗" if problem else "✓"
+            lines.append(
+                f"- {mark} {check_['date']}: {check_['point']} in `{check_['unit']}`. {check_['source']}"
+            )
         lines.append("")
     seen: set[str] = set()
     for event in events:
@@ -682,7 +799,8 @@ def build(
     events, rows = resolve_events(doc, sources)
     shapes = assign_refs(rows)
     log(f"{len(rows)} unit rows, {len(shapes)} distinct polygons")
-    problems = validate(events, rows, sources.canada)
+    checks = control_points(doc, rows)
+    problems = validate(events, rows, sources.canada) + [problem for _, problem in checks if problem]
     for problem in problems:
         log(f"✗ {problem}")
     if problems:
@@ -693,7 +811,7 @@ def build(
     atlas = atlas_document(events, rows)
     write_bytes(atlas_json, json.dumps(atlas, ensure_ascii=False, indent=1).encode("utf-8") + b"\n")
     if checklist_path is not None:
-        write_bytes(checklist_path, checklist(events, rows).encode("utf-8"))
+        write_bytes(checklist_path, checklist(events, rows, checks).encode("utf-8"))
     for path in (atlas_json, topology):
         log(f"wrote {path} ({path.stat().st_size:,} bytes)")
     return atlas
@@ -704,7 +822,7 @@ def check(events_path: Path = EVENTS) -> int:
     doc = load_events(events_path)
     sources = Sources(rivers=rivers_needed(doc))
     events, rows = resolve_events(doc, sources)
-    problems = validate(events, rows, sources.canada)
+    problems = validate(events, rows, sources.canada) + [p_ for _, p_ in control_points(doc, rows) if p_]
     matches = agreements(rows)
     for row in rows:
         print(f"{row.valid_from} {row.id:<32} {compare.describe(matches.get(id(row)))}")

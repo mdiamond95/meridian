@@ -3,6 +3,502 @@
  "version": "v1",
  "events": [
   {
+   "date": "1670-05-12",
+   "title": "The Hudson's Bay Company charter",
+   "note": "Charles II grants the Hudson's Bay Company the lands draining into Hudson Bay, as Rupert's Land. France holds Canada and Acadia, and England and France both fish and claim Newfoundland. The charter is dated 2 May 1670 in the Old Style calendar England then used.",
+   "changes": [
+    {
+     "unit": "ruperts_land",
+     "kind": "create"
+    },
+    {
+     "unit": "acadia",
+     "kind": "create"
+    },
+    {
+     "unit": "newfoundland",
+     "kind": "create"
+    },
+    {
+     "unit": "north_western_territory",
+     "kind": "create"
+    },
+    {
+     "unit": "new_france",
+     "kind": "create"
+    },
+    {
+     "unit": "defacto_french_settlement",
+     "kind": "create"
+    },
+    {
+     "unit": "defacto_french_posts",
+     "kind": "create"
+    },
+    {
+     "unit": "defacto_english_settlement",
+     "kind": "create"
+    },
+    {
+     "unit": "defacto_english_posts",
+     "kind": "create"
+    }
+   ]
+  },
+  {
+   "date": "1713-04-11",
+   "title": "The Treaty of Utrecht",
+   "note": "France gives up Hudson Bay, Newfoundland and \"Nova Scotia or Acadia, with its ancient boundaries\" to Great Britain, and keeps Cape Breton and the islands of the Gulf as Île Royale. The two powers never agree what Acadia's ancient boundaries were. Signed 31 March 1713 in the Old Style calendar; the exchange of ratifications was within four weeks but its day is not established.",
+   "dateConfidence": 0.8,
+   "changes": [
+    {
+     "unit": "nova_scotia",
+     "kind": "create"
+    },
+    {
+     "unit": "acadia_mainland",
+     "kind": "create"
+    },
+    {
+     "unit": "ile_royale",
+     "kind": "create"
+    },
+    {
+     "unit": "acadia",
+     "kind": "dissolve"
+    },
+    {
+     "unit": "newfoundland",
+     "kind": "alter"
+    },
+    {
+     "unit": "defacto_french_settlement",
+     "kind": "alter"
+    },
+    {
+     "unit": "defacto_french_posts",
+     "kind": "alter"
+    },
+    {
+     "unit": "defacto_english_settlement",
+     "kind": "alter"
+    },
+    {
+     "unit": "defacto_english_posts",
+     "kind": "alter"
+    }
+   ]
+  },
+  {
+   "date": "1763-03-10",
+   "title": "The Treaty of Paris",
+   "note": "France cedes Canada, Cape Breton and all the islands of the Gulf and River St. Lawrence to Great Britain. French rule in what is now Canada ends, except for fishing rights. Signed on 10 February; ratifications were exchanged on 10 March 1763.",
+   "dateConfidence": 0.8,
+   "changes": [
+    {
+     "unit": "new_france",
+     "kind": "alter"
+    },
+    {
+     "unit": "ile_royale",
+     "kind": "alter"
+    },
+    {
+     "unit": "nova_scotia",
+     "kind": "alter"
+    },
+    {
+     "unit": "acadia_mainland",
+     "kind": "dissolve"
+    },
+    {
+     "unit": "defacto_french_settlement",
+     "kind": "dissolve"
+    },
+    {
+     "unit": "defacto_french_posts",
+     "kind": "dissolve"
+    }
+   ]
+  },
+  {
+   "date": "1763-10-07",
+   "title": "The Royal Proclamation",
+   "note": "Britain creates the Province of Quebec as a narrow band along the St. Lawrence and reserves the lands beyond the colonies for Indigenous nations. Newfoundland is given the Labrador coast, and Nova Scotia the islands of the Gulf.",
+   "changes": [
+    {
+     "unit": "quebec",
+     "kind": "create"
+    },
+    {
+     "unit": "newfoundland",
+     "kind": "alter"
+    },
+    {
+     "unit": "nova_scotia",
+     "kind": "alter"
+    },
+    {
+     "unit": "ile_royale",
+     "kind": "dissolve"
+    },
+    {
+     "unit": "arctic_islands",
+     "kind": "create"
+    },
+    {
+     "unit": "north_western_territory",
+     "kind": "alter"
+    },
+    {
+     "unit": "new_france",
+     "kind": "dissolve"
+    },
+    {
+     "unit": "defacto_english_settlement",
+     "kind": "alter"
+    },
+    {
+     "unit": "defacto_english_posts",
+     "kind": "alter"
+    }
+   ]
+  },
+  {
+   "date": "1769-06-28",
+   "title": "St. John's Island",
+   "note": "An order in council makes St. John's Island a colony separate from Nova Scotia. Its first governor, Walter Patterson, arrives in 1770.",
+   "changes": [
+    {
+     "unit": "prince_edward_island",
+     "kind": "create"
+    },
+    {
+     "unit": "nova_scotia",
+     "kind": "alter"
+    }
+   ]
+  },
+  {
+   "date": "1774-06-22",
+   "title": "The Quebec Act",
+   "note": "Parliament enlarges Quebec to the Ohio, the Mississippi and the Hudson's Bay Company lands, and gives it back the Labrador coast. Its new civil government begins on 1 May 1775; the boundary took effect on assent.",
+   "dateConfidence": 0.9,
+   "changes": [
+    {
+     "unit": "quebec",
+     "kind": "alter"
+    },
+    {
+     "unit": "newfoundland",
+     "kind": "alter"
+    },
+    {
+     "unit": "north_western_territory",
+     "kind": "alter"
+    },
+    {
+     "unit": "defacto_english_posts",
+     "kind": "alter"
+    }
+   ]
+  },
+  {
+   "date": "1784-05-12",
+   "title": "The Treaty of Paris with the United States",
+   "note": "Britain recognizes the United States, with a boundary through the Great Lakes and along the highlands south of the St. Lawrence. The treaty's vague lines leave disputes over New Brunswick and the country west of Lake Superior; nothing inside modern Canada changes hands. Signed 3 September 1783; in force 12 May 1784.",
+   "changes": []
+  },
+  {
+   "date": "1784-06-18",
+   "title": "New Brunswick",
+   "note": "Loyalists who fled the American Revolution press for their own colony, and an order in council divides Nova Scotia at the Missiguash River. Thomas Carleton's commission as governor follows on 16 August.",
+   "changes": [
+    {
+     "unit": "new_brunswick",
+     "kind": "create"
+    },
+    {
+     "unit": "nova_scotia",
+     "kind": "alter"
+    }
+   ]
+  },
+  {
+   "date": "1784-08-09",
+   "title": "Cape Breton",
+   "note": "Cape Breton is made a separate colony under Joseph DesBarres, who founds Sydney as its capital. The June order had made it a lieutenant-governorship subordinate to Nova Scotia.",
+   "dateConfidence": 0.8,
+   "changes": [
+    {
+     "unit": "cape_breton",
+     "kind": "create"
+    },
+    {
+     "unit": "nova_scotia",
+     "kind": "alter"
+    },
+    {
+     "unit": "defacto_english_settlement",
+     "kind": "alter"
+    }
+   ]
+  },
+  {
+   "date": "1791-12-26",
+   "title": "Upper and Lower Canada",
+   "note": "The Constitutional Act divides Quebec in two along the Ottawa River, giving the Loyalists of the west their own province. Upper Canada takes English law; Lower Canada keeps French civil law.",
+   "changes": [
+    {
+     "unit": "upper_canada",
+     "kind": "create"
+    },
+    {
+     "unit": "lower_canada",
+     "kind": "create"
+    },
+    {
+     "unit": "quebec",
+     "kind": "dissolve"
+    },
+    {
+     "unit": "defacto_spanish_posts",
+     "kind": "create"
+    },
+    {
+     "unit": "defacto_english_settlement",
+     "kind": "alter"
+    },
+    {
+     "unit": "defacto_english_posts",
+     "kind": "alter"
+    }
+   ]
+  },
+  {
+   "date": "1799-02-01",
+   "title": "Prince Edward Island",
+   "note": "The island's assembly renames St. John's Island after Prince Edward, and the King in Council confirms it. Its boundaries are unchanged.",
+   "dateConfidence": 0.8,
+   "changes": [
+    {
+     "unit": "prince_edward_island",
+     "kind": "rename"
+    }
+   ]
+  },
+  {
+   "date": "1809-03-30",
+   "title": "The Labrador coast returns to Newfoundland",
+   "note": "Parliament gives the Labrador coast and Anticosti back to Newfoundland to put the fishery under one government. Lower Canada keeps the Magdalen Islands.",
+   "changes": [
+    {
+     "unit": "newfoundland",
+     "kind": "alter"
+    },
+    {
+     "unit": "lower_canada",
+     "kind": "alter"
+    }
+   ]
+  },
+  {
+   "date": "1819-01-30",
+   "title": "The Convention of 1818",
+   "note": "Britain and the United States draw their boundary along 49°N from Lake of the Woods to the Rocky Mountains, and leave the Oregon Country west of the mountains open to both. Signed 20 October 1818; in force 30 January 1819.",
+   "changes": []
+  },
+  {
+   "date": "1820-10-16",
+   "title": "Cape Breton rejoins Nova Scotia",
+   "note": "Cape Breton loses its separate government and is annexed to Nova Scotia again, over its residents' protests. Lieutenant-Governor Kempt proclaimed the change on 16 October 1820.",
+   "dateConfidence": 0.9,
+   "changes": [
+    {
+     "unit": "nova_scotia",
+     "kind": "alter"
+    },
+    {
+     "unit": "cape_breton",
+     "kind": "dissolve"
+    }
+   ]
+  },
+  {
+   "date": "1821-07-02",
+   "title": "The fur trade merger",
+   "note": "The Hudson's Bay Company and the North West Company merge after years of violent rivalry. Parliament gives the merged company an exclusive licence over the Indian Territories beyond Rupert's Land.",
+   "changes": [
+    {
+     "unit": "north_western_territory",
+     "kind": "alter"
+    },
+    {
+     "unit": "defacto_english_posts",
+     "kind": "alter"
+    },
+    {
+     "unit": "defacto_english_settlement",
+     "kind": "alter"
+    },
+    {
+     "unit": "defacto_spanish_posts",
+     "kind": "dissolve"
+    }
+   ]
+  },
+  {
+   "date": "1825-06-22",
+   "title": "The Gulf shore returns to Lower Canada",
+   "note": "Parliament moves the Gulf of St. Lawrence shore west of Anse-Sablon, and Anticosti, back to Lower Canada. Newfoundland keeps the coast east of the Anse-Sablon line and north of 52°N.",
+   "changes": [
+    {
+     "unit": "lower_canada",
+     "kind": "alter"
+    },
+    {
+     "unit": "newfoundland",
+     "kind": "alter"
+    }
+   ]
+  },
+  {
+   "date": "1841-02-10",
+   "title": "The Province of Canada",
+   "note": "After the rebellions of 1837–38, Upper and Lower Canada are united as one province with one legislature. They remain Canada West and Canada East in practice.",
+   "changes": [
+    {
+     "unit": "province_of_canada",
+     "kind": "create"
+    },
+    {
+     "unit": "upper_canada",
+     "kind": "dissolve"
+    },
+    {
+     "unit": "lower_canada",
+     "kind": "dissolve"
+    },
+    {
+     "unit": "defacto_english_settlement",
+     "kind": "alter"
+    },
+    {
+     "unit": "defacto_english_posts",
+     "kind": "alter"
+    }
+   ]
+  },
+  {
+   "date": "1842-10-13",
+   "title": "The Webster–Ashburton Treaty",
+   "note": "Britain and the United States settle the Maine–New Brunswick boundary and the line west of Lake Superior. The disputed claims arrive with the disputed layer; the ratifications were exchanged on 13 October 1842 by one treaty series and 15 October by another.",
+   "dateConfidence": 0.7,
+   "changes": []
+  },
+  {
+   "date": "1846-07-17",
+   "title": "The Oregon Treaty",
+   "note": "The boundary along 49°N is continued to the Pacific, leaving Vancouver Island wholly British. The joint occupation of the Oregon Country ends. Signed 15 June; in force 17 July 1846.",
+   "changes": []
+  },
+  {
+   "date": "1849-01-13",
+   "title": "Vancouver Island",
+   "note": "Britain grants Vancouver Island to the Hudson's Bay Company as a colony, to be settled against American expansion. Victoria becomes its capital.",
+   "changes": [
+    {
+     "unit": "vancouver_island",
+     "kind": "create"
+    },
+    {
+     "unit": "north_western_territory",
+     "kind": "alter"
+    },
+    {
+     "unit": "defacto_english_settlement",
+     "kind": "alter"
+    }
+   ]
+  },
+  {
+   "date": "1858-11-19",
+   "title": "British Columbia",
+   "note": "The Fraser River gold rush brings thousands of miners, and Britain creates the mainland colony of British Columbia. The Act was passed on 2 August and proclaimed at Fort Langley on 19 November 1858.",
+   "dateConfidence": 0.9,
+   "changes": [
+    {
+     "unit": "british_columbia",
+     "kind": "create"
+    },
+    {
+     "unit": "north_western_territory",
+     "kind": "alter"
+    },
+    {
+     "unit": "defacto_english_settlement",
+     "kind": "alter"
+    },
+    {
+     "unit": "defacto_english_posts",
+     "kind": "alter"
+    }
+   ]
+  },
+  {
+   "date": "1862-07-19",
+   "title": "The Stickeen Territories",
+   "note": "Gold on the Stikine River prompts Britain to organize the land north of British Columbia as a territory under its governor. It lasts a year.",
+   "changes": [
+    {
+     "unit": "stickeen_territories",
+     "kind": "create"
+    },
+    {
+     "unit": "north_western_territory",
+     "kind": "alter"
+    }
+   ]
+  },
+  {
+   "date": "1863-07-28",
+   "title": "British Columbia extended",
+   "note": "British Columbia takes in the Stickeen Territories south of 60°N and the Peace River country west of 120°W. The land north of 60°N returns to the Indian Territories.",
+   "changes": [
+    {
+     "unit": "british_columbia",
+     "kind": "alter"
+    },
+    {
+     "unit": "north_western_territory",
+     "kind": "alter"
+    },
+    {
+     "unit": "stickeen_territories",
+     "kind": "dissolve"
+    }
+   ]
+  },
+  {
+   "date": "1866-11-19",
+   "title": "Vancouver Island and British Columbia united",
+   "note": "Debt and a slump after the gold rush force the two colonies into one, under the name British Columbia. New Westminster is the capital of the united colony at first.",
+   "changes": [
+    {
+     "unit": "british_columbia",
+     "kind": "alter"
+    },
+    {
+     "unit": "ruperts_land",
+     "kind": "alter"
+    },
+    {
+     "unit": "vancouver_island",
+     "kind": "dissolve"
+    }
+   ]
+  },
+  {
    "date": "1867-07-01",
    "title": "Confederation",
    "note": "Ontario, Quebec, Nova Scotia and New Brunswick unite as the Dominion of Canada. Everything north and west still belongs to Britain or to the Hudson's Bay Company.",
@@ -13,39 +509,42 @@
     },
     {
      "unit": "newfoundland",
-     "kind": "create"
+     "kind": "alter"
     },
     {
      "unit": "quebec",
      "kind": "create"
     },
     {
+     "unit": "province_of_canada",
+     "kind": "dissolve"
+    },
+    {
      "unit": "nova_scotia",
-     "kind": "create"
+     "kind": "alter"
     },
     {
      "unit": "new_brunswick",
-     "kind": "create"
-    },
-    {
-     "unit": "prince_edward_island",
-     "kind": "create"
-    },
-    {
-     "unit": "british_columbia",
-     "kind": "create"
+     "kind": "alter"
     },
     {
      "unit": "ruperts_land",
-     "kind": "create"
-    },
-    {
-     "unit": "arctic_islands",
-     "kind": "create"
+     "kind": "alter"
     },
     {
      "unit": "north_western_territory",
-     "kind": "create"
+     "kind": "alter"
+    }
+   ]
+  },
+  {
+   "date": "1868-05-25",
+   "title": "Victoria becomes British Columbia's capital",
+   "note": "The capital of the united colony moves from New Westminster to Victoria. No boundaries change.",
+   "changes": [
+    {
+     "unit": "british_columbia",
+     "kind": "alter"
     }
    ]
   },
@@ -68,6 +567,14 @@
     },
     {
      "unit": "north_western_territory",
+     "kind": "dissolve"
+    },
+    {
+     "unit": "defacto_english_settlement",
+     "kind": "dissolve"
+    },
+    {
+     "unit": "defacto_english_posts",
      "kind": "dissolve"
     }
    ]
@@ -514,6 +1021,32 @@
  ],
  "units": [
   {
+   "id": "acadia",
+   "name": "Acadia",
+   "status": "colony",
+   "sovereign": "France",
+   "capital": "Port-Royal",
+   "validFrom": "1670-05-12",
+   "validTo": "1713-04-11",
+   "truth": "dejure",
+   "geometryRef": "acadia_1670",
+   "note": "Restored to France by the Treaty of Breda (1667) and handed over in 1670; its seat moved several times.",
+   "instrument": "Treaty of Breda, 31 July 1667, art. X (restitution of Acadia to France)."
+  },
+  {
+   "id": "acadia_mainland",
+   "name": "Mainland Acadia (disputed)",
+   "status": "disputed",
+   "sovereign": "Britain and France",
+   "capital": null,
+   "validFrom": "1713-04-11",
+   "validTo": "1763-03-10",
+   "truth": "dejure",
+   "geometryRef": "acadia_mainland_1713",
+   "note": "Britain read Acadia's \"ancient boundaries\" to include this land; France held that it had ceded only the peninsula.",
+   "instrument": "Treaty of Utrecht, art. XII (\"with its ancient boundaries\"); Historical Atlas of Canada timeline, 1713."
+  },
+  {
    "id": "alberta",
    "name": "Alberta",
    "status": "province",
@@ -530,12 +1063,12 @@
    "status": "unorganized",
    "sovereign": "Britain",
    "capital": null,
-   "validFrom": "1867-07-01",
+   "validFrom": "1763-10-07",
    "validTo": "1880-09-01",
    "truth": "dejure",
-   "geometryRef": "arctic_islands_1867",
+   "geometryRef": "arctic_islands_1763",
    "confidence": 0.7,
-   "instrument": "Rupert's Land and North-Western Territory Order (Imperial Order in Council, 23 June 1870, in force 15 July 1870), operative paragraph, which names no boundaries; Adjacent Territories Order (Imperial Order in Council, 31 July 1880), operative paragraph, transferring \"all Islands adjacent\" from 1 September 1880.",
+   "instrument": "British claims by discovery (Frobisher 1576–78, Davis, Hudson, Baffin), which NRCan's 1763 plate tints British; Rupert's Land and North-Western Territory Order (Imperial Order in Council, 23 June 1870, in force 15 July 1870), operative paragraph, which names no boundaries; Adjacent Territories Order (Imperial Order in Council, 31 July 1880), operative paragraph, transferring \"all Islands adjacent\" from 1 September 1880.",
    "rationale": "London and Ottawa treated the Arctic islands as outside the 1870 transfer, which is why Britain transferred them separately in 1880, so they are drawn apart from the North-Western Territory; the DCER editors note the 1821 and 1859 definitions could be read to include them, hence 0.7."
   },
   {
@@ -543,12 +1076,51 @@
    "name": "British Columbia",
    "status": "colony",
    "sovereign": "Britain",
+   "capital": "New Westminster",
+   "validFrom": "1858-11-19",
+   "validTo": "1863-07-28",
+   "truth": "dejure",
+   "geometryRef": "british_columbia_1858",
+   "note": "Proclaimed at Fort Langley; New Westminster was named the capital in 1859.",
+   "confidence": 0.8,
+   "instrument": "An Act to provide for the Government of British Columbia, 21 & 22 Vict. c. 99, s. I (2 August 1858): \"bounded to the South by the Frontier of the United States of America, to the East by the main Chain of the Rocky Mountains, to the North by Simpson's River, and the Finlay Branch of the Peace River, and to the West by the Pacific Ocean, and shall include Queen Charlotte's Island\"; proclaimed 19 November 1858."
+  },
+  {
+   "id": "british_columbia",
+   "name": "British Columbia",
+   "status": "colony",
+   "sovereign": "Britain",
+   "capital": "New Westminster",
+   "validFrom": "1863-07-28",
+   "validTo": "1866-11-19",
+   "truth": "dejure",
+   "geometryRef": "british_columbia_1863",
+   "instrument": "An Act to define the Boundaries of the Colony of British Columbia, 26 & 27 Vict. c. 83, s. 3 (28 July 1863): bounded \"to the North by the Sixtieth Parallel of North Latitude, and to the East, from the Boundary of the United States Northwards, by the Rocky Mountains and the One hundred and twentieth Meridian of West Longitude ... except Vancouver's Island and the Islands adjacent thereto.\""
+  },
+  {
+   "id": "british_columbia",
+   "name": "British Columbia",
+   "status": "colony",
+   "sovereign": "Britain",
+   "capital": "New Westminster",
+   "validFrom": "1866-11-19",
+   "validTo": "1868-05-25",
+   "truth": "dejure",
+   "geometryRef": "british_columbia_1866",
+   "note": "Vancouver Island and the mainland colony united; the capital moved from New Westminster to Victoria in 1868.",
+   "instrument": "British Columbia Act, 29 & 30 Vict. c. 67, ss. 3 and 8 (assented 6 August 1866), proclaimed 19 November 1866."
+  },
+  {
+   "id": "british_columbia",
+   "name": "British Columbia",
+   "status": "colony",
+   "sovereign": "Britain",
    "capital": "Victoria",
-   "validFrom": "1867-07-01",
+   "validFrom": "1868-05-25",
    "validTo": "1871-07-20",
    "truth": "dejure",
-   "geometryRef": "british_columbia_1867",
-   "note": "Vancouver Island and the mainland colony were united in 1866; the capital moved from New Westminster to Victoria in 1868."
+   "geometryRef": "british_columbia_1866",
+   "instrument": "Proclamation of 25 May 1868 naming \"the City of Victoria\" the capital and seat of government of the united Colony of British Columbia."
   },
   {
    "id": "british_columbia",
@@ -559,7 +1131,283 @@
    "validFrom": "1871-07-20",
    "validTo": null,
    "truth": "dejure",
-   "geometryRef": "british_columbia_1867"
+   "geometryRef": "british_columbia_1866"
+  },
+  {
+   "id": "cape_breton",
+   "name": "Cape Breton",
+   "status": "colony",
+   "sovereign": "Britain",
+   "capital": "Sydney",
+   "validFrom": "1784-08-09",
+   "validTo": "1820-10-16",
+   "truth": "dejure",
+   "geometryRef": "cape_breton_1784",
+   "instrument": "Commission to J.F.W. DesBarres as lieutenant-governor of Cape Breton, 9 August 1784 (Dictionary of Canadian Biography)."
+  },
+  {
+   "id": "defacto_english_posts",
+   "name": "Hudson's Bay Company posts",
+   "status": "hbc_charter",
+   "sovereign": "Hudson's Bay Company",
+   "capital": null,
+   "validFrom": "1670-05-12",
+   "validTo": "1713-04-11",
+   "truth": "defacto",
+   "geometryRef": "defacto_english_posts_1670",
+   "confidence": 0.35
+  },
+  {
+   "id": "defacto_english_posts",
+   "name": "Hudson's Bay Company posts",
+   "status": "hbc_charter",
+   "sovereign": "Hudson's Bay Company",
+   "capital": null,
+   "validFrom": "1713-04-11",
+   "validTo": "1763-10-07",
+   "truth": "defacto",
+   "geometryRef": "defacto_english_posts_1713",
+   "confidence": 0.35
+  },
+  {
+   "id": "defacto_english_posts",
+   "name": "British trading posts",
+   "status": "hbc_charter",
+   "sovereign": "Britain",
+   "capital": null,
+   "validFrom": "1763-10-07",
+   "validTo": "1774-06-22",
+   "truth": "defacto",
+   "geometryRef": "defacto_english_posts_1763",
+   "confidence": 0.35
+  },
+  {
+   "id": "defacto_english_posts",
+   "name": "British trading posts",
+   "status": "hbc_charter",
+   "sovereign": "Britain",
+   "capital": null,
+   "validFrom": "1774-06-22",
+   "validTo": "1791-12-26",
+   "truth": "defacto",
+   "geometryRef": "defacto_english_posts_1774",
+   "confidence": 0.35
+  },
+  {
+   "id": "defacto_english_posts",
+   "name": "British trading posts",
+   "status": "hbc_charter",
+   "sovereign": "Britain",
+   "capital": null,
+   "validFrom": "1791-12-26",
+   "validTo": "1821-07-02",
+   "truth": "defacto",
+   "geometryRef": "defacto_english_posts_1791",
+   "confidence": 0.35
+  },
+  {
+   "id": "defacto_english_posts",
+   "name": "British trading posts",
+   "status": "hbc_charter",
+   "sovereign": "Britain",
+   "capital": null,
+   "validFrom": "1821-07-02",
+   "validTo": "1841-02-10",
+   "truth": "defacto",
+   "geometryRef": "defacto_english_posts_1821",
+   "confidence": 0.35
+  },
+  {
+   "id": "defacto_english_posts",
+   "name": "British trading posts",
+   "status": "hbc_charter",
+   "sovereign": "Britain",
+   "capital": null,
+   "validFrom": "1841-02-10",
+   "validTo": "1858-11-19",
+   "truth": "defacto",
+   "geometryRef": "defacto_english_posts_1841",
+   "confidence": 0.35
+  },
+  {
+   "id": "defacto_english_posts",
+   "name": "British trading posts",
+   "status": "hbc_charter",
+   "sovereign": "Britain",
+   "capital": null,
+   "validFrom": "1858-11-19",
+   "validTo": "1870-07-15",
+   "truth": "defacto",
+   "geometryRef": "defacto_english_posts_1858",
+   "confidence": 0.35
+  },
+  {
+   "id": "defacto_english_settlement",
+   "name": "English settlement",
+   "status": "colony",
+   "sovereign": "England",
+   "capital": null,
+   "validFrom": "1670-05-12",
+   "validTo": "1713-04-11",
+   "truth": "defacto",
+   "geometryRef": "defacto_english_settlement_1670",
+   "confidence": 0.7
+  },
+  {
+   "id": "defacto_english_settlement",
+   "name": "British settlement",
+   "status": "colony",
+   "sovereign": "Britain",
+   "capital": null,
+   "validFrom": "1713-04-11",
+   "validTo": "1763-10-07",
+   "truth": "defacto",
+   "geometryRef": "defacto_english_settlement_1713",
+   "confidence": 0.7
+  },
+  {
+   "id": "defacto_english_settlement",
+   "name": "British settlement",
+   "status": "colony",
+   "sovereign": "Britain",
+   "capital": null,
+   "validFrom": "1763-10-07",
+   "validTo": "1784-08-09",
+   "truth": "defacto",
+   "geometryRef": "defacto_english_settlement_1763",
+   "confidence": 0.7
+  },
+  {
+   "id": "defacto_english_settlement",
+   "name": "British settlement",
+   "status": "colony",
+   "sovereign": "Britain",
+   "capital": null,
+   "validFrom": "1784-08-09",
+   "validTo": "1791-12-26",
+   "truth": "defacto",
+   "geometryRef": "defacto_english_settlement_1784",
+   "confidence": 0.7
+  },
+  {
+   "id": "defacto_english_settlement",
+   "name": "British settlement",
+   "status": "colony",
+   "sovereign": "Britain",
+   "capital": null,
+   "validFrom": "1791-12-26",
+   "validTo": "1821-07-02",
+   "truth": "defacto",
+   "geometryRef": "defacto_english_settlement_1791",
+   "confidence": 0.7
+  },
+  {
+   "id": "defacto_english_settlement",
+   "name": "British settlement",
+   "status": "colony",
+   "sovereign": "Britain",
+   "capital": null,
+   "validFrom": "1821-07-02",
+   "validTo": "1841-02-10",
+   "truth": "defacto",
+   "geometryRef": "defacto_english_settlement_1821",
+   "confidence": 0.7
+  },
+  {
+   "id": "defacto_english_settlement",
+   "name": "British settlement",
+   "status": "colony",
+   "sovereign": "Britain",
+   "capital": null,
+   "validFrom": "1841-02-10",
+   "validTo": "1849-01-13",
+   "truth": "defacto",
+   "geometryRef": "defacto_english_settlement_1841",
+   "confidence": 0.7
+  },
+  {
+   "id": "defacto_english_settlement",
+   "name": "British settlement",
+   "status": "colony",
+   "sovereign": "Britain",
+   "capital": null,
+   "validFrom": "1849-01-13",
+   "validTo": "1858-11-19",
+   "truth": "defacto",
+   "geometryRef": "defacto_english_settlement_1849",
+   "confidence": 0.7
+  },
+  {
+   "id": "defacto_english_settlement",
+   "name": "British settlement",
+   "status": "colony",
+   "sovereign": "Britain",
+   "capital": null,
+   "validFrom": "1858-11-19",
+   "validTo": "1870-07-15",
+   "truth": "defacto",
+   "geometryRef": "defacto_english_settlement_1858",
+   "confidence": 0.7
+  },
+  {
+   "id": "defacto_french_posts",
+   "name": "French trading posts",
+   "status": "colony",
+   "sovereign": "France",
+   "capital": null,
+   "validFrom": "1670-05-12",
+   "validTo": "1713-04-11",
+   "truth": "defacto",
+   "geometryRef": "defacto_french_posts_1670",
+   "confidence": 0.3
+  },
+  {
+   "id": "defacto_french_posts",
+   "name": "French trading posts",
+   "status": "colony",
+   "sovereign": "France",
+   "capital": null,
+   "validFrom": "1713-04-11",
+   "validTo": "1763-03-10",
+   "truth": "defacto",
+   "geometryRef": "defacto_french_posts_1713",
+   "confidence": 0.3
+  },
+  {
+   "id": "defacto_french_settlement",
+   "name": "French settlement",
+   "status": "colony",
+   "sovereign": "France",
+   "capital": null,
+   "validFrom": "1670-05-12",
+   "validTo": "1713-04-11",
+   "truth": "defacto",
+   "geometryRef": "defacto_french_settlement_1670",
+   "confidence": 0.8
+  },
+  {
+   "id": "defacto_french_settlement",
+   "name": "French settlement",
+   "status": "colony",
+   "sovereign": "France",
+   "capital": null,
+   "validFrom": "1713-04-11",
+   "validTo": "1763-03-10",
+   "truth": "defacto",
+   "geometryRef": "defacto_french_settlement_1713",
+   "confidence": 0.8
+  },
+  {
+   "id": "defacto_spanish_posts",
+   "name": "Spanish post at Nootka",
+   "status": "colony",
+   "sovereign": "Spain",
+   "capital": null,
+   "validFrom": "1791-12-26",
+   "validTo": "1821-07-02",
+   "truth": "defacto",
+   "geometryRef": "defacto_spanish_posts_1791",
+   "confidence": 0.3
   },
   {
    "id": "district_of_alberta",
@@ -869,6 +1717,66 @@
    "rationale": "The 1912 Act moved only the mainland to Quebec and the 1897 order defining Ungava stood until 1 January 1920, so the islands remain a district until then; NRCan already splits them between Keewatin and Franklin, and the Act excludes islands only by following the shore, hence 0.8."
   },
   {
+   "id": "ile_royale",
+   "name": "Île Royale",
+   "status": "colony",
+   "sovereign": "France",
+   "capital": "Louisbourg",
+   "validFrom": "1713-04-11",
+   "validTo": "1763-03-10",
+   "truth": "dejure",
+   "geometryRef": "ile_royale_1713",
+   "note": "Cape Breton, with Île Saint-Jean (Prince Edward Island) as a dependency from 1720.",
+   "instrument": "Treaty of Utrecht, art. XIII: \"the island called Cape Breton, as also all others, both in the mouth of the river of St. Lawrence, and in the gulph of the same name, shall hereafter belong of right to the French\"."
+  },
+  {
+   "id": "ile_royale",
+   "name": "Cape Breton and St. John's Island",
+   "status": "colony",
+   "sovereign": "Britain",
+   "capital": "Louisbourg",
+   "validFrom": "1763-03-10",
+   "validTo": "1763-10-07",
+   "truth": "dejure",
+   "geometryRef": "ile_royale_1713",
+   "instrument": "Treaty of Paris, 10 February 1763, art. IV."
+  },
+  {
+   "id": "lower_canada",
+   "name": "Lower Canada",
+   "status": "colony",
+   "sovereign": "Britain",
+   "capital": "Québec",
+   "validFrom": "1791-12-26",
+   "validTo": "1809-03-30",
+   "truth": "dejure",
+   "geometryRef": "lower_canada_1791",
+   "instrument": "Constitutional Act, 31 Geo. III c. 31, and Order in Council of 24 August 1791, in force 26 December 1791."
+  },
+  {
+   "id": "lower_canada",
+   "name": "Lower Canada",
+   "status": "colony",
+   "sovereign": "Britain",
+   "capital": "Québec",
+   "validFrom": "1809-03-30",
+   "validTo": "1825-06-22",
+   "truth": "dejure",
+   "geometryRef": "lower_canada_1809"
+  },
+  {
+   "id": "lower_canada",
+   "name": "Lower Canada",
+   "status": "colony",
+   "sovereign": "Britain",
+   "capital": "Québec",
+   "validFrom": "1825-06-22",
+   "validTo": "1841-02-10",
+   "truth": "dejure",
+   "geometryRef": "lower_canada_1825",
+   "instrument": "6 Geo. IV c. 59, s. IX (22 June 1825): the coast \"to the westward of a line to be drawn due north and south from the bay or harbour of Ance Sablon inclusive, as far as the fifty-second degree of north latitude, with the Island of Anticosti\" re-annexed to Lower Canada."
+  },
+  {
    "id": "manitoba",
    "name": "Manitoba",
    "status": "province",
@@ -907,13 +1815,129 @@
   {
    "id": "new_brunswick",
    "name": "New Brunswick",
+   "status": "colony",
+   "sovereign": "Britain",
+   "capital": "Fredericton",
+   "validFrom": "1784-06-18",
+   "validTo": "1867-07-01",
+   "truth": "dejure",
+   "geometryRef": "acadia_mainland_1713",
+   "note": "Saint John served as capital until the government moved to Fredericton in 1788.",
+   "instrument": "Order of His Majesty in Council, 18 June 1784: the land north of the Missiguash \"erected into a Government under the Name of New Brunswick\"; commission to Thomas Carleton, 16 August 1784."
+  },
+  {
+   "id": "new_brunswick",
+   "name": "New Brunswick",
    "status": "province",
    "sovereign": "Canada",
    "capital": "Fredericton",
    "validFrom": "1867-07-01",
    "validTo": null,
    "truth": "dejure",
-   "geometryRef": "new_brunswick_1867"
+   "geometryRef": "acadia_mainland_1713",
+   "instrument": "British North America Act, 1867, 30 & 31 Vict. c. 3, ss. 5 and 7."
+  },
+  {
+   "id": "new_france",
+   "name": "Canada (New France)",
+   "status": "colony",
+   "sovereign": "France",
+   "capital": "Québec",
+   "validFrom": "1670-05-12",
+   "validTo": "1763-03-10",
+   "truth": "dejure",
+   "geometryRef": "new_france_1670",
+   "note": "The colony of Canada, claiming the St. Lawrence and Great Lakes basins (the pays d'en haut) and Labrador's Atlantic slope.",
+   "instrument": "French royal government of New France from 1663 (Édit de création du Conseil souverain, April 1663); no instrument fixed its limits."
+  },
+  {
+   "id": "new_france",
+   "name": "Canada",
+   "status": "colony",
+   "sovereign": "Britain",
+   "capital": "Québec",
+   "validFrom": "1763-03-10",
+   "validTo": "1763-10-07",
+   "truth": "dejure",
+   "geometryRef": "new_france_1670",
+   "note": "Under British military government since the capitulation of Montreal (8 September 1760).",
+   "instrument": "Treaty of Paris, 10 February 1763, art. IV: \"his Most Christian Majesty cedes and guaranties to his said Britannick Majesty, in full right, Canada, with all its dependencies, as well as the island of Cape Breton, and all the other islands and coasts in the gulph and river of St. Lawrence\"."
+  },
+  {
+   "id": "newfoundland",
+   "name": "Newfoundland",
+   "status": "disputed",
+   "sovereign": "England and France",
+   "capital": null,
+   "validFrom": "1670-05-12",
+   "validTo": "1713-04-11",
+   "truth": "dejure",
+   "geometryRef": "newfoundland_1670",
+   "note": "English fishing settlements on the east coast and the French colony of Plaisance, founded 1662. NRCan's 1667 plate stripes the whole island.",
+   "instrument": "No instrument settled it: England's claim rested on Cabot (1497) and Gilbert (1583), France's on its colony at Plaisance (1662)."
+  },
+  {
+   "id": "newfoundland",
+   "name": "Newfoundland",
+   "status": "colony",
+   "sovereign": "Britain",
+   "capital": "St. John's",
+   "validFrom": "1713-04-11",
+   "validTo": "1763-10-07",
+   "truth": "dejure",
+   "geometryRef": "newfoundland_1670",
+   "note": "British, with French fishing rights on the French Shore; governed by naval commodores, with no formal colonial government until 1825. St. John's was the seat in practice.",
+   "instrument": "Treaty of Utrecht, art. XIII: \"The island called Newfoundland, with the adjacent islands, shall from this time forward, belong of right wholly to Britain\"."
+  },
+  {
+   "id": "newfoundland",
+   "name": "Newfoundland",
+   "status": "colony",
+   "sovereign": "Britain",
+   "capital": "St. John's",
+   "validFrom": "1763-10-07",
+   "validTo": "1774-06-22",
+   "truth": "dejure",
+   "geometryRef": "newfoundland_1763",
+   "confidence": 0.6,
+   "instrument": "Royal Proclamation, 7 October 1763: \"all that Coast, from the River St. John's to Hudson's Streights, together with the Islands of Anticosti and Madelaine, and all other smaller Islands lying upon the said Coast, under the care and Inspection of our Governor of Newfoundland.\""
+  },
+  {
+   "id": "newfoundland",
+   "name": "Newfoundland",
+   "status": "colony",
+   "sovereign": "Britain",
+   "capital": "St. John's",
+   "validFrom": "1774-06-22",
+   "validTo": "1809-03-30",
+   "truth": "dejure",
+   "geometryRef": "newfoundland_1670",
+   "instrument": "Quebec Act, 14 Geo. III c. 83, s. I (the Labrador coast, Anticosti and the Magdalens annexed to Quebec)."
+  },
+  {
+   "id": "newfoundland",
+   "name": "Newfoundland",
+   "status": "colony",
+   "sovereign": "Britain",
+   "capital": "St. John's",
+   "validFrom": "1809-03-30",
+   "validTo": "1825-06-22",
+   "truth": "dejure",
+   "geometryRef": "newfoundland_1809",
+   "confidence": 0.6,
+   "instrument": "49 Geo. III c. 27, s. XIV (30 March 1809): the coast of Labrador \"from the river St. John to Hudson's Streights, and the said Island of Anticosti\" re-annexed to Newfoundland, \"except the islands of Madelaine\"."
+  },
+  {
+   "id": "newfoundland",
+   "name": "Newfoundland",
+   "status": "colony",
+   "sovereign": "Britain",
+   "capital": "St. John's",
+   "validFrom": "1825-06-22",
+   "validTo": "1867-07-01",
+   "truth": "dejure",
+   "geometryRef": "newfoundland_1825",
+   "confidence": 0.5
   },
   {
    "id": "newfoundland",
@@ -964,6 +1988,99 @@
   },
   {
    "id": "north_western_territory",
+   "name": "Lands outside European claims",
+   "status": "unorganized",
+   "sovereign": "Indigenous nations",
+   "capital": null,
+   "validFrom": "1670-05-12",
+   "validTo": "1763-10-07",
+   "truth": "dejure",
+   "geometryRef": "north_western_territory_1670",
+   "note": "The Pacific slope, the Arctic and Missouri drainage, and the Arctic islands, held by Indigenous nations."
+  },
+  {
+   "id": "north_western_territory",
+   "name": "Indian Reserve",
+   "status": "unorganized",
+   "sovereign": "Britain",
+   "capital": null,
+   "validFrom": "1763-10-07",
+   "validTo": "1774-06-22",
+   "truth": "dejure",
+   "geometryRef": "north_western_territory_1763",
+   "note": "Reserved for Indigenous nations under the Crown's protection; settlement and private purchase forbidden.",
+   "instrument": "Royal Proclamation, 7 October 1763: \"all the Lands and Territories not included within the Limits of Our said Three new Governments, or within the Limits of the Territory granted to the Hudson's Bay Company, as also all the Lands and Territories lying to the Westward of the Sources of the Rivers which fall into the Sea from the West and North West\"."
+  },
+  {
+   "id": "north_western_territory",
+   "name": "Indian Reserve",
+   "status": "unorganized",
+   "sovereign": "Britain",
+   "capital": null,
+   "validFrom": "1774-06-22",
+   "validTo": "1821-07-02",
+   "truth": "dejure",
+   "geometryRef": "north_western_territory_1774"
+  },
+  {
+   "id": "north_western_territory",
+   "name": "Indian Territories",
+   "status": "unorganized",
+   "sovereign": "Britain",
+   "capital": null,
+   "validFrom": "1821-07-02",
+   "validTo": "1849-01-13",
+   "truth": "dejure",
+   "geometryRef": "north_western_territory_1774",
+   "note": "Under the Hudson's Bay Company's exclusive trading licence; named the North-Western Territory by the 1859 Indian Territories Act.",
+   "instrument": "An Act for regulating the Fur Trade, 1 & 2 Geo. IV c. 66 (2 July 1821), s. VI (jurisdiction \"within the said Indian Territories\"); licence of exclusive trade, 5 December 1821."
+  },
+  {
+   "id": "north_western_territory",
+   "name": "Indian Territories",
+   "status": "unorganized",
+   "sovereign": "Britain",
+   "capital": null,
+   "validFrom": "1849-01-13",
+   "validTo": "1858-11-19",
+   "truth": "dejure",
+   "geometryRef": "north_western_territory_1849"
+  },
+  {
+   "id": "north_western_territory",
+   "name": "Indian Territories",
+   "status": "unorganized",
+   "sovereign": "Britain",
+   "capital": null,
+   "validFrom": "1858-11-19",
+   "validTo": "1862-07-19",
+   "truth": "dejure",
+   "geometryRef": "north_western_territory_1858"
+  },
+  {
+   "id": "north_western_territory",
+   "name": "Indian Territories",
+   "status": "unorganized",
+   "sovereign": "Britain",
+   "capital": null,
+   "validFrom": "1862-07-19",
+   "validTo": "1863-07-28",
+   "truth": "dejure",
+   "geometryRef": "north_western_territory_1862"
+  },
+  {
+   "id": "north_western_territory",
+   "name": "Indian Territories",
+   "status": "unorganized",
+   "sovereign": "Britain",
+   "capital": null,
+   "validFrom": "1863-07-28",
+   "validTo": "1867-07-01",
+   "truth": "dejure",
+   "geometryRef": "north_western_territory_1863"
+  },
+  {
+   "id": "north_western_territory",
    "name": "North-Western Territory",
    "status": "unorganized",
    "sovereign": "Britain",
@@ -972,7 +2089,8 @@
    "validTo": "1870-07-15",
    "truth": "dejure",
    "geometryRef": "north_western_territory_1867",
-   "note": "Never defined in law; British territory under the Hudson's Bay Company's trade."
+   "note": "Never defined in law; British territory under the Hudson's Bay Company's trade.",
+   "instrument": "Indian Territories Act, 1859, 22 & 23 Vict. c. 26 (the name); no instrument defined its limits."
   },
   {
    "id": "northwest_territories",
@@ -1082,13 +2200,97 @@
   {
    "id": "nova_scotia",
    "name": "Nova Scotia",
+   "status": "colony",
+   "sovereign": "Britain",
+   "capital": "Annapolis Royal",
+   "validFrom": "1713-04-11",
+   "validTo": "1763-03-10",
+   "truth": "dejure",
+   "geometryRef": "nova_scotia_1713",
+   "note": "Captured in 1710 and ceded in 1713; Halifax replaced Annapolis Royal as capital in 1749.",
+   "instrument": "Treaty of Utrecht, 11 April 1713 (31 March Old Style), art. XII: \"all Nova Scotia or Acadia, with its ancient boundaries, as also the city of Port Royal, now called Annapolis Royal\"."
+  },
+  {
+   "id": "nova_scotia",
+   "name": "Nova Scotia",
+   "status": "colony",
+   "sovereign": "Britain",
+   "capital": "Halifax",
+   "validFrom": "1763-03-10",
+   "validTo": "1763-10-07",
+   "truth": "dejure",
+   "geometryRef": "nova_scotia_1763",
+   "note": "The dispute over mainland Acadia ends with the French cession.",
+   "instrument": "Treaty of Paris, 10 February 1763, art. IV."
+  },
+  {
+   "id": "nova_scotia",
+   "name": "Nova Scotia",
+   "status": "colony",
+   "sovereign": "Britain",
+   "capital": "Halifax",
+   "validFrom": "1763-10-07",
+   "validTo": "1769-06-28",
+   "truth": "dejure",
+   "geometryRef": "acadia_1670",
+   "instrument": "Royal Proclamation, 7 October 1763: \"to annex the Islands of St. John's and Cape Breton, or Isle Royale, with the lesser Islands adjacent thereto, to our Government of Nova Scotia.\""
+  },
+  {
+   "id": "nova_scotia",
+   "name": "Nova Scotia",
+   "status": "colony",
+   "sovereign": "Britain",
+   "capital": "Halifax",
+   "validFrom": "1769-06-28",
+   "validTo": "1784-06-18",
+   "truth": "dejure",
+   "geometryRef": "nova_scotia_1769"
+  },
+  {
+   "id": "nova_scotia",
+   "name": "Nova Scotia",
+   "status": "colony",
+   "sovereign": "Britain",
+   "capital": "Halifax",
+   "validFrom": "1784-06-18",
+   "validTo": "1784-08-09",
+   "truth": "dejure",
+   "geometryRef": "nova_scotia_1784"
+  },
+  {
+   "id": "nova_scotia",
+   "name": "Nova Scotia",
+   "status": "colony",
+   "sovereign": "Britain",
+   "capital": "Halifax",
+   "validFrom": "1784-08-09",
+   "validTo": "1820-10-16",
+   "truth": "dejure",
+   "geometryRef": "nova_scotia_1713"
+  },
+  {
+   "id": "nova_scotia",
+   "name": "Nova Scotia",
+   "status": "colony",
+   "sovereign": "Britain",
+   "capital": "Halifax",
+   "validFrom": "1820-10-16",
+   "validTo": "1867-07-01",
+   "truth": "dejure",
+   "geometryRef": "nova_scotia_1784",
+   "instrument": "Commission to the Earl of Dalhousie, 27 April 1820, and Lieutenant-Governor Sir James Kempt's proclamation of 16 October 1820 ending Cape Breton's separate government."
+  },
+  {
+   "id": "nova_scotia",
+   "name": "Nova Scotia",
    "status": "province",
    "sovereign": "Canada",
    "capital": "Halifax",
    "validFrom": "1867-07-01",
    "validTo": null,
    "truth": "dejure",
-   "geometryRef": "nova_scotia_1867"
+   "geometryRef": "nova_scotia_1784",
+   "instrument": "British North America Act, 1867, 30 & 31 Vict. c. 3, ss. 5 and 7."
   },
   {
    "id": "nunavut",
@@ -1110,7 +2312,8 @@
    "validFrom": "1867-07-01",
    "validTo": "1874-07-09",
    "truth": "dejure",
-   "geometryRef": "ontario_1867"
+   "geometryRef": "upper_canada_1791",
+   "instrument": "British North America Act, 1867, 30 & 31 Vict. c. 3, ss. 5 and 6 (Upper Canada becomes Ontario)."
   },
   {
    "id": "ontario",
@@ -1159,14 +2362,26 @@
   },
   {
    "id": "prince_edward_island",
+   "name": "St. John's Island",
+   "status": "colony",
+   "sovereign": "Britain",
+   "capital": "Charlottetown",
+   "validFrom": "1769-06-28",
+   "validTo": "1799-02-01",
+   "truth": "dejure",
+   "geometryRef": "prince_edward_island_1769",
+   "instrument": "Order of His Majesty in Council, 28 June 1769, approving a separate government for the island of St. John."
+  },
+  {
+   "id": "prince_edward_island",
    "name": "Prince Edward Island",
    "status": "colony",
    "sovereign": "Britain",
    "capital": "Charlottetown",
-   "validFrom": "1867-07-01",
+   "validFrom": "1799-02-01",
    "validTo": "1873-07-01",
    "truth": "dejure",
-   "geometryRef": "prince_edward_island_1867"
+   "geometryRef": "prince_edward_island_1769"
   },
   {
    "id": "prince_edward_island",
@@ -1177,7 +2392,44 @@
    "validFrom": "1873-07-01",
    "validTo": null,
    "truth": "dejure",
-   "geometryRef": "prince_edward_island_1867"
+   "geometryRef": "prince_edward_island_1769"
+  },
+  {
+   "id": "province_of_canada",
+   "name": "Province of Canada",
+   "status": "colony",
+   "sovereign": "Britain",
+   "capital": "Kingston",
+   "validFrom": "1841-02-10",
+   "validTo": "1867-07-01",
+   "truth": "dejure",
+   "geometryRef": "province_of_canada_1841",
+   "note": "The seat moved: Kingston 1841, Montreal 1844, Toronto 1849, Quebec 1851, Toronto 1855, Quebec 1859, Ottawa 1865.",
+   "instrument": "Act of Union, 3 & 4 Vict. c. 35, s. I (assented 23 July 1840), proclaimed by Lord Sydenham on 10 February 1841."
+  },
+  {
+   "id": "quebec",
+   "name": "Province of Quebec",
+   "status": "colony",
+   "sovereign": "Britain",
+   "capital": "Québec",
+   "validFrom": "1763-10-07",
+   "validTo": "1774-06-22",
+   "truth": "dejure",
+   "geometryRef": "quebec_1763",
+   "instrument": "Royal Proclamation, 7 October 1763: \"bounded on the Labrador Coast by the River St. John, and from thence by a Line drawn from the Head of that River through the Lake St. John, to the South end of the Lake Nipissim; from whence the said Line, crossing the River St. Lawrence, and the Lake Champlain, in 45. Degrees of North Latitude, passes along the High Lands ... and also along the North Coast of the Baye des Chaleurs, and the Coast of the Gulph of St. Lawrence to Cape Rosieres, and from thence crossing the Mouth of the River St. Lawrence by the West End of the Island of Anticosti, terminates at the aforesaid River of St. John.\""
+  },
+  {
+   "id": "quebec",
+   "name": "Province of Quebec",
+   "status": "colony",
+   "sovereign": "Britain",
+   "capital": "Québec",
+   "validFrom": "1774-06-22",
+   "validTo": "1791-12-26",
+   "truth": "dejure",
+   "geometryRef": "quebec_1774",
+   "instrument": "Quebec Act, 14 Geo. III c. 83, s. I (assented 22 June 1774): Quebec extends \"Northward to the Southern Boundary of the Territory granted to the Merchants Adventurers of England, trading to Hudson's Bay; and also all such Territories, Islands, and Countries, which have, since the tenth of February, one thousand seven hundred and sixty-three, been made Part of the Government of Newfoundland\"."
   },
   {
    "id": "quebec",
@@ -1188,7 +2440,8 @@
    "validFrom": "1867-07-01",
    "validTo": "1898-06-13",
    "truth": "dejure",
-   "geometryRef": "quebec_1867"
+   "geometryRef": "quebec_1867",
+   "instrument": "British North America Act, 1867, 30 & 31 Vict. c. 3, ss. 5 and 6 (Lower Canada becomes Quebec)."
   },
   {
    "id": "quebec",
@@ -1229,6 +2482,30 @@
    "status": "hbc_charter",
    "sovereign": "Hudson's Bay Company",
    "capital": null,
+   "validFrom": "1670-05-12",
+   "validTo": "1866-11-19",
+   "truth": "dejure",
+   "geometryRef": "ruperts_land_1670",
+   "note": "Granted to the Hudson's Bay Company by royal charter; France contested the bay posts until 1713.",
+   "instrument": "Royal Charter of the Hudson's Bay Company, 2 May 1670 (Old Style): \"all the Landes Countryes and Territoryes upon the Coastes and Confynes of the Seas ... that lye within the entrance of the Streightes commonly called Hudsons Streightes\"."
+  },
+  {
+   "id": "ruperts_land",
+   "name": "Rupert's Land",
+   "status": "hbc_charter",
+   "sovereign": "Hudson's Bay Company",
+   "capital": null,
+   "validFrom": "1866-11-19",
+   "validTo": "1867-07-01",
+   "truth": "dejure",
+   "geometryRef": "ruperts_land_1866"
+  },
+  {
+   "id": "ruperts_land",
+   "name": "Rupert's Land",
+   "status": "hbc_charter",
+   "sovereign": "Hudson's Bay Company",
+   "capital": null,
    "validFrom": "1867-07-01",
    "validTo": "1870-07-15",
    "truth": "dejure",
@@ -1245,6 +2522,43 @@
    "validTo": null,
    "truth": "dejure",
    "geometryRef": "saskatchewan_1905"
+  },
+  {
+   "id": "stickeen_territories",
+   "name": "Stickeen Territories",
+   "status": "territory",
+   "sovereign": "Britain",
+   "capital": null,
+   "validFrom": "1862-07-19",
+   "validTo": "1863-07-28",
+   "truth": "dejure",
+   "geometryRef": "stickeen_territories_1862",
+   "instrument": "Imperial Order in Council, 19 July 1862: \"bounded to the West and South West by the Frontier of Russian America, to the south and South East by the boundary of British Columbia, to the East by the 125th meridian of West Longitude, and to the north by the 62nd parallel of North latitude\"."
+  },
+  {
+   "id": "upper_canada",
+   "name": "Upper Canada",
+   "status": "colony",
+   "sovereign": "Britain",
+   "capital": "York",
+   "validFrom": "1791-12-26",
+   "validTo": "1841-02-10",
+   "truth": "dejure",
+   "geometryRef": "upper_canada_1791",
+   "note": "Newark (Niagara-on-the-Lake) was the capital until 1796; York is now Toronto.",
+   "instrument": "Constitutional Act, 31 Geo. III c. 31, and Order in Council of 24 August 1791 (the dividing line), in force 26 December 1791 by proclamation of 18 November 1791."
+  },
+  {
+   "id": "vancouver_island",
+   "name": "Vancouver Island",
+   "status": "colony",
+   "sovereign": "Britain",
+   "capital": "Victoria",
+   "validFrom": "1849-01-13",
+   "validTo": "1866-11-19",
+   "truth": "dejure",
+   "geometryRef": "vancouver_island_1849",
+   "instrument": "Royal Grant of Vancouver's Island to the Hudson's Bay Company, letters patent of 13 January 1849."
   },
   {
    "id": "yukon",

@@ -111,6 +111,28 @@ class Sources:
         mainland = max(range(len(parts)), key=lambda i: parts[i].area)
         return parts, shapely.STRtree([part.representative_point() for part in parts]), mainland
 
+    def buffer(self, points: list, line: list, km: float) -> shapely.Geometry:
+        """Land-agnostic circle(s) or corridor of `km` around points or a polyline, in lon/lat."""
+        geoms = [shapely.Point(pt) for pt in points]
+        if line:
+            geoms.append(shapely.LineString(line))
+        if not geoms:
+            raise ValueError("buffer needs points or a line")
+        projected = gpd.GeoSeries(geoms, crs=WGS84).to_crs(ATLAS_CRS).buffer(km * 1000, resolution=16)
+        return shapely.union_all(projected.to_crs(WGS84).to_numpy())
+
+    def near_coast(self, area: shapely.Geometry, km: float) -> shapely.Geometry:
+        """Mainland within `km` of the sea inside `area`: a colony's "coast" with no inland limit.
+        The mainland outline inside the area is taken as the coast, so the area must not reach an
+        international land border."""
+        coast = shapely.intersection(self.mainland.exterior, area.buffer(km / 50))
+        projected = gpd.GeoSeries([coast], crs=WGS84).to_crs(ATLAS_CRS).buffer(km * 1000, resolution=8)
+        band = projected.to_crs(WGS84).iloc[0]
+        return (
+            polygonal(shapely.intersection(shapely.intersection(band, self.mainland), area))
+            or shapely.Polygon()
+        )
+
     def coastal_islands(self, km: float) -> shapely.Geometry:
         """Every island within `km` of the mainland ("islands within three miles of the coast")."""
         parts, _, mainland = self.parts

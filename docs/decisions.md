@@ -305,3 +305,40 @@ Mark's decisions on PR #5, and what they changed.
   - **Labrador: 1927-03-01,** the day the report was delivered; approved in Council on 22 March, not 11 March. Confidence 0.9.
 - **Schema:** `AtlasEvent.dateConfidence`, `AtlasUnit.instrument` and `AtlasUnit.rationale`, and `AtlasFile.references` are optional additions. The atlas stays `v1`, by the same rule as RegionPack.
 - **Labrador before 1927 is unchanged** until Sitting C.
+
+## 2026-09-16 — Sitting B: the atlas back to 1670
+
+- **The drawing rule from Sitting A carries back:** the instrument where its text is clear, NRCan
+  where the text is silent or the claim is disputed. Every pre-1867 row cites its instrument, gives
+  a one-sentence rationale and a confidence.
+- **NRCan's comparison cannot reach this era.** Its *Territorial Evolution* service publishes
+  vector layers only from 1867; earlier years exist as scanned rasters only. Each pre-1867 row says
+  so in the checklist rather than showing a misleading overlap figure.
+- **Control points replace it.** `checks:` in `events.yaml` names a place, a date, the unit the
+  instruments put it in, and the citation; `make atlas` fails if any point resolves elsewhere
+  (tolerance 0.01°). There are 34, and all pass. They are the pre-1867 test.
+  - One check was wrong and the atlas was right: the Magdalen Islands point `[-61.75, 47.40]` is
+    open water in the Atlas of Canada 1:1M coverage; Havre-aux-Maisons `[-61.79, 47.42]` is land.
+- **Rupert's Land is the Hudson Bay drainage basin,** including the bay's islands and southern
+  Baffin Island. The charter names no watershed; the basin is the standard reading (Historical
+  Atlas of Canada). NRCan's 1667 and 1713 plates stripe a disputed band along its southern margin;
+  that band is not drawn.
+- **Rows carry a sovereign** — Britain, France, England, Spain, the Hudson's Bay Company,
+  Indigenous nations, Canada, and the shared forms where two powers claimed the same ground.
+- **The de facto layer for this era is fur-post catchments and settlement belts,** from
+  `pipeline/atlas/defacto.yaml`: 94 posts with their open periods, the power holding them and a
+  tier that fixes the catchment radius (bay factory 60 km, depot 80 km, post 50 km, outpost 25 km,
+  French Great Lakes 50 km, French west 40 km, Pacific 30 km), and 22 settlement belts with their
+  own widths. These are deliberately coarse: they show reach, not control. Every de facto row
+  carries an explicit confidence and the layer is off by default.
+  - Annotations do not carry across an `alter`, so each de facto row restates its confidence. That
+    is by design: a row that changes shape has to re-justify itself.
+- **Four new geometry operators:** `buffer`, `near_coast`, `posts`, `belts`.
+- **Open questions, not decided here:**
+  - **Interior Labrador, 1763–1867, has three incompatible readings** — NRCan's 1974 plate
+    (Quebec/Lower Canada), the JCPC's 1927 judgment (Newfoundland, the whole watershed), and
+    Sitting A (Rupert's Land). The atlas keeps Rupert's Land; Sitting C draws the overlap hatched.
+  - **The "two Districts of Keewatin" phrase is Surveyor General Deville's (1899)**, not the
+    Minister of Justice's; the 1897 row's note is corrected.
+  - **British Columbia's capital on 1 July 1867 was New Westminster;** Victoria from 1868-05-25,
+    which is now its own event.
