@@ -33,6 +33,16 @@ export function currentEvent(atlas: Pick<AtlasFile, 'events'>, date: string): At
   return found;
 }
 
+/**
+ * The date the map resolves to for `date`: the latest event on or before it, or "" before the
+ * first event. Rows only ever start and end on event dates, so resolving at this date gives the
+ * same units as `date` itself — and it is stable across a whole event window, which lets the map
+ * skip its work on the slider steps that change nothing.
+ */
+export function resolvedAt(atlas: Pick<AtlasFile, 'events'>, date: string): string {
+  return currentEvent(atlas, date)?.date ?? '';
+}
+
 /** The slider works in years; a year shows the map as it stood at the end of that year. */
 export function yearToDate(year: number): string {
   return `${String(year).padStart(4, '0')}-12-31`;

@@ -13,7 +13,8 @@
     "test": "vitest run",
     "smoke": "playwright test",
     "schemas": "tsx scripts/export-schemas.ts",
-    "schemas:check": "tsx scripts/export-schemas.ts --check"
+    "schemas:check": "tsx scripts/export-schemas.ts --check",
+    "frame-time": "playwright test --config playwright.perf.config.ts"
   },
   "dependencies": {
     "leaflet": "^1.9.4",

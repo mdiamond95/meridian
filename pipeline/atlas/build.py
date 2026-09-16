@@ -64,12 +64,14 @@ import shapely
 import yaml
 
 from atlas import compare
+from atlas import contact as contact_frontier
 from atlas import primitives as p
 from atlas.sources import Sources, log
 from common import BUILD, EQUAL_AREA_CRS, ROOT, WGS84, dumps, gzip_bytes, write_bytes
 from polygons import mapshaper_cmd
 
 ATLAS_VERSION = "v1"
+CONTACT_VERSION = "v1"
 EVENTS = Path(__file__).with_name("events.yaml")
 DEFACTO = Path(__file__).with_name("defacto.yaml")
 POWERS = ("french", "british", "spanish")
@@ -675,6 +677,55 @@ def atlas_document(events: list[dict], rows: list[Row]) -> dict:
     return doc
 
 
+def band_ref(band: contact_frontier.Band) -> str:
+    return f"contact_{band.from_year or 'start'}_{band.until_year or 'now'}"
+
+
+def build_contact(sources: Sources, build_dir: Path = BUILD) -> dict:
+    """The contact frontier as its own pair of artefacts (contact.v1.json + .topojson.gz).
+
+    It is kept out of atlas.v1 on purpose: mapshaper snaps coincident points across everything in
+    one topology, and a band's edge is not a boundary — it must not be allowed to move one.
+    """
+    doc = contact_frontier.load_contact()
+    regions = contact_frontier.resolve(doc, Evaluator(sources=sources))
+    bands = contact_frontier.bands(doc, regions)
+    log(f"contact: {len(regions)} regions in {len(bands)} bands")
+    write_topology(
+        [(band_ref(b), b.geometry) for b in bands], build_dir / f"contact.{CONTACT_VERSION}.topojson.gz"
+    )
+    document = {
+        "format": "meridian.contact",
+        "version": CONTACT_VERSION,
+        "caveat": doc["caveat"].strip(),
+        "bands": [
+            {
+                "label": b.label,
+                "fromYear": b.from_year,
+                "untilYear": b.until_year,
+                "geometryRef": band_ref(b),
+            }
+            for b in bands
+        ],
+        "regions": [
+            {
+                "id": r.id,
+                "name": r.name,
+                "year": r.year,
+                "event": r.event,
+                "confidence": r.confidence,
+                "source": r.source,
+                **({"note": " ".join(r.note.split())} if r.note else {}),
+            }
+            for r in regions
+        ],
+    }
+    path = build_dir / f"contact.{CONTACT_VERSION}.json"
+    write_bytes(path, json.dumps(document, ensure_ascii=False, indent=1).encode("utf-8") + b"\n")
+    log(f"wrote {path} ({path.stat().st_size:,} bytes)")
+    return document
+
+
 def agreements(rows: list[Row]) -> dict[int, compare.Agreement | None]:
     """Per row (by id()), agreement with NRCan's map; empty when the maps are not downloaded."""
     if not compare.available():
@@ -810,6 +861,7 @@ def build(
     write_topology(shapes, topology)
     atlas = atlas_document(events, rows)
     write_bytes(atlas_json, json.dumps(atlas, ensure_ascii=False, indent=1).encode("utf-8") + b"\n")
+    build_contact(sources, build_dir)
     if checklist_path is not None:
         write_bytes(checklist_path, checklist(events, rows, checks).encode("utf-8"))
     for path in (atlas_json, topology):

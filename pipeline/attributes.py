@@ -28,6 +28,9 @@ Methods (each also recorded on its column as `method`):
 - riding_party_2025 (id): party of the candidate elected in the cell's riding at the 45th GE.
 - distance_to_capital_km (measure, km): great-circle distance from cell centre to the
   provincial or territorial capital.
+- first_contact_year (measure, year): the earliest documented direct European presence covering
+  the cell's centre, from pipeline/atlas/contact.yaml. 0 means no entry covers it. Read the
+  caveat in that file before reading anything into these years.
 """
 
 from __future__ import annotations
@@ -482,6 +485,26 @@ def subbasin_column(polys: gpd.GeoSeries) -> tuple[np.ndarray, dict[str, str]]:
     return out, dict(sorted(labels.items(), key=lambda kv: int(kv[0])))
 
 
+def contact_column(mesh) -> np.ndarray:
+    """Earliest documented European presence per cell, from pipeline/atlas/contact.yaml.
+
+    Imported lazily and released straight afterwards: it pulls in the atlas's geometry sources,
+    and this step has the tightest memory budget in the pipeline (docs/perf.md).
+    """
+    from atlas import contact
+    from atlas.build import Evaluator
+    from atlas.sources import Sources
+
+    doc = contact.load_contact()
+    regions = contact.resolve(doc, Evaluator(sources=Sources()))
+    centroids = np.array([c["centroid"] for c in mesh["cells"]], dtype=float)
+    years = contact.cell_years(regions, centroids[:, 0], centroids[:, 1])
+    unknown = int((years == 0).sum())
+    if unknown:
+        log(f"{unknown:,} cells with no contact entry (centroid outside the coverage)")
+    return years
+
+
 def overlay_inputs():
     eco = read_vector(raw_file("aafc_ecozones")).to_crs(EQUAL_AREA_CRS)
     eco = eco.dissolve("ECOZONE_ID", as_index=False)
@@ -499,7 +522,13 @@ def build() -> dict:
     polys = cell_polygons(cells)
     areas_m2 = polys.area.to_numpy()
 
-    # DA points first, while little else is in memory: reading the DA GeoJSON is the largest
+    # The contact frontier first, before anything large is resident: it loads the atlas's own
+    # geometry sources, which it then drops.
+    log("first contact")
+    contact_years = contact_column(mesh)
+    release_memory()
+
+    # DA points next, while little else is in memory: reading the DA GeoJSON is the largest
     # transient allocation in this step (docs/perf.md).
     log("DA representative points")
     points = da_points()
@@ -673,6 +702,14 @@ def build() -> dict:
         "measure",
         unit="km",
         method="great_circle_centre_to_legislature_v1",
+    )
+
+    add(
+        "first_contact_year",
+        contact_years,
+        "measure",
+        unit="year",
+        method="earliest_covering_entry_contact_yaml_v1",
     )
 
     if "native_land_territories" not in load_manifest():
