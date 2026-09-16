@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import { CARTO_MISSING_WARNING, selectBasemap } from '../map/basemap';
+import { installPatterns } from '../map/patterns';
 import { AtlasLayer } from './AtlasLayer';
+import { ContactLayer } from './ContactLayer';
 import { ReferenceLayer } from './ReferenceLayer';
 
 /** Canada's extent, south-west to north-east, including Ellesmere and Cape Spear. */
@@ -29,15 +31,18 @@ export function MapView() {
     const instance = L.map(containerRef.current, { zoomSnap: 0.25, worldCopyJump: true });
     L.tileLayer(BASEMAP.url, BASEMAP.options).addTo(instance);
     instance.fitBounds(CANADA_BOUNDS, chromePadding());
+    const removePatterns = installPatterns(instance);
     setMap(instance);
     return () => {
       setMap(null);
+      removePatterns();
       instance.remove();
     };
   }, []);
 
   return (
     <div ref={containerRef} className="map" data-testid="map" data-basemap={BASEMAP.provider}>
+      {map && <ContactLayer map={map} />}
       {map && <AtlasLayer map={map} />}
       {map && <ReferenceLayer map={map} />}
     </div>

@@ -1,0 +1,607 @@
+# The contact frontier: the earliest documented direct European presence, by area.
+#
+# HOW THIS FILE RESOLVES. Every entry is a year and an area. A place takes the *earliest* year of
+# every entry covering it, so the order of entries does not matter and the file can be edited by
+# hand for years without anyone having to hold it all in their head.
+#
+# THE CONSEQUENCE, which is the thing to get right: a `drainage` entry covers a whole basin, so it
+# must carry that basin's *latest*, deep-interior date. Earlier dates for its coast, its river and
+# its posts are layered on as smaller shapes and cut through by the earliest-wins rule. Put 1611 on
+# the whole of northern Ontario because Hudson saw James Bay and the interior is dated a century
+# early with no way to correct it.
+#
+# The 25 StatCan drainage regions partition modern Canada with no gaps (atlas.primitives.partition),
+# so the 25 basin entries make "every hex has a year" a property of the data, not a hope.
+#
+# COORDINATES. Island seeds only have to fall inside the right island, and buffer centres are used
+# with radii of 40–200 km, so map-read coordinates of ±0.05° are harmless here in a way they would
+# not be on a boundary. Coordinates marked (defacto) are the verified ones from defacto.yaml.
+#
+# WHAT IS DELIBERATELY NOT HERE. Reconstructed journey corridors — Hearne 1770–72, Henday 1754–55,
+# de Troyes 1686, Albanel 1672 — would change the interior's shape a great deal, and their routes
+# are argued over: Hearne's own longitudes were badly out. Drawing them from prose would be tracing
+# a guess. They wait for a published route map (Historical Atlas of Canada, vol. I, has plates for
+# exactly these; Open Government's "Exploration 1651–1760" may be that plate as vectors). Until
+# then the interior takes its basin's later, documented date. See docs/decisions.md.
+
+caveat: |
+  "First contact" is a European frame. These years record when Europeans arrived and wrote it
+  down; the peoples already living here had their own long histories of these encounters, and of
+  the places and routes Europeans then claimed to have discovered. Contact also usually arrived
+  before Europeans did: trade goods, horses and above all epidemic disease moved along Indigenous
+  networks decades ahead of any European traveller — the smallpox epidemic of 1780–82 reached the
+  northern Plains through Indigenous trade and warfare routes and killed a large share of the
+  population in country no European had yet visited. The dates are uneven in kind as well: some
+  mark a ship passing offshore, others a wintering or a permanent post, and in the far north and
+  the deep interior they are the best documented guess rather than a record of what happened first.
+
+# Display bands for the choropleth. A band covers [from, until).
+bands:
+  - {from: null, until: 1500, label: Before 1500}
+  - {from: 1500, until: 1600, label: 1500–1599}
+  - {from: 1600, until: 1700, label: 1600–1699}
+  - {from: 1700, until: 1800, label: 1700–1799}
+  - {from: 1800, until: 1900, label: 1800–1899}
+  - {from: 1900, until: null, label: 1900 and after}
+
+# ---------------------------------------------------------------------------------------------
+# The 25 drainage basins: the gapless backbone. Each carries its own interior's latest date.
+# ---------------------------------------------------------------------------------------------
+regions:
+  - id: basin_pacific_coastal
+    name: Pacific coastal basin
+    year: 1793
+    event: Mackenzie reaches salt water at Bella Coola, 22 July 1793
+    where: {drainage: ["01"]}
+    confidence: 0.7
+    source: https://www.thecanadianencyclopedia.ca/en/article/sir-alexander-mackenzie-explorer
+
+  - id: basin_fraser
+    name: Fraser and Lower Mainland
+    year: 1808
+    event: Simon Fraser descends the river to the Strait of Georgia, May–July 1808
+    where: {drainage: ["02"]}
+    confidence: 0.85
+    source: https://www.biographi.ca/en/bio/fraser_simon_9E.html
+
+  - id: basin_okanagan
+    name: Okanagan and Similkameen
+    year: 1811
+    event: David Stuart travels north from Fort Okanogan into the Okanagan, 1811; Fort Kamloops 1812
+    where: {drainage: ["03"]}
+    confidence: 0.5
+    source: https://www.thecanadianencyclopedia.ca/en/article/kamloops
+
+  - id: basin_columbia
+    name: Columbia and Kootenay
+    year: 1807
+    event: David Thompson crosses Howse Pass and builds Kootenae House on the upper Columbia, 1807
+    where: {drainage: ["04"]}
+    confidence: 0.75
+    source: https://www.biographi.ca/en/bio/thompson_david_8E.html
+
+  - id: basin_yukon
+    name: Yukon basin
+    year: 1843
+    event: Robert Campbell descends the Pelly, 1843; Fort Selkirk 1848
+    where: {drainage: ["05"]}
+    confidence: 0.6
+    source: https://www.biographi.ca/en/bio/campbell_robert_1808_94_12E.html
+
+  - id: basin_peace_athabasca
+    name: Peace and Athabasca
+    year: 1778
+    event: Peter Pond crosses Methye Portage and winters on the Athabasca, 1778–79
+    where: {drainage: ["06"]}
+    confidence: 0.85
+    source: https://www.thecanadianencyclopedia.ca/en/article/peter-pond
+
+  - id: basin_lower_mackenzie
+    name: Lower Mackenzie
+    year: 1805
+    event: Fort Good Hope, 1805; Fort Norman and Great Bear, 1810
+    where: {drainage: ["07"]}
+    confidence: 0.5
+    source: https://www.thecanadianencyclopedia.ca/en/article/fort-good-hope
+
+  - id: basin_arctic
+    name: Arctic coast and islands
+    year: 1913
+    event: The Canadian Arctic Expedition, 1913–18, and the police posts of the 1900s–20s
+    where: {drainage: ["08"]}
+    confidence: 0.4
+    source: https://www.thecanadianencyclopedia.ca/en/article/canadian-arctic-expedition
+    note: >-
+      A deliberate backstop for the parts of the archipelago nothing more specific covers. Every
+      island entry below improves it.
+
+  - id: basin_missouri
+    name: Canadian Missouri (Milk River)
+    year: 1792
+    event: Peter Fidler winters with the Piikani, 1792–93 — the nearest documented presence
+    where: {drainage: ["09"]}
+    confidence: 0.35
+    source: https://www.biographi.ca/en/bio/fidler_peter_6E.html
+    note: >-
+      The weakest entry in this file. No documented European presence in the Canadian Missouri
+      basin before the 19th century was found; Fidler was probably north of it. Needs a specialist
+      source.
+
+  - id: basin_north_saskatchewan
+    name: North Saskatchewan
+    year: 1754
+    event: Anthony Henday's journey of 1754–55, the first European in what is now Alberta
+    where: {drainage: ["10"]}
+    confidence: 0.8
+    source: https://www.biographi.ca/en/bio/henday_anthony_3E.html
+
+  - id: basin_south_saskatchewan
+    name: South Saskatchewan
+    year: 1787
+    event: David Thompson winters with the Piikani on the Bow, 1787–88
+    where: {drainage: ["11"]}
+    confidence: 0.5
+    source: https://www.biographi.ca/en/bio/thompson_david_8E.html
+    note: >-
+      Both candidate anchors (Thompson 1787, Fidler 1792) are winters spent with the Piikani, so
+      contact plainly predated them through Cree and Assiniboine middlemen and the French posts on
+      the lower Saskatchewan.
+
+  - id: basin_assiniboine_red
+    name: Assiniboine and Red
+    year: 1738
+    event: La Vérendrye builds Fort Rouge and Fort La Reine, October 1738
+    where: {drainage: ["12"]}
+    confidence: 0.85
+    source: https://www.biographi.ca/en/bio/gaultier_de_varennes_et_de_la_verendrye_pierre_3E.html
+
+  - id: basin_winnipeg
+    name: Winnipeg River and Rainy Lake
+    year: 1731
+    event: Fort Saint-Pierre on Rainy Lake, 1731
+    where: {drainage: ["13"]}
+    confidence: 0.9
+    source: https://www.biographi.ca/en/bio/gaultier_de_varennes_et_de_la_verendrye_pierre_3E.html
+    note: >-
+      Jacques de Noyon is said to have wintered on Rainy Lake in 1688, but the account is a late
+      second-hand deposition, so the documented post of 1731 is used instead.
+
+  - id: basin_lower_saskatchewan_nelson
+    name: Lower Saskatchewan and Nelson
+    year: 1690
+    event: Henry Kelsey travels inland from York Factory, 1690–92
+    where: {drainage: ["14"]}
+    confidence: 0.8
+    source: https://www.biographi.ca/en/bio/kelsey_henry_2E.html
+
+  - id: basin_churchill
+    name: Churchill River basin
+    year: 1774
+    event: Frobisher at Frog Portage, 1774; Île-à-la-Crosse, 1776
+    where: {drainage: ["15"]}
+    confidence: 0.6
+    source: https://www.biographi.ca/en/bio/frobisher_joseph_5E.html
+
+  - id: basin_keewatin
+    name: Keewatin and southern Baffin
+    year: 1893
+    event: J. B. Tyrrell descends the Dubawnt and Kazan, 1893–94, and meets the Ahiarmiut
+    where: {drainage: ["16"]}
+    confidence: 0.7
+    source: https://fisher.library.utoronto.ca/tyrrell-explorer-and-adventurer
+
+  - id: basin_northern_ontario
+    name: Northern Ontario
+    year: 1743
+    event: Henley House, 1743, the first inland post; Osnaburgh, 1786
+    where: {drainage: ["17"]}
+    confidence: 0.5
+    source: https://www.thecanadianencyclopedia.ca/en/article/hudsons-bay-company
+    note: >-
+      Thin. Henley House is a post, not a contact: traders and Indigenous middlemen moved through
+      this country from the 1670s and the true date is almost certainly earlier.
+
+  - id: basin_northern_quebec
+    name: Northern Quebec
+    year: 1830
+    event: HBC inland posts of the 1830s; A. P. Low's surveys, 1890s
+    where: {drainage: ["18"]}
+    confidence: 0.4
+    source: https://pubs.aina.ucalgary.ca/arctic/Arctic39-3-274.pdf
+
+  - id: basin_great_lakes
+    name: Great Lakes basin
+    year: 1669
+    event: Dollier and Galinée winter at Long Point, 1669–70
+    where: {drainage: ["19"]}
+    confidence: 0.6
+    source: https://www.biographi.ca/en/bio/galinee_rene_bre_1E.html
+
+  - id: basin_ottawa
+    name: Ottawa valley
+    year: 1613
+    event: Champlain ascends the Ottawa to Allumette Island, 1613
+    where: {drainage: ["20"]}
+    confidence: 0.85
+    source: https://www.thecanadianencyclopedia.ca/en/article/samuel-de-champlain
+
+  - id: basin_st_lawrence
+    name: St. Lawrence basin
+    year: 1647
+    event: Jean de Quen reaches Lac Saint-Jean, 1647; the Chicoutimi post, 1676
+    where: {drainage: ["21"]}
+    confidence: 0.6
+    source: https://www.biographi.ca/en/bio/quen_jean_de_1E.html
+    note: >-
+      The basin's interior, not its river: Cartier's 1535 voyage is the corridor entry below. The
+      1647 date for the Saguenay interior is universally repeated but was not checked against the
+      Dictionary of Canadian Biography in the pass that produced this file.
+
+  - id: basin_north_shore_gaspe
+    name: North Shore and Gaspé
+    year: 1534
+    event: Cartier's first voyage coasts the Gulf's north shore and raises a cross at Gaspé, July 1534
+    where: {drainage: ["22"]}
+    confidence: 0.85
+    source: https://www.thecanadianencyclopedia.ca/en/article/jacques-cartier
+
+  - id: basin_saint_john
+    name: Saint John and St. Croix
+    year: 1604
+    event: de Monts and Champlain at Île Sainte-Croix, 26 June 1604; the Saint John named that month
+    where: {drainage: ["23"]}
+    confidence: 0.85
+    source: https://www.thecanadianencyclopedia.ca/en/article/ile-ste-croix-the-birth-of-acadia-feature
+
+  - id: basin_maritime_coastal
+    name: Maritime coastal
+    year: 1604
+    event: The Acadian coast of the de Monts expedition, 1604–05
+    where: {drainage: ["24"]}
+    confidence: 0.85
+    source: https://archives.novascotia.ca/habitation/
+
+  - id: basin_newfoundland_labrador
+    name: Newfoundland and Labrador interior
+    year: 1893
+    event: A. P. Low's Geological Survey traverse of the Labrador peninsula, 1893–95
+    where: {drainage: ["25"]}
+    confidence: 0.55
+    source: https://pubs.aina.ucalgary.ca/arctic/Arctic39-3-274.pdf
+
+  # -------------------------------------------------------------------------------------------
+  # Coasts, rivers, islands and posts that reached their country earlier than its basin.
+  # -------------------------------------------------------------------------------------------
+
+  - id: lanse_aux_meadows
+    name: L'Anse aux Meadows
+    year: 1000
+    event: The Norse outpost at L'Anse aux Meadows, radiocarbon 990–1050, one felling dated to 1021
+    where: {buffer: {points: [[-55.53, 51.60]], km: 40}}
+    confidence: 0.8
+    source: https://whc.unesco.org/en/list/4/
+    note: >-
+      A different kind of fact from everything else here: a single short-lived outpost with no
+      continuity to what came after. It is why the timeline offers 1000 as a start date.
+
+  - id: newfoundland_island
+    name: Newfoundland
+    year: 1497
+    event: Cabot's landfall, 24 June 1497; the Dictionary of Canadian Biography is explicit that the site is not established
+    where: {island: [-56.0, 48.6]}
+    confidence: 0.75
+    source: https://www.biographi.ca/en/bio/cabot_john_1E.html
+
+  - id: strait_of_belle_isle
+    name: Strait of Belle Isle
+    year: 1530
+    event: Basque whaling at Red Bay from the 1530s, worked for some seventy years
+    where: {buffer: {line: [[-57.15, 51.42], [-56.43, 51.73], [-55.90, 52.00]], km: 50}}
+    confidence: 0.65
+    source: https://whc.unesco.org/en/list/1412/
+
+  - id: prince_edward_island
+    name: Prince Edward Island
+    year: 1534
+    event: Cartier coasts the island, July 1534
+    where: {island: [-63.2, 46.4]}
+    confidence: 0.85
+    source: https://www.thecanadianencyclopedia.ca/en/article/jacques-cartier
+
+  - id: st_lawrence_river
+    name: The St. Lawrence to Hochelaga
+    year: 1535
+    event: Cartier winters at Stadacona and reaches Hochelaga, 2 October 1535
+    where:
+      buffer:
+        line: [[-64.50, 49.20], [-68.50, 48.50], [-70.50, 47.30], [-71.21, 46.81], [-72.55, 46.35], [-73.57, 45.50], [-74.30, 45.30]]
+        km: 60
+    confidence: 0.85
+    source: https://www.thecanadianencyclopedia.ca/en/article/jacques-cartier
+    note: The river itself, which was the route; the basin entry above carries the interior.
+
+  - id: huronia
+    name: Huronia and Georgian Bay
+    year: 1615
+    event: Champlain reaches the Wendat by the French River, 1615
+    where: {buffer: {points: [[-79.90, 44.60]], km: 120}}
+    confidence: 0.85
+    source: https://www.thecanadianencyclopedia.ca/en/article/samuel-de-champlain
+
+  - id: sault_and_superior
+    name: Sault Ste. Marie and Lake Superior
+    year: 1641
+    event: Jogues and Raymbault at the Sault, 1641; Radisson and Des Groseilliers winter on Superior, 1659–60
+    where: {buffer: {points: [[-84.35, 46.51]], km: 120}}
+    confidence: 0.7
+    source: https://www.thecanadianencyclopedia.ca/en/article/sault-ste-marie
+
+  # The bay's shore, in five boxes rather than one. `near_coast` buffers the mainland outline
+  # inside its area, and the whole bay at once builds a polygon of millions of vertices — enough
+  # to have this step killed on an 8 GB machine (docs/perf.md). Five boxes cost about 150 MB each.
+  - id: james_bay_shore
+    name: James Bay shore
+    year: 1610
+    event: Hudson reaches James Bay, 1 November 1610, and winters there
+    where: {near_coast: {area: {box: [-83.0, 50.6, -78.0, 55.0]}, km: 40}}
+    confidence: 0.85
+    source: https://www.rmg.co.uk/stories/maritime-history/henry-hudson-north-west-passage-expedition-1610-11
+
+  - id: hudson_lowland_shore
+    name: The Hudson Bay lowland shore
+    year: 1610
+    event: Hudson's voyage of 1610–11 along the bay's southern shore
+    where: {near_coast: {area: {box: [-88.0, 51.0, -82.5, 57.0]}, km: 40}}
+    confidence: 0.75
+    source: https://www.rmg.co.uk/stories/maritime-history/henry-hudson-north-west-passage-expedition-1610-11
+
+  - id: hudson_west_shore
+    name: The bay's west shore
+    year: 1610
+    event: Hudson's voyage of 1610–11; Button winters at the Nelson in 1612
+    where: {near_coast: {area: {box: [-96.0, 55.0, -88.0, 60.0]}, km: 40}}
+    confidence: 0.75
+    source: https://www.rmg.co.uk/stories/maritime-history/henry-hudson-north-west-passage-expedition-1610-11
+
+  - id: kivalliq_shore
+    name: The Kivalliq shore
+    year: 1612
+    event: Button coasts north from the Nelson, 1612–13; Munk 1619; Foxe 1631
+    where: {near_coast: {area: {box: [-95.0, 60.0, -85.0, 64.5]}, km: 40}}
+    confidence: 0.6
+    source: https://www.biographi.ca/en/bio/button_thomas_1E.html
+
+  - id: nunavik_bay_shore
+    name: The bay's east shore
+    year: 1610
+    event: Hudson's voyage of 1610–11 down the bay's eastern shore
+    where: {near_coast: {area: {box: [-79.0, 55.0, -75.0, 63.0]}, km: 40}}
+    confidence: 0.75
+    source: https://www.rmg.co.uk/stories/maritime-history/henry-hudson-north-west-passage-expedition-1610-11
+
+  - id: james_bay_posts
+    name: The James Bay factories
+    year: 1668
+    event: Charles Fort, 1668; Moose Factory, 1673; Fort Albany, 1679
+    where: {buffer: {points: [[-78.750, 51.483], [-80.605, 51.256], [-81.684, 52.211]], km: 60}}
+    confidence: 0.9
+    source: https://www.thecanadianencyclopedia.ca/en/article/hudsons-bay-company
+
+  - id: nelson_mouth
+    name: The Nelson's mouth
+    year: 1612
+    event: Thomas Button winters at the Nelson, 1612–13
+    where: {buffer: {points: [[-92.306, 57.002]], km: 60}}
+    confidence: 0.7
+    source: https://www.biographi.ca/en/bio/button_thomas_1E.html
+
+  - id: churchill_post
+    name: Churchill
+    year: 1717
+    event: The post at Churchill, 1717; Prince of Wales Fort from 1731
+    where: {buffer: {points: [[-94.213, 58.797]], km: 60}}
+    confidence: 0.9
+    source: https://www.thecanadianencyclopedia.ca/en/article/prince-of-wales-fort
+
+  - id: nunavik_hudson_coast
+    name: Nunavik's Hudson coast
+    year: 1749
+    event: Richmond Fort, 1749; Great Whale River, 1820
+    where: {buffer: {points: [[-76.294, 56.249], [-77.764, 55.278]], km: 60}}
+    confidence: 0.8
+    source: https://www.thecanadianencyclopedia.ca/en/article/hudsons-bay-company
+
+  - id: ungava_bay
+    name: Ungava Bay and the Koksoak
+    year: 1811
+    event: Kohlmeister and Kmoch, guided by Inuit, reach a camp on the Koksoak, 25 August 1811
+    where: {buffer: {points: [[-68.400, 58.108]], km: 80}}
+    confidence: 0.8
+    source: https://www.gutenberg.org/files/15436/15436-h/15436-h.htm
+
+  - id: labrador_south_coast
+    name: Lake Melville and the south Labrador coast
+    year: 1743
+    event: French then HBC posts at North West River and Rigolet
+    where: {buffer: {points: [[-60.144, 53.535], [-58.431, 54.179]], km: 60}}
+    confidence: 0.8
+    source: https://www.thecanadianencyclopedia.ca/en/article/north-west-river
+
+  - id: labrador_north_coast
+    name: The Moravian coast
+    year: 1771
+    event: Jens Haven founds the mission at Nain, August 1771; Okak 1776, Hopedale 1782
+    where: {buffer: {points: [[-61.690, 56.540], [-60.220, 55.450]], km: 60}}
+    confidence: 0.85
+    source: https://www.thecanadianencyclopedia.ca/en/article/moravian-missions-in-labrador-emc
+
+  - id: southern_baffin
+    name: Southern Baffin Island
+    year: 1576
+    event: Frobisher enters Frobisher Bay, 1576; three voyages, 1576–78
+    where: {intersect: [{island: [-70.0, 65.0]}, {box: [-80.0, 61.0, -61.0, 67.0]}]}
+    confidence: 0.85
+    source: https://www.thecanadianencyclopedia.ca/en/article/sir-martin-frobisher
+
+  - id: cumberland_sound
+    name: Cumberland Sound
+    year: 1840
+    event: William Penny, guided by Eenoolooapik, re-enters Cumberland Sound, 1840
+    where: {buffer: {points: [[-64.70, 65.40]], km: 120}}
+    confidence: 0.8
+    source: https://www.biographi.ca/en/bio/penny_william_12E.html
+
+  - id: repulse_bay
+    name: Repulse Bay and Committee Bay
+    year: 1846
+    event: Rae winters at Fort Hope, 1846–47, and surveys Committee Bay the next spring
+    where: {buffer: {points: [[-86.25, 66.52]], km: 200}}
+    confidence: 0.85
+    source: https://www.biographi.ca/en/bio/rae_john_1813_93_12E.html
+
+  - id: boothia_netsilik
+    name: Boothia and the Netsilik
+    year: 1829
+    event: John Ross's Victory winters at Felix Harbour, 1829–33, four winters among the Netsilik
+    where: {buffer: {points: [[-92.00, 69.90]], km: 200}}
+    confidence: 0.7
+    source: https://www.biographi.ca/en/bio/ross_john_8E.html
+
+  - id: king_william_island
+    name: King William Island
+    year: 1903
+    event: Amundsen winters at Gjoa Haven, 1903–05
+    where: {island: [-97.5, 69.0]}
+    confidence: 0.85
+    source: https://www.thecanadianencyclopedia.ca/en/article/roald-amundsen
+
+  - id: coronation_gulf_coast
+    name: The Coronation Gulf coast
+    year: 1821
+    event: Franklin's first expedition charts the coast east from the Coppermine, summer 1821
+    where: {near_coast: {area: {box: [-118.0, 66.5, -105.0, 69.5]}, km: 40}}
+    confidence: 0.8
+    source: https://www.biographi.ca/en/bio/franklin_john_7E.html
+
+  - id: western_arctic_coast
+    name: The Beaufort coast
+    year: 1826
+    event: "Franklin's second expedition, July 1826: Franklin west and Richardson east from the delta"
+    where: {near_coast: {area: {box: [-139.5, 67.5, -120.0, 71.5]}, km: 40}}
+    confidence: 0.85
+    source: https://www.biographi.ca/en/bio/franklin_john_7E.html
+
+  - id: herschel_island
+    name: Herschel Island
+    year: 1890
+    event: American whalers winter at Pauline Cove, 1890–91
+    where: {island: [-138.9, 69.6]}
+    confidence: 0.8
+    source: https://sightsandsites.ca/north/site/herschel-island
+
+  - id: parry_channel_islands
+    name: The Parry Channel islands
+    year: 1819
+    event: Parry through Lancaster Sound; winters at Winter Harbour, Melville Island, 1819–20
+    where: {islands: [[-110.7, 75.3], [-100.0, 75.7], [-94.9, 75.2], [-88.0, 75.5]]}
+    confidence: 0.6
+    source: https://www.biographi.ca/en/bio/parry_william_edward_8E.html
+
+  - id: banks_island
+    name: Banks Island
+    year: 1850
+    event: McClure's Investigator, 1850–53, at Mercy Bay
+    where: {island: [-121.0, 73.5]}
+    confidence: 0.7
+    source: https://www.biographi.ca/en/bio/mcclure_robert_john_le_mesurier_11E.html
+
+  - id: victoria_island
+    name: Victoria Island
+    year: 1851
+    event: Collinson explores Prince Albert Sound, 1851–53
+    where: {island: [-110.0, 71.0]}
+    confidence: 0.6
+    source: https://www.biographi.ca/en/bio/collinson_richard_11E.html
+    note: >-
+      A genuine judgement: Dease and Simpson sighted the south shore in 1838–39, and Stefansson's
+      sustained contact with the Inuinnait was 1910.
+
+  - id: ellesmere_island
+    name: Ellesmere Island
+    year: 1875
+    event: The Nares expedition winters in the Hall Basin, 1875–76; Fort Conger, 1881
+    where: {island: [-79.0, 79.5]}
+    confidence: 0.6
+    source: https://www.biographi.ca/en/bio/nares_george_strong_14E.html
+
+  - id: sverdrup_islands
+    name: The Sverdrup Islands
+    year: 1899
+    event: Sverdrup's second Fram expedition, 1898–1902, maps some 260,000 km²
+    where: {islands: [[-91.0, 78.8], [-96.5, 78.3], [-102.5, 78.5]]}
+    confidence: 0.75
+    source: https://www.thecanadianencyclopedia.ca/en/article/otto-neumann-sverdrup
+
+  - id: haida_gwaii
+    name: Haida Gwaii
+    year: 1774
+    event: Juan Pérez reaches Haida Gwaii, 18–19 July 1774, and trades with Haida from canoes
+    where: {islands: [[-132.4, 53.6], [-132.0, 52.9]]}
+    confidence: 0.8
+    source: https://www.thecanadianencyclopedia.ca/en/article/juan-josef-perez-hernandez
+
+  - id: vancouver_island
+    name: Vancouver Island
+    year: 1778
+    event: Cook anchors at Yuquot in Nootka Sound, 29 March – 26 April 1778
+    where: {island: [-126.0, 49.7]}
+    confidence: 0.9
+    source: https://www.thecanadianencyclopedia.ca/en/article/nootka-sound
+
+  - id: inner_coast
+    name: The Strait of Georgia and the inner channels
+    year: 1792
+    event: Vancouver's survey of 1792–94
+    where: {buffer: {line: [[-123.20, 49.30], [-124.80, 49.80], [-126.50, 50.60]], km: 60}}
+    confidence: 0.8
+    source: https://www.biographi.ca/en/bio/vancouver_george_4E.html
+
+  - id: new_caledonia_posts
+    name: New Caledonia
+    year: 1805
+    event: Fort McLeod, 1805; Fort St James and Fort Fraser, 1806; Fort George, 1807
+    where: {buffer: {points: [[-123.03, 54.99], [-124.25, 54.44], [-122.75, 53.92]], km: 100}}
+    confidence: 0.75
+    source: https://www.thecanadianencyclopedia.ca/en/article/simon-fraser
+
+  - id: great_slave_lake
+    name: Great Slave Lake
+    year: 1771
+    event: Hearne crosses the lake, December 1771 – January 1772; Fort Resolution, 1786
+    where: {buffer: {points: [[-113.68, 61.17]], km: 100}}
+    confidence: 0.75
+    source: https://www.biographi.ca/en/bio/hearne_samuel_4E.html
+
+  - id: coppermine_mouth
+    name: The Coppermine's mouth
+    year: 1771
+    event: Hearne reaches the Arctic Ocean at Bloody Falls, 15 July 1771
+    where: {buffer: {points: [[-115.10, 67.83]], km: 80}}
+    confidence: 0.85
+    source: https://www.thecanadianencyclopedia.ca/en/article/coppermine-river
+
+  - id: mackenzie_delta
+    name: The Mackenzie delta
+    year: 1789
+    event: Mackenzie reaches the Arctic Ocean, 13 July 1789, meeting Inuvialuit in the delta
+    where: {buffer: {points: [[-134.20, 68.40]], km: 100}}
+    confidence: 0.85
+    source: https://www.thecanadianencyclopedia.ca/en/article/sir-alexander-mackenzie-explorer
+
+  - id: fort_chipewyan
+    name: Fort Chipewyan and the Peace
+    year: 1788
+    event: Fort Chipewyan, 1788; Boyer's post at the site of Fort Vermilion the same year
+    where: {buffer: {points: [[-111.157, 58.709], [-116.00, 58.40]], km: 80}}
+    confidence: 0.8
+    source: https://www.thecanadianencyclopedia.ca/en/article/fort-vermilion

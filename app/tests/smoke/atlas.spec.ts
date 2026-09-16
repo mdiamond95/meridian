@@ -23,13 +23,15 @@ test('atlas loads and resolves the timeline to units', async ({ page }, testInfo
   await expect(units).toHaveCount(13);
   await page.screenshot({ path: testInfo.outputPath('atlas-1999.png') });
 
-  // The slider moves by year from the keyboard. Home is the atlas's first year: 1670, the charter.
+  // The slider moves by year from the keyboard. Home is the timeline's first year, which is the
+  // start selector's, not the atlas's: 1497 by default, before the first event of 1670.
   const slider = page.getByRole('slider', { name: 'Year' });
   await slider.focus();
   await page.keyboard.press('Home');
-  await expect(page.getByTestId('timeline-year')).toHaveText('1670');
+  await expect(page.getByTestId('timeline-year')).toHaveText('1497');
   await page.keyboard.press('ArrowRight');
-  await expect(page.getByTestId('timeline-year')).toHaveText('1671');
+  await expect(page.getByTestId('timeline-year')).toHaveText('1498');
+  await expect(page.getByTestId('timeline-event')).toContainText('Before the first event');
   expect(errors).toEqual([]);
 });
 
@@ -67,4 +69,32 @@ test('NRCan drawing overlay is off by default and shows where the atlas departs 
 
   await page.getByLabel('NRCan drawing').uncheck();
   await expect(dashed).toHaveCount(0);
+});
+
+test('the contact frontier and the pre-contact base', async ({ page }) => {
+  await page.goto('./');
+  await expect(page.locator('.leaflet-overlay-pane path').first()).toBeAttached();
+
+  // The layer is off by default and its data is not fetched until it is asked for.
+  const requested: string[] = [];
+  page.on('request', (r) => requested.push(r.url()));
+  await page.getByRole('button', { name: 'Layers' }).click();
+  await page.getByLabel('Contact frontier').check();
+  await expect
+    .poll(() => requested.filter((u) => u.includes('contact')).length, { timeout: 15000 })
+    .toBeGreaterThan(0);
+
+  // Its caveat travels with it: these years must not be read as a record of what happened first.
+  const caveat = page.getByTestId('contact-caveat');
+  await expect(caveat).toBeVisible();
+  await expect(caveat).toContainText('European frame');
+
+  // Before the atlas begins there are no units, and the base says why rather than showing an
+  // empty country.
+  await page.getByTestId('start-select').selectOption('1000');
+  const slider = page.getByRole('slider', { name: 'Year' });
+  await slider.focus();
+  await page.keyboard.press('Home');
+  await expect(page.getByTestId('timeline-year')).toHaveText('1000');
+  await expect(page.getByTestId('pre-contact')).toContainText('permission');
 });

@@ -342,3 +342,46 @@ Mark's decisions on PR #5, and what they changed.
     Minister of Justice's; the 1897 row's note is corrected.
   - **British Columbia's capital on 1 July 1867 was New Westminster;** Victoria from 1868-05-25,
     which is now its own event.
+
+## 2026-09-16 — Sitting C: the contact frontier, and claims as claims
+
+- **The contact frontier is our own data, in `pipeline/atlas/contact.yaml`,** not a traced map.
+  Each of its 65 entries is a year, an area expression and a source. A place takes the **earliest**
+  year of every entry covering it, so entries compose in any order and the file survives being
+  edited by hand for years.
+  - **A basin entry therefore carries its interior's *latest* date,** with coasts, rivers, islands
+    and posts layered on as smaller shapes that cut through. The opposite convention dates the
+    interior of northern Ontario a century early with no way to correct it.
+  - **The 25 StatCan drainage regions partition modern Canada,** so "every hex has a year" is a
+    property of the data rather than a hope. Measured: the bands cover 9,652,844 km² against
+    Canada's 9,650,830 km².
+  - **Reconstructed journey corridors are deliberately absent** — Hearne 1770–72, Henday 1754–55,
+    de Troyes 1686, Albanel 1672. The years are solid; the routes are argued over (Hearne's own
+    longitudes were badly out), and drawing them from prose would be tracing a guess. The interior
+    takes its basin's later, documented date until a published route map can be used.
+- **The caveat ships with the data and the schema requires it.** `ContactFile.caveat` is not
+  optional, and the app shows it with the layer: "first contact" is a European frame, contact
+  usually arrived before Europeans did (the smallpox epidemic of 1780–82 moved along Indigenous
+  networks into country no European had visited), and the dates are uneven in kind.
+- **`first_contact_year` is a per-hex column in attrs** (measure, unit `year`, 0 where no entry
+  covers the cell's centre), so Phase 3 can use it as a lens.
+- **The contact frontier is its own artefact pair** (`contact.v1.json`, `contact.v1.topojson.gz`),
+  not part of `atlas.v1`. mapshaper snaps coincident points across everything in one topology, and
+  a band's edge is not a boundary: it must not be allowed to move one. The same argument applies to
+  a claim line, but claim rows are units with a validity range, so they stay in the atlas.
+- **Claims are not clipped to Canada.** `clip:` on a change is `canada` (the default),
+  `north_america` (Canada with the United States and Greenland) or `none`. Most of the ground in
+  these disputes is now American or Greenlandic; clipping a claim away would draw the dispute as if
+  it had already been settled our way.
+- **A `dispute:` id groups the claim rows of one dispute,** so the map can say whose claim a hatch
+  is instead of hatching every claim identically.
+- **Claims are hatched, never filled.** A flat fill says "this is how it was"; a hatch says "this is
+  a statement about a claim". The pattern is installed into Leaflet's overlay pane
+  (`app/src/map/patterns.ts`), which has no API for pattern fills.
+- **Native Land stays gated.** The permission flag is read from `pipeline/artefacts.yaml` at build
+  time, so the pipeline and the app cannot disagree about it. Until it says `granted`, nothing of
+  theirs is fetched or shipped, the pre-contact base is plain, and it says why — an empty country
+  with no explanation would be its own kind of claim.
+- **The timeline's start is 1000, 1497 or the contact frontier,** defaulting to 1497. Before the
+  first event of 1670 the atlas has no units, which is the point: that is where the pre-contact
+  base and, with "frontier", the moving contact line do the talking.

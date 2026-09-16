@@ -395,3 +395,66 @@ belts:
     assert evaluator.eval({"belts": {"as_of": 1800, "power": "british"}}).contains(Point(-87, 50.05))
     with pytest.raises(ValueError, match="as_of"):
         evaluator.eval({"belts": {"year": 1800, "power": "british"}})
+
+
+def test_claims_may_reach_beyond_canada_but_units_may_not():
+    """A claim over ground now American is drawn whole; clipping it to Canada would draw the
+    dispute as already settled our way."""
+
+    class Sources(FakeSources):
+        modern = {**FakeSources.modern, "US": box(-110, 40, -80, 49)}
+
+    evaluator = build.Evaluator(Sources())
+    claim = {"box": [-95, 45, -90, 55]}  # half in Canada, half in the "US"
+    assert evaluator(claim, "canada").bounds == (-95, 49, -90, 55)
+    assert evaluator(claim, "north_america").bounds == (-95, 45, -90, 55)
+    # `none` keeps even the part in the sea, for a maritime zone.
+    assert evaluator({"box": [-95, 30, -90, 35]}, "none").bounds == (-95, 30, -90, 35)
+    with pytest.raises(ValueError, match="empty after clipping to canada"):
+        evaluator({"box": [-95, 30, -90, 35]}, "canada")
+    with pytest.raises(ValueError, match="unknown clip"):
+        evaluator(claim, "everything")
+
+
+def test_disputed_rows_carry_their_dispute_and_do_not_have_to_agree():
+    """Two claim rows of one dispute overlap on purpose: that overlap is the dispute."""
+    events, rows = build.resolve_events(
+        doc(
+            {
+                "date": "1818-10-20",
+                "title": "Joint occupation",
+                "note": "Both claim it.",
+                "changes": [
+                    create(
+                        "west",
+                        {"modern": ["WE", "MI", "EA"]},
+                        truth="dejure",
+                    ),
+                    create(
+                        "british_claim",
+                        {"box": [-110, 49, -95, 60]},
+                        truth="disputed",
+                        dispute="oregon",
+                        sovereign="Britain",
+                        status="disputed",
+                        confidence=0.9,
+                    ),
+                    create(
+                        "american_claim",
+                        {"box": [-105, 49, -90, 60]},
+                        truth="disputed",
+                        dispute="oregon",
+                        sovereign="United States",
+                        status="disputed",
+                        confidence=0.9,
+                    ),
+                ],
+            }
+        ),
+        FakeSources(),
+    )
+    assert build.validate(events, rows, FakeSources.canada) == []
+    document = build.atlas_document(events, rows)
+    claims = [u for u in document["units"] if u["truth"] == "disputed"]
+    assert [u["dispute"] for u in claims] == ["oregon", "oregon"]
+    assert {u["sovereign"] for u in claims} == {"Britain", "United States"}

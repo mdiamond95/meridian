@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { currentEvent, dateToYear, formatDate, yearRange, yearToDate } from '../atlas/resolve';
-import { useAtlasStore } from '../state/atlasStore';
+import { startYear, useAtlasStore } from '../state/atlasStore';
 
 /** Bottom timeline: a year slider with a tick per atlas event. */
 export function Timeline() {
@@ -9,6 +9,7 @@ export function Timeline() {
   const date = useAtlasStore((s) => s.date);
   const setDate = useAtlasStore((s) => s.setDate);
 
+  const start = useAtlasStore((s) => s.start);
   const range = useMemo(() => (data ? yearRange(data.atlas, new Date()) : null), [data]);
   const event = data ? currentEvent(data.atlas, date) : null;
 
@@ -20,7 +21,10 @@ export function Timeline() {
     );
   }
 
-  const [min, max] = range;
+  // The atlas begins in 1670; the start selector reaches back before it, where the map has only
+  // the pre-contact base and, with "frontier", the contact bands.
+  const [firstEvent, max] = range;
+  const min = Math.min(firstEvent, startYear(start));
   const year = dateToYear(date);
   const offset = (y: number) => `${((y - min) / (max - min || 1)) * 100}%`;
 

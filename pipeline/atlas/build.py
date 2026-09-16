@@ -37,6 +37,9 @@ Geometry expressions (events.yaml, `geometry:`), all in lon/lat degrees:
     was: <id> | was: [<id>, ...]     a unit's geometry when this event began (before any change);
                                      a list unites those of the listed units that existed
     shape: <name>                    a named expression from `shapes:`
+A change may also carry `clip:` beside its geometry: canada (the default, modern Canada),
+north_america (Canada with the United States and Greenland, for claims over ground now theirs), or
+none (no clip at all, for a shape drawn in the sea).
 Ring pieces:
     parallel: [lat, lon0, lon1]      meridian: [lon, lat0, lat1]      line: [[lon, lat], ...]
     border: {a: MB, b: ON, from: [lon, lat], to: [lon, lat]}   shared modern border (from/to optional)
@@ -64,12 +67,14 @@ import shapely
 import yaml
 
 from atlas import compare
+from atlas import contact as contact_frontier
 from atlas import primitives as p
 from atlas.sources import Sources, log
 from common import BUILD, EQUAL_AREA_CRS, ROOT, WGS84, dumps, gzip_bytes, write_bytes
 from polygons import mapshaper_cmd
 
 ATLAS_VERSION = "v1"
+CONTACT_VERSION = "v1"
 EVENTS = Path(__file__).with_name("events.yaml")
 DEFACTO = Path(__file__).with_name("defacto.yaml")
 POWERS = ("french", "british", "spanish")
@@ -96,11 +101,15 @@ UNIT_FIELDS = (
     "sovereign",
     "capital",
     "truth",
+    "dispute",
     "note",
     "confidence",
     "instrument",
     "rationale",
 )
+# How far a geometry is cut back. Units are Canadian ground; claims need the neighbours too.
+CLIPS = ("canada", "north_america", "none")
+FOREIGN_CODES = ("US", "GL")
 # Per-row annotations: they describe one drawing, so an alter does not carry them forward.
 ROW_ANNOTATIONS = ("note", "confidence", "instrument", "rationale")
 EVENT_KEYS = {"date", "title", "note", "date_confidence", "changes"}
@@ -126,12 +135,30 @@ class Evaluator:
     defacto_path: Path = DEFACTO
     _cache: dict[str, shapely.Geometry] = field(default_factory=dict)
 
-    def __call__(self, expr: Any) -> shapely.Geometry:
+    def __call__(self, expr: Any, clip: str = "canada") -> shapely.Geometry:
+        """Evaluate and clip. Units are clipped to modern Canada so every de jure map covers the
+        same ground; a *claim* is not, because most of the ground claimed in these disputes is now
+        American or Greenlandic, and clipping it away would draw the dispute as if it had already
+        been settled our way."""
         geom = self.eval(expr)
-        clipped = p.polygonal(shapely.intersection(geom, self.sources.canada))
+        if clip not in CLIPS:
+            raise ValueError(f"unknown clip {clip!r}; one of {', '.join(sorted(CLIPS))}")
+        if clip == "none":
+            clipped = p.polygonal(geom)
+        else:
+            extent = self.sources.canada if clip == "canada" else self.north_america
+            clipped = p.polygonal(shapely.intersection(geom, extent))
         if clipped is None:
-            raise ValueError(f"geometry is empty after clipping to Canada: {expr}")
+            raise ValueError(f"geometry is empty after clipping to {clip}: {expr}")
         return clipped
+
+    @property
+    def north_america(self) -> shapely.Geometry:
+        """Canada with its neighbours in the same source file: enough for any claim in the atlas."""
+        if "north_america" not in self._cache:
+            neighbours = [self.sources.modern[c] for c in sorted(FOREIGN_CODES) if c in self.sources.modern]
+            self._cache["north_america"] = shapely.union_all([self.sources.canada, *neighbours])
+        return self._cache["north_america"]
 
     def eval(self, expr: Any) -> shapely.Geometry:
         if not isinstance(expr, dict) or len(expr) != 1:
@@ -390,7 +417,7 @@ def apply_change(
 ) -> Row | None:
     """Apply one change. Everything is checked and evaluated before state is touched, so a
     geometry may refer to the unit it replaces (`unit: <itself>`)."""
-    unknown = set(change) - {kind, "geometry", "boundary", "nrcan", "nrcan_overlay", *UNIT_FIELDS}
+    unknown = set(change) - {kind, "geometry", "boundary", "clip", "nrcan", "nrcan_overlay", *UNIT_FIELDS}
     if unknown:
         raise ValueError(f"unknown keys {sorted(unknown)}")
     previous = open_rows.get(unit_id)
@@ -420,7 +447,7 @@ def apply_change(
     if kind == "dissolve":
         geometry, boundary = None, ""
     elif "geometry" in change:
-        geometry = evaluator(change["geometry"])
+        geometry = evaluator(change["geometry"], change.get("clip", "canada"))
         boundary = " ".join(change["boundary"].split())
     else:
         geometry = previous.geometry
@@ -647,6 +674,8 @@ def atlas_document(events: list[dict], rows: list[Row]) -> dict:
             unit["note"] = " ".join(row.fields["note"].split())
         if row.fields.get("confidence") is not None:
             unit["confidence"] = row.fields["confidence"]
+        if row.fields.get("dispute"):
+            unit["dispute"] = row.fields["dispute"]
         for key in ("instrument", "rationale"):
             if row.fields.get(key):
                 unit[key] = " ".join(row.fields[key].split())
@@ -673,6 +702,55 @@ def atlas_document(events: list[dict], rows: list[Row]) -> dict:
     if references:
         doc["references"] = references
     return doc
+
+
+def band_ref(band: contact_frontier.Band) -> str:
+    return f"contact_{band.from_year or 'start'}_{band.until_year or 'now'}"
+
+
+def build_contact(sources: Sources, build_dir: Path = BUILD) -> dict:
+    """The contact frontier as its own pair of artefacts (contact.v1.json + .topojson.gz).
+
+    It is kept out of atlas.v1 on purpose: mapshaper snaps coincident points across everything in
+    one topology, and a band's edge is not a boundary — it must not be allowed to move one.
+    """
+    doc = contact_frontier.load_contact()
+    regions = contact_frontier.resolve(doc, Evaluator(sources=sources))
+    bands = contact_frontier.bands(doc, regions)
+    log(f"contact: {len(regions)} regions in {len(bands)} bands")
+    write_topology(
+        [(band_ref(b), b.geometry) for b in bands], build_dir / f"contact.{CONTACT_VERSION}.topojson.gz"
+    )
+    document = {
+        "format": "meridian.contact",
+        "version": CONTACT_VERSION,
+        "caveat": doc["caveat"].strip(),
+        "bands": [
+            {
+                "label": b.label,
+                "fromYear": b.from_year,
+                "untilYear": b.until_year,
+                "geometryRef": band_ref(b),
+            }
+            for b in bands
+        ],
+        "regions": [
+            {
+                "id": r.id,
+                "name": r.name,
+                "year": r.year,
+                "event": r.event,
+                "confidence": r.confidence,
+                "source": r.source,
+                **({"note": " ".join(r.note.split())} if r.note else {}),
+            }
+            for r in regions
+        ],
+    }
+    path = build_dir / f"contact.{CONTACT_VERSION}.json"
+    write_bytes(path, json.dumps(document, ensure_ascii=False, indent=1).encode("utf-8") + b"\n")
+    log(f"wrote {path} ({path.stat().st_size:,} bytes)")
+    return document
 
 
 def agreements(rows: list[Row]) -> dict[int, compare.Agreement | None]:
@@ -720,7 +798,13 @@ def checklist(events: list[dict], rows: list[Row], checks: list[tuple[dict, str 
         for iou, row in worst:
             lines.append(f"- {row.valid_from} **{row.fields['name']}**: {iou:.1%} overlap with NRCan")
         for row in missing:
-            lines.append(f"- {row.valid_from} **{row.fields['name']}**: no NRCan polygon named “{row.nrcan}”")
+            # A claim has no NRCan counterpart by construction: their maps draw settled boundaries.
+            why = (
+                "no NRCan counterpart (their maps draw boundaries, not claims)"
+                if row.fields["truth"] == "disputed"
+                else f"no NRCan polygon named “{row.nrcan}”"
+            )
+            lines.append(f"- {row.valid_from} **{row.fields['name']}**: {why}")
         lines.append("")
     if checks:
         lines += [
@@ -810,6 +894,7 @@ def build(
     write_topology(shapes, topology)
     atlas = atlas_document(events, rows)
     write_bytes(atlas_json, json.dumps(atlas, ensure_ascii=False, indent=1).encode("utf-8") + b"\n")
+    build_contact(sources, build_dir)
     if checklist_path is not None:
         write_bytes(checklist_path, checklist(events, rows, checks).encode("utf-8"))
     for path in (atlas_json, topology):

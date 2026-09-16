@@ -18,11 +18,20 @@ where the atlas follows the legal text instead of NRCan's drawing the row says s
 - 1867-07-01 **Nova Scotia**: 94.8% overlap with NRCan
 - 1763-10-07 **British Arctic Islands**: no NRCan polygon named “Arctic Islands”
 - 1799-02-01 **Prince Edward Island**: no NRCan polygon named “St. John's Island”
+- 1809-03-30 **Labrador interior (Canada, for Quebec)**: no NRCan counterpart (their maps draw boundaries, not claims)
+- 1809-03-30 **Labrador (Newfoundland's claim)**: no NRCan counterpart (their maps draw boundaries, not claims)
+- 1846-07-17 **San Juan Islands (disputed)**: no NRCan counterpart (their maps draw boundaries, not claims)
 - 1858-11-19 **British settlement**: no NRCan polygon named “English settlement”
 - 1858-11-19 **British trading posts**: no NRCan polygon named “Hudson's Bay Company posts”
 - 1873-07-01 **Prince Edward Island**: no NRCan polygon named “St. John's Island”
+- 1881-07-01 **Manitoba's eastern claim**: no NRCan counterpart (their maps draw boundaries, not claims)
+- 1881-07-01 **Ontario's northern claim**: no NRCan counterpart (their maps draw boundaries, not claims)
 - 1895-10-02 **North-West Territories**: no NRCan polygon named “Northwest Territories”
+- 1902-09-19 **The Sverdrup Islands (Norwegian claim)**: no NRCan counterpart (their maps draw boundaries, not claims)
 - 1912-05-15 **District of Ungava**: no NRCan polygon named “District of Ungava”
+- 1973-12-17 **Hans Island (Canada's claim)**: no NRCan counterpart (their maps draw boundaries, not claims)
+- 1973-12-17 **Hans Island / Tartupaluk (Denmark's claim)**: no NRCan counterpart (their maps draw boundaries, not claims)
+- 1977-01-01 **Machias Seal Island and the grey zone**: no NRCan counterpart (their maps draw boundaries, not claims)
 
 ## Control points
 
@@ -260,13 +269,27 @@ Parliament gives the Labrador coast and Anticosti back to Newfoundland to put th
   *Instrument:* 49 Geo. III c. 27, s. XIV (30 March 1809): the coast of Labrador "from the river St. John to Hudson's Streights, and the said Island of Anticosti" re-annexed to Newfoundland, "except the islands of Madelaine".
 - [ ] alter: **Lower Canada** (`lower_canada_1809`, colony, dejure)  
   Less the Labrador coast and Anticosti. Area 747,493 km²; extent 44.99°N to 60.30°N, 56.63°W to 79.59°W. No NRCan vector map before 1867 (NRCan publishes only scanned rasters for earlier dates).
+- [ ] create: **Labrador interior (Canada, for Quebec)** (`labrador_claim_canada_1809`, disputed, disputed)  
+  The Atlantic-draining Labrador peninsula less a strip one statute mile (1.609 km) inland of high-water mark from Blanc-Sablon to Cape Chidley, following the shore into Hamilton Inlet as the primitive does. Area 252,369 km²; extent 51.40°N to 60.38°N, 55.27°W to 67.82°W. NRCan 1867: no polygon named “Labrador (Canada's claim)”.
+  *Instrument:* Canada's case before the Judicial Committee, 1927: the boundary should be "a line to be drawn from the eastern headland of the bay or harbour of Blanc Sablon on the south to Cape Chidley on the north at a distance from high-water mark on the seacoast of the Peninsula of Labrador of one mile".
+  *Departs from NRCan:* Canada read the 1763 grant as a grant for administering a migratory fishery, so "the coast" meant the strip of shore that fishery used, and everything behind it stayed Quebec's. (confidence 0.85)
+- [ ] create: **Labrador (Newfoundland's claim)** (`labrador_claim_newfoundland_1809`, disputed, disputed)  
+  The Atlantic watershed of the Labrador peninsula east of the Blanc-Sablon meridian (StatCan drainage region 25). The height of land has never been surveyed. Area 262,003 km²; extent 51.40°N to 60.38°N, 55.27°W to 67.82°W. NRCan 1867: no polygon named “Labrador (Newfoundland's claim)”.
+  *Instrument:* Newfoundland's case before the Judicial Committee, 1927: "a line drawn due north from Ance Sablon as far as the fifty-second degree of north latitude, and … traced from thence northwards to Cape Chidley along the crest of the watershed of the rivers flowing into the Atlantic Ocean".
+  *Departs from NRCan:* Newfoundland argued that occupation of a sea-coast carries the country draining into it, which is the reading the Judicial Committee adopted in 1927. (confidence 0.9)
 
 ## 1819-01-30 — The Convention of 1818
 
 Britain and the United States draw their boundary along 49°N from Lake of the Woods to the Rocky Mountains, and leave the Oregon Country west of the mountains open to both. Signed 20 October 1818; in force 30 January 1819.
 
-No polygon changes on this date.
-
+- [ ] create: **Oregon Country (United States' claim)** (`oregon_claim_us_1819`, disputed, disputed)  
+  West of the continental divide between 42°N and 54°40'N: the Pacific drainage inside modern Canada (StatCan regions 01–04) and the United States west of the Rockies south of 49°N. Area 1,295,005 km²; extent 42.00°N to 54.67°N, 111.00°W to 133.19°W. No NRCan vector map before 1867 (NRCan publishes only scanned rasters for earlier dates).
+  *Instrument:* Convention of London, 20 October 1818, art. III (country "Westward of the Stony Mountains" free and open to both, without prejudice to any claim); the American claim ran to 54°40'N, the southern limit of the Russian claim under the conventions of 1824 and 1825.
+  *Departs from NRCan:* The United States claimed the whole country between the Spanish line of 42°N (Adams–Onís, 1819) and the Russian line of 54°40'N, which is the frame contemporaries argued inside. (confidence 0.9)
+- [ ] create: **Columbia District (British claim)** (`oregon_claim_britain_1819`, disputed, disputed)  
+  The Pacific drainage inside modern Canada south of 54°40'N, with the American country north and west of the Columbia River. Area 603,018 km²; extent 45.56°N to 54.67°N, 114.00°W to 133.19°W. No NRCan vector map before 1867 (NRCan publishes only scanned rasters for earlier dates).
+  *Instrument:* Britain's standing offer of 1818, 1824, 1826 and 1844: the boundary to follow 49°N to the Columbia and then the river to the sea, leaving the country north of it British.
+  *Departs from NRCan:* Britain never claimed south of the Columbia as of right; the Hudson's Bay Company held the district under the licences of 1821 and 1838, and the river was the line it offered four times. (confidence 0.75)
 
 ## 1820-10-16 — Cape Breton rejoins Nova Scotia
 
@@ -329,8 +352,12 @@ No polygon changes on this date.
 
 The boundary along 49°N is continued to the Pacific, leaving Vancouver Island wholly British. The joint occupation of the Oregon Country ends. Signed 15 June; in force 17 July 1846.
 
-No polygon changes on this date.
-
+- dissolve: `oregon_claim_us` (no polygon)
+- dissolve: `oregon_claim_britain` (no polygon)
+- [ ] create: **San Juan Islands (disputed)** (`san_juan_claim_1846`, disputed, disputed)  
+  The San Juan group between Haro and Rosario straits, as the modern coastline draws it. Area 453 km²; extent 48.42°N to 48.79°N, 122.72°W to 123.23°W. NRCan 1867: no polygon named “San Juan Islands claim”.
+  *Instrument:* Oregon Treaty, 15 June 1846, art. I: the line runs "to the middle of the channel which separates the continent from Vancouver's Island; and thence southerly through the middle of the said channel, and of Fuca's Straits to the Pacific Ocean".
+  *Departs from NRCan:* Britain read the channel as Rosario Strait and the United States as Haro Strait; the islands between them were claimed by both and occupied by both from 1859. (confidence 0.8)
 
 ## 1849-01-13 — Vancouver Island
 
@@ -448,6 +475,12 @@ British Columbia enters Confederation on the promise of a railway to the Pacific
 - [ ] alter: **British Columbia** (`british_columbia_1866`, province, dejure) — same polygon as before  
   Modern British Columbia: 49°N, the Rocky Mountain divide, 120°W and 60°N. The Alaska panhandle line is the 1903 award, as NRCan draws it for every year. Area 916,595 km²; extent 48.31°N to 60.00°N, 114.05°W to 139.06°W. NRCan 1871 “British Columbia”: 99.1% overlap, 7,986 km² differ.
 
+## 1872-10-21 — The San Juan award
+
+Wilhelm I, arbitrating under the Treaty of Washington, finds for the American reading: the boundary runs through Haro Strait, and the San Juan Islands are American. The British garrison leaves in November 1872.
+
+- dissolve: `san_juan_claim` (no polygon)
+
 ## 1873-07-01 — Prince Edward Island joins
 
 Prince Edward Island joins Canada six years after Confederation. The island's boundaries are unchanged.
@@ -493,6 +526,14 @@ Date confidence 0.95: sources disagree; see the note.
   West, the road allowance between ranges 29 and 30 west of the Principal Meridian (the modern Manitoba–Saskatchewan border); north, the 12th base line (52.8422°N); east, as NRCan draws it, the meridian of the North-West Angle of Lake of the Woods (95°09'W, the modern Manitoba–Ontario border). Manitoba claimed east to 89°09'W. In force 1 July 1881 under s. 4 of 44 Vict. c. 14 and the proclamation of 13 June 1881. Area 188,558 km²; extent 49.00°N to 52.84°N, 95.15°W to 101.67°W. NRCan 1881 “Manitoba”: 98.8% overlap, 2,299 km² differ.
 - [ ] create: **Ontario–Manitoba disputed area** (`ontario_manitoba_disputed_area_1881`, disputed, dejure)  
   As NRCan draws it: between 95°09'W and Ontario's 1874 meridian, from the international boundary north to the 12th base line. The legal claims reached further (Manitoba to 89°09'W, Ontario north to the Albany River); those are a Sitting C overlay. Area 140,169 km²; extent 48.04°N to 52.84°N, 90.97°W to 95.15°W. NRCan 1881 “Disputed area”: 98.6% overlap, 1,910 km² differ.
+- [ ] create: **Manitoba's eastern claim** (`ontario_manitoba_disputed_area_1881`, disputed, disputed) — same polygon as before  
+  From the international boundary north to the 12th base line (52.8422°N), east of Manitoba's 1881 limit to the 89°09'W meridian. Area 140,169 km²; extent 48.04°N to 52.84°N, 90.97°W to 95.15°W. NRCan 1881: no polygon named “Manitoba's claim”.
+  *Instrument:* An Act to provide for the extension of the boundaries of the Province of Manitoba, 44 Vict. c. 14, s. 4 (in force 1 July 1881), carrying Manitoba east to "the westerly boundary of the Province of Ontario".
+  *Departs from NRCan:* The Act sent Manitoba east to a boundary Ontario's own arbitration had already fixed elsewhere, so each province read the same words as reaching the other's line. (confidence 0.75)
+- [ ] create: **Ontario's northern claim** (`ontario_claim_1881_1881`, disputed, disputed)  
+  Everything then administered as Keewatin that lies within modern Ontario: west to the North-West Angle meridian and north to the English and Albany rivers, which is what the arbitrators awarded and what the 1889 Act confirmed. Area 180,402 km²; extent 48.04°N to 55.61°N, 90.97°W to 95.15°W. NRCan 1881: no polygon named “Ontario's claim”.
+  *Instrument:* Award of the arbitrators, 3 August 1878 (Sir Francis Hincks, Sir Edward Thornton and Chief Justice Harrison), carried into law by 52 & 53 Vict. c. 28 (1889) after the Judicial Committee's report of 11 August 1884.
+  *Departs from NRCan:* Ontario claimed north to the Albany River and west to the North-West Angle meridian, which is what the arbitrators awarded and what Parliament eventually confirmed. (confidence 0.85)
 - [ ] alter: **District of Keewatin** (`district_of_keewatin_1881`, district, dejure)  
   Less Manitoba's extension and the disputed area. Area 894,949 km²; extent 49.42°N to 72.00°N, 82.00°W to 100.00°W. NRCan 1881 “District of Keewatin”: 98.7% overlap, 11,979 km² differ.
 - [ ] alter: **North-West Territories** (`northwest_territories_1881`, territory, dejure)  
@@ -533,6 +574,8 @@ Parliament confirms the Privy Council's ruling for Ontario. Its northern boundar
 - [ ] alter: **North-West Territories** (`northwest_territories_1889`, territory, dejure)  
   Less Ontario's new northern lands. Area 4,936,019 km²; extent 47.78°N to 83.14°N, 56.63°W to 141.00°W. NRCan 1889 “Northwest Territories”: 98.5% overlap, 71,848 km² differ.
 - dissolve: `ontario_manitoba_disputed_area` (no polygon)
+- dissolve: `manitoba_claim_1881` (no polygon)
+- dissolve: `ontario_claim_1881` (no polygon)
 
 ## 1895-10-02 — Districts of the North
 
@@ -594,9 +637,20 @@ Parliament moves Yukon's eastern boundary onto the mountain divides. It is the l
 - [ ] alter: **District of Mackenzie** (`district_of_mackenzie_1901`, district, dejure)  
   Less Yukon's new line. Area 1,389,262 km²; extent 60.00°N to 70.64°N, 100.00°W to 136.45°W. NRCan 1901 “District of Mackenzie”: 99.6% overlap, 5,331 km² differ.
 
+## 1902-09-19 — The Sverdrup claim
+
+The Fram returns from four winters in the archipelago. Otto Sverdrup had taken possession in the Norwegian king's name of the islands his expedition mapped west of Ellesmere, some 260,000 km² that Britain had transferred to Canada in 1880 without ever visiting. Norway pressed the claim from 1924.
+
+Date confidence 0.7: sources disagree; see the note.
+
+- [ ] create: **The Sverdrup Islands (Norwegian claim)** (`sverdrup_claim_1902`, foreign, disputed)  
+  Axel Heiberg, Amund Ringnes, Ellef Ringnes, King Christian, Cornwall and Graham: the islands the expedition mapped and claimed. Table and Stor are below the 1:1M source's minimum size. Area 65,414 km²; extent 77.19°N to 81.38°N, 84.88°W to 105.62°W. NRCan 1901: no polygon named “Sverdrup Islands claim”.
+  *Instrument:* Acts of possession by Otto Sverdrup's second Fram expedition, 1898–1902, pressed by Norway in the notes of 29 October 1924 and 12 March 1925.
+  *Departs from NRCan:* The islands were mapped and claimed by the expedition, and Norway never abandoned the claim until 1930; Canada's own title rested on the 1880 transfer of islands no one had surveyed. (confidence 0.75)
+
 ## 1903-10-20 — The Alaska boundary award
 
-An international tribunal settles the Alaska panhandle boundary, mostly in favour of the United States. The atlas draws the award line throughout, as NRCan does; the earlier claim lines arrive with the disputed layer.
+An international tribunal settles the Alaska panhandle boundary, mostly in favour of the United States. The atlas draws the award line throughout, as NRCan does; the earlier claim lines arrive with the disputed layer. The Canadian claim itself is not drawn. The 1825 convention fixes no coordinate between 56°N and 141°W — it says "la crête des montagnes" and "les sinuosités de la côte" — and the tribunal answered by marking a map ("the line marked A B in red"), so the claim survives only on Map 37 of the British atlas filed on 23 September 1903. Tracing that map would put a ±5–10 km line into an atlas whose whole point is that its lines come from instruments. See docs/decisions.md.
 
 No polygon changes on this date.
 
@@ -657,11 +711,19 @@ Date confidence 0.9: sources disagree; see the note.
   Privy Council report of 1 March 1927: due north from Blanc-Sablon to 52°N, west to the Romaine River, up it to its source, and along the crest of the Atlantic watershed to Cape Chidley. The modern border. Area 399,483 km²; extent 46.61°N to 60.38°N, 52.62°W to 67.82°W. NRCan 1927 “Newfoundland”: 96.8% overlap, 12,566 km² differ.
 - [ ] alter: **Quebec** (`quebec_1927`, province, dejure)  
   Less Labrador as the Privy Council drew it. Modern Quebec. Area 1,477,116 km²; extent 44.99°N to 62.58°N, 57.11°W to 79.76°W. NRCan 1927 “Quebec”: 98.9% overlap, 16,048 km² differ.
+- dissolve: `labrador_claim_canada` (no polygon)
+- dissolve: `labrador_claim_newfoundland` (no polygon)
 - [ ] alter: **District of Franklin** (`district_of_franklin_1927`, district, dejure)  
   Less a few coastal islets that modern Quebec (Atlas of Canada 1:1M) includes. No instrument moved them; NRCan's 1927 Franklin shrinks by a similar area. Nottingham Island stays in Franklin. Area 1,416,058 km²; extent 58.28°N to 83.14°N, 61.13°W to 136.27°W. NRCan 1927 “District of Franklin”: 97.1% overlap, 41,304 km² differ.
   *Instrument:* Order in Council of 16 March 1918 (in force 1 January 1920), description of Keewatin: "thence southeasterly in a straight line to the most northerly point of cape Wolstenholme"; Franklin is the remainder of the Northwest Territories.
   *Departs from NRCan:* Nottingham Island lies at least 8 km north-east of the Frozen Strait–Cape Wolstenholme line, so it stays in Franklin; NRCan's maps from 1927 draw it in Keewatin. (confidence 0.9)
   *NRCan overlay:* `nrcan_district_of_franklin_1927_district_of_keewatin` (District of Keewatin, nrcan_te_1927).
+
+## 1930-11-05 — Norway recognises Canada's title
+
+Norway recognises Canada's sovereignty over the Sverdrup Islands, closing the last foreign claim to the archipelago. Canada paid Sverdrup £6,700 for his charts and journals the same year.
+
+- dissolve: `sverdrup_claim` (no polygon)
 
 ## 1949-03-31 — Newfoundland joins
 
@@ -676,6 +738,30 @@ Yukon's capital moves from Dawson to Whitehorse, on the highway and the railway.
 
 - [ ] alter: **Yukon Territory** (`yukon_1901`, territory, dejure) — same polygon as before  
   The 1901 Act's watershed line, which is the modern Yukon–Northwest Territories border. Area 455,459 km²; extent 60.00°N to 69.65°N, 123.81°W to 141.00°W. NRCan 1949 “Yukon Territory”: 99.3% overlap, 3,144 km² differ.
+
+## 1973-12-17 — The continental shelf agreement
+
+Canada and Denmark divide the continental shelf between Ellesmere Island and Greenland, and stop the line at the water's edge on either side of Hans Island: points 122 and 123 leave a gap of about 1.4 km, because neither would concede the island. Both states then claimed it for half a century, by planting flags and, later, by leaving each other bottles of spirits.
+
+- [ ] create: **Hans Island (Canada's claim)** (`hans_claim_canada_1973`, disputed, disputed)  
+  The whole island, as Canada claimed it. Area 1 km²; extent 80.82°N to 80.83°N, 66.42°W to 66.48°W. NRCan 1949: no polygon named “Hans Island claim”.
+  *Instrument:* Agreement between Canada and Denmark relating to the delimitation of the continental shelf, 17 December 1973, whose line runs to point 122 (-66.4833, 80.82) and resumes at point 123 (-66.4383, 80.83).
+  *Departs from NRCan:* The agreement's gap is the dispute: both states claimed the whole island, and the 1:1M source draws it as wholly Canadian. (confidence 0.9)
+- [ ] create: **Hans Island / Tartupaluk (Denmark's claim)** (`hans_claim_canada_1973`, disputed, disputed) — same polygon as before  
+  The whole island, as Denmark claimed it. Area 1 km²; extent 80.82°N to 80.83°N, 66.42°W to 66.48°W. NRCan 1949: no polygon named “Hans Island claim”.
+  *Instrument:* The same agreement of 17 December 1973, read the other way: Denmark claimed the island as part of Greenland, whose Inughuit have hunted from it as Tartupaluk.
+  *Departs from NRCan:* Denmark's claim covered the same whole island, which is why the shelf line had to stop at its shore. (confidence 0.9)
+
+## 1977-01-01 — The fishing zones and the grey zone
+
+Canada and the United States each declare a 200-mile fishing zone, and publish boundaries in the Gulf of Maine that do not agree. The water between the two lines is fished under both flags and is known as the grey zone; Machias Seal Island, which Canada has lit since 1832, lies inside it. Canada's zone took effect on 1 January 1977 and the American one on 1 March 1977.
+
+Date confidence 0.8: sources disagree; see the note.
+
+- [ ] create: **Machias Seal Island and the grey zone** (`machias_grey_zone_1977`, disputed, disputed)  
+  Between Canada's Zone 5 line and the United States' line, from their shared northern end point off Grand Manan to their shared southern end point. Area 764 km²; extent 44.19°N to 44.78°N, 66.90°W to 67.30°W. NRCan 1949: no polygon named “Grey zone”.
+  *Instrument:* Canada's Fishing Zones of Canada (Zone 5) Order, C.R.C. c. 1548, Sch. I, Area 2 (42 points), and the United States' line published at 60 Fed. Reg. 43825 (12 points). The two lines share their end points.
+  *Departs from NRCan:* Both states publish a line, the lines differ, and neither has moved: the ground between them is the dispute, and it is the only one in this atlas that is still open. (confidence 0.9)
 
 ## 1999-04-01 — Nunavut
 
@@ -702,3 +788,13 @@ The new Yukon Act drops "Territory" from the name. Its boundaries are unchanged.
 
 - [ ] rename: **Yukon** (`yukon_1901`, territory, dejure) — same polygon as before  
   The 1901 Act's watershed line, which is the modern Yukon–Northwest Territories border. Area 455,459 km²; extent 60.00°N to 69.65°N, 123.81°W to 141.00°W. NRCan 2001 “Yukon Territory”: 99.3% overlap, 3,144 km² differ.
+
+## 2022-06-14 — Hans Island divided
+
+Canada and the Kingdom of Denmark agree a land boundary across Hans Island, following a gully from north to south: the western part is Canadian and becomes part of Nunavut, the eastern part is Greenlandic. It is Canada's first new land boundary since 1949, and the last of the disputes in this atlas to close.
+
+- dissolve: `hans_claim_canada` (no polygon)
+- dissolve: `hans_claim_denmark` (no polygon)
+- [ ] alter: **Nunavut** (`nunavut_2022`, territory, dejure)  
+  Less the eastern part of Hans Island, which is Greenland's under the 2022 agreement. Area 2,007,658 km²; extent 51.65°N to 83.14°N, 61.13°W to 120.68°W. NRCan 2001 “Nunavut”: 97.8% overlap, 42,846 km² differ.
+  *Instrument:* Agreement between Canada and the Kingdom of Denmark together with Greenland, 14 June 2022, art. 4(3): the land boundary follows the points listed in Annex 3, leaving the eastern part to Greenland.

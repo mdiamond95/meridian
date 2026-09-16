@@ -167,6 +167,11 @@
             "disputed"
           ]
         },
+        "dispute": {
+          "description": "Groups the claim rows of one dispute, so the map can say whose claim a hatch is",
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$"
+        },
         "geometryRef": {
           "type": "string",
           "minLength": 1,

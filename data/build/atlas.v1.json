@@ -299,6 +299,14 @@
     {
      "unit": "lower_canada",
      "kind": "alter"
+    },
+    {
+     "unit": "labrador_claim_canada",
+     "kind": "create"
+    },
+    {
+     "unit": "labrador_claim_newfoundland",
+     "kind": "create"
     }
    ]
   },
@@ -306,7 +314,16 @@
    "date": "1819-01-30",
    "title": "The Convention of 1818",
    "note": "Britain and the United States draw their boundary along 49°N from Lake of the Woods to the Rocky Mountains, and leave the Oregon Country west of the mountains open to both. Signed 20 October 1818; in force 30 January 1819.",
-   "changes": []
+   "changes": [
+    {
+     "unit": "oregon_claim_us",
+     "kind": "create"
+    },
+    {
+     "unit": "oregon_claim_britain",
+     "kind": "create"
+    }
+   ]
   },
   {
    "date": "1820-10-16",
@@ -400,7 +417,20 @@
    "date": "1846-07-17",
    "title": "The Oregon Treaty",
    "note": "The boundary along 49°N is continued to the Pacific, leaving Vancouver Island wholly British. The joint occupation of the Oregon Country ends. Signed 15 June; in force 17 July 1846.",
-   "changes": []
+   "changes": [
+    {
+     "unit": "oregon_claim_us",
+     "kind": "dissolve"
+    },
+    {
+     "unit": "oregon_claim_britain",
+     "kind": "dissolve"
+    },
+    {
+     "unit": "san_juan_claim",
+     "kind": "create"
+    }
+   ]
   },
   {
    "date": "1849-01-13",
@@ -591,6 +621,17 @@
    ]
   },
   {
+   "date": "1872-10-21",
+   "title": "The San Juan award",
+   "note": "Wilhelm I, arbitrating under the Treaty of Washington, finds for the American reading: the boundary runs through Haro Strait, and the San Juan Islands are American. The British garrison leaves in November 1872.",
+   "changes": [
+    {
+     "unit": "san_juan_claim",
+     "kind": "dissolve"
+    }
+   ]
+  },
+  {
    "date": "1873-07-01",
    "title": "Prince Edward Island joins",
    "note": "Prince Edward Island joins Canada six years after Confederation. The island's boundaries are unchanged.",
@@ -659,6 +700,14 @@
     },
     {
      "unit": "ontario_manitoba_disputed_area",
+     "kind": "create"
+    },
+    {
+     "unit": "manitoba_claim_1881",
+     "kind": "create"
+    },
+    {
+     "unit": "ontario_claim_1881",
      "kind": "create"
     },
     {
@@ -732,6 +781,14 @@
     },
     {
      "unit": "ontario_manitoba_disputed_area",
+     "kind": "dissolve"
+    },
+    {
+     "unit": "manitoba_claim_1881",
+     "kind": "dissolve"
+    },
+    {
+     "unit": "ontario_claim_1881",
      "kind": "dissolve"
     }
    ]
@@ -837,9 +894,21 @@
    ]
   },
   {
+   "date": "1902-09-19",
+   "title": "The Sverdrup claim",
+   "note": "The Fram returns from four winters in the archipelago. Otto Sverdrup had taken possession in the Norwegian king's name of the islands his expedition mapped west of Ellesmere, some 260,000 km² that Britain had transferred to Canada in 1880 without ever visiting. Norway pressed the claim from 1924.",
+   "dateConfidence": 0.7,
+   "changes": [
+    {
+     "unit": "sverdrup_claim",
+     "kind": "create"
+    }
+   ]
+  },
+  {
    "date": "1903-10-20",
    "title": "The Alaska boundary award",
-   "note": "An international tribunal settles the Alaska panhandle boundary, mostly in favour of the United States. The atlas draws the award line throughout, as NRCan does; the earlier claim lines arrive with the disputed layer.",
+   "note": "An international tribunal settles the Alaska panhandle boundary, mostly in favour of the United States. The atlas draws the award line throughout, as NRCan does; the earlier claim lines arrive with the disputed layer. The Canadian claim itself is not drawn. The 1825 convention fixes no coordinate between 56°N and 141°W — it says \"la crête des montagnes\" and \"les sinuosités de la côte\" — and the tribunal answered by marking a map (\"the line marked A B in red\"), so the claim survives only on Map 37 of the British atlas filed on 23 September 1903. Tracing that map would put a ±5–10 km line into an atlas whose whole point is that its lines come from instruments. See docs/decisions.md.",
    "changes": []
   },
   {
@@ -942,8 +1011,27 @@
      "kind": "alter"
     },
     {
+     "unit": "labrador_claim_canada",
+     "kind": "dissolve"
+    },
+    {
+     "unit": "labrador_claim_newfoundland",
+     "kind": "dissolve"
+    },
+    {
      "unit": "district_of_franklin",
      "kind": "alter"
+    }
+   ]
+  },
+  {
+   "date": "1930-11-05",
+   "title": "Norway recognises Canada's title",
+   "note": "Norway recognises Canada's sovereignty over the Sverdrup Islands, closing the last foreign claim to the archipelago. Canada paid Sverdrup £6,700 for his charts and journals the same year.",
+   "changes": [
+    {
+     "unit": "sverdrup_claim",
+     "kind": "dissolve"
     }
    ]
   },
@@ -966,6 +1054,33 @@
     {
      "unit": "yukon",
      "kind": "alter"
+    }
+   ]
+  },
+  {
+   "date": "1973-12-17",
+   "title": "The continental shelf agreement",
+   "note": "Canada and Denmark divide the continental shelf between Ellesmere Island and Greenland, and stop the line at the water's edge on either side of Hans Island: points 122 and 123 leave a gap of about 1.4 km, because neither would concede the island. Both states then claimed it for half a century, by planting flags and, later, by leaving each other bottles of spirits.",
+   "changes": [
+    {
+     "unit": "hans_claim_canada",
+     "kind": "create"
+    },
+    {
+     "unit": "hans_claim_denmark",
+     "kind": "create"
+    }
+   ]
+  },
+  {
+   "date": "1977-01-01",
+   "title": "The fishing zones and the grey zone",
+   "note": "Canada and the United States each declare a 200-mile fishing zone, and publish boundaries in the Gulf of Maine that do not agree. The water between the two lines is fished under both flags and is known as the grey zone; Machias Seal Island, which Canada has lit since 1832, lies inside it. Canada's zone took effect on 1 January 1977 and the American one on 1 March 1977.",
+   "dateConfidence": 0.8,
+   "changes": [
+    {
+     "unit": "machias_grey_zone",
+     "kind": "create"
     }
    ]
   },
@@ -1015,6 +1130,25 @@
     {
      "unit": "yukon",
      "kind": "rename"
+    }
+   ]
+  },
+  {
+   "date": "2022-06-14",
+   "title": "Hans Island divided",
+   "note": "Canada and the Kingdom of Denmark agree a land boundary across Hans Island, following a gully from north to south: the western part is Canadian and becomes part of Nunavut, the eastern part is Greenlandic. It is Canada's first new land boundary since 1949, and the last of the disputes in this atlas to close.",
+   "changes": [
+    {
+     "unit": "hans_claim_canada",
+     "kind": "dissolve"
+    },
+    {
+     "unit": "hans_claim_denmark",
+     "kind": "dissolve"
+    },
+    {
+     "unit": "nunavut",
+     "kind": "alter"
     }
    ]
   }
@@ -1717,6 +1851,36 @@
    "rationale": "The 1912 Act moved only the mainland to Quebec and the 1897 order defining Ungava stood until 1 January 1920, so the islands remain a district until then; NRCan already splits them between Keewatin and Franklin, and the Act excludes islands only by following the shore, hence 0.8."
   },
   {
+   "id": "hans_claim_canada",
+   "name": "Hans Island (Canada's claim)",
+   "status": "disputed",
+   "sovereign": "Canada",
+   "capital": null,
+   "validFrom": "1973-12-17",
+   "validTo": "2022-06-14",
+   "truth": "disputed",
+   "geometryRef": "hans_claim_canada_1973",
+   "confidence": 0.9,
+   "dispute": "hans_island",
+   "instrument": "Agreement between Canada and Denmark relating to the delimitation of the continental shelf, 17 December 1973, whose line runs to point 122 (-66.4833, 80.82) and resumes at point 123 (-66.4383, 80.83).",
+   "rationale": "The agreement's gap is the dispute: both states claimed the whole island, and the 1:1M source draws it as wholly Canadian."
+  },
+  {
+   "id": "hans_claim_denmark",
+   "name": "Hans Island / Tartupaluk (Denmark's claim)",
+   "status": "disputed",
+   "sovereign": "Kingdom of Denmark (Greenland)",
+   "capital": null,
+   "validFrom": "1973-12-17",
+   "validTo": "2022-06-14",
+   "truth": "disputed",
+   "geometryRef": "hans_claim_canada_1973",
+   "confidence": 0.9,
+   "dispute": "hans_island",
+   "instrument": "The same agreement of 17 December 1973, read the other way: Denmark claimed the island as part of Greenland, whose Inughuit have hunted from it as Tartupaluk.",
+   "rationale": "Denmark's claim covered the same whole island, which is why the shelf line had to stop at its shore."
+  },
+  {
    "id": "ile_royale",
    "name": "Île Royale",
    "status": "colony",
@@ -1740,6 +1904,37 @@
    "truth": "dejure",
    "geometryRef": "ile_royale_1713",
    "instrument": "Treaty of Paris, 10 February 1763, art. IV."
+  },
+  {
+   "id": "labrador_claim_canada",
+   "name": "Labrador interior (Canada, for Quebec)",
+   "status": "disputed",
+   "sovereign": "Canada (for Quebec)",
+   "capital": null,
+   "validFrom": "1809-03-30",
+   "validTo": "1927-03-01",
+   "truth": "disputed",
+   "geometryRef": "labrador_claim_canada_1809",
+   "note": "Drawn as the country behind a one-statute-mile shore strip. The strip is a hairline at this scale, so what the map shows is the claim's effect: the interior Canada said was Quebec's.",
+   "confidence": 0.85,
+   "dispute": "labrador",
+   "instrument": "Canada's case before the Judicial Committee, 1927: the boundary should be \"a line to be drawn from the eastern headland of the bay or harbour of Blanc Sablon on the south to Cape Chidley on the north at a distance from high-water mark on the seacoast of the Peninsula of Labrador of one mile\".",
+   "rationale": "Canada read the 1763 grant as a grant for administering a migratory fishery, so \"the coast\" meant the strip of shore that fishery used, and everything behind it stayed Quebec's."
+  },
+  {
+   "id": "labrador_claim_newfoundland",
+   "name": "Labrador (Newfoundland's claim)",
+   "status": "disputed",
+   "sovereign": "Newfoundland",
+   "capital": null,
+   "validFrom": "1809-03-30",
+   "validTo": "1927-03-01",
+   "truth": "disputed",
+   "geometryRef": "labrador_claim_newfoundland_1809",
+   "confidence": 0.9,
+   "dispute": "labrador",
+   "instrument": "Newfoundland's case before the Judicial Committee, 1927: \"a line drawn due north from Ance Sablon as far as the fifty-second degree of north latitude, and … traced from thence northwards to Cape Chidley along the crest of the watershed of the rivers flowing into the Atlantic Ocean\".",
+   "rationale": "Newfoundland argued that occupation of a sea-coast carries the country draining into it, which is the reading the Judicial Committee adopted in 1927."
   },
   {
    "id": "lower_canada",
@@ -1777,6 +1972,22 @@
    "instrument": "6 Geo. IV c. 59, s. IX (22 June 1825): the coast \"to the westward of a line to be drawn due north and south from the bay or harbour of Ance Sablon inclusive, as far as the fifty-second degree of north latitude, with the Island of Anticosti\" re-annexed to Lower Canada."
   },
   {
+   "id": "machias_grey_zone",
+   "name": "Machias Seal Island and the grey zone",
+   "status": "disputed",
+   "sovereign": "Canada and the United States",
+   "capital": null,
+   "validFrom": "1977-01-01",
+   "validTo": null,
+   "truth": "disputed",
+   "geometryRef": "machias_grey_zone_1977",
+   "note": "The 1984 International Court of Justice judgment divided the Gulf of Maine seaward of here and left the island and this water untouched. The two lines cross near the northern end, so a small area is claimed by neither state rather than by both.",
+   "confidence": 0.9,
+   "dispute": "machias_seal",
+   "instrument": "Canada's Fishing Zones of Canada (Zone 5) Order, C.R.C. c. 1548, Sch. I, Area 2 (42 points), and the United States' line published at 60 Fed. Reg. 43825 (12 points). The two lines share their end points.",
+   "rationale": "Both states publish a line, the lines differ, and neither has moved: the ground between them is the dispute, and it is the only one in this atlas that is still open."
+  },
+  {
    "id": "manitoba",
    "name": "Manitoba",
    "status": "province",
@@ -1811,6 +2022,22 @@
    "validTo": null,
    "truth": "dejure",
    "geometryRef": "manitoba_1912"
+  },
+  {
+   "id": "manitoba_claim_1881",
+   "name": "Manitoba's eastern claim",
+   "status": "disputed",
+   "sovereign": "Canada (Manitoba)",
+   "capital": null,
+   "validFrom": "1881-07-01",
+   "validTo": "1889-08-12",
+   "truth": "disputed",
+   "geometryRef": "ontario_manitoba_disputed_area_1881",
+   "note": "The eastern limit is given here as the 89°09'W meridian that the Dominion pressed. The instruments name a river confluence rather than a longitude, so the meridian is a reading, not a quotation.",
+   "confidence": 0.75,
+   "dispute": "ontario_manitoba",
+   "instrument": "An Act to provide for the extension of the boundaries of the Province of Manitoba, 44 Vict. c. 14, s. 4 (in force 1 July 1881), carrying Manitoba east to \"the westerly boundary of the Province of Ontario\".",
+   "rationale": "The Act sent Manitoba east to a boundary Ontario's own arbitration had already fixed elsewhere, so each province read the same words as reaching the other's line."
   },
   {
    "id": "new_brunswick",
@@ -2299,9 +2526,23 @@
    "sovereign": "Canada",
    "capital": "Iqaluit",
    "validFrom": "1999-04-01",
-   "validTo": null,
+   "validTo": "2022-06-14",
    "truth": "dejure",
    "geometryRef": "nunavut_1999"
+  },
+  {
+   "id": "nunavut",
+   "name": "Nunavut",
+   "status": "territory",
+   "sovereign": "Canada",
+   "capital": "Iqaluit",
+   "validFrom": "2022-06-14",
+   "validTo": null,
+   "truth": "dejure",
+   "geometryRef": "nunavut_2022",
+   "note": "The 1:1M source draws the whole island in Canada, so the Greenlandic part is cut from Nunavut for the map to agree with the treaty. That part is about 0.57 km², below the 2 km² minimum the display copy keeps, so the drawn polygon does not change: the change is in the row, not the picture. The island's outline at 1:1M is generalized, so the treaty's roughly even division comes out closer to a third–two thirds. The boundary is drawn, not surveyed.",
+   "confidence": 0.6,
+   "instrument": "Agreement between Canada and the Kingdom of Denmark together with Greenland, 14 June 2022, art. 4(3): the land boundary follows the points listed in Annex 3, leaving the eastern part to Greenland."
   },
   {
    "id": "ontario",
@@ -2349,6 +2590,21 @@
    "geometryRef": "ontario_1912"
   },
   {
+   "id": "ontario_claim_1881",
+   "name": "Ontario's northern claim",
+   "status": "disputed",
+   "sovereign": "Canada (Ontario)",
+   "capital": null,
+   "validFrom": "1881-07-01",
+   "validTo": "1889-08-12",
+   "truth": "disputed",
+   "geometryRef": "ontario_claim_1881_1881",
+   "confidence": 0.85,
+   "dispute": "ontario_manitoba",
+   "instrument": "Award of the arbitrators, 3 August 1878 (Sir Francis Hincks, Sir Edward Thornton and Chief Justice Harrison), carried into law by 52 & 53 Vict. c. 28 (1889) after the Judicial Committee's report of 11 August 1884.",
+   "rationale": "Ontario claimed north to the Albany River and west to the North-West Angle meridian, which is what the arbitrators awarded and what Parliament eventually confirmed."
+  },
+  {
    "id": "ontario_manitoba_disputed_area",
    "name": "Ontario–Manitoba disputed area",
    "status": "disputed",
@@ -2359,6 +2615,37 @@
    "truth": "dejure",
    "geometryRef": "ontario_manitoba_disputed_area_1881",
    "note": "Claimed by Manitoba under the 1881 Act and by Ontario under the 1878 arbitration. The Privy Council found for Ontario in 1884; Parliament confirmed it in 1889."
+  },
+  {
+   "id": "oregon_claim_britain",
+   "name": "Columbia District (British claim)",
+   "status": "disputed",
+   "sovereign": "Britain",
+   "capital": null,
+   "validFrom": "1819-01-30",
+   "validTo": "1846-07-17",
+   "truth": "disputed",
+   "geometryRef": "oregon_claim_britain_1819",
+   "note": "The Columbia's course below 49°N is map-read to about ±3 km: Canada1Water carries no American reaches, so the river cannot be taken from the same source as the rest of the atlas.",
+   "confidence": 0.75,
+   "dispute": "oregon",
+   "instrument": "Britain's standing offer of 1818, 1824, 1826 and 1844: the boundary to follow 49°N to the Columbia and then the river to the sea, leaving the country north of it British.",
+   "rationale": "Britain never claimed south of the Columbia as of right; the Hudson's Bay Company held the district under the licences of 1821 and 1838, and the river was the line it offered four times."
+  },
+  {
+   "id": "oregon_claim_us",
+   "name": "Oregon Country (United States' claim)",
+   "status": "disputed",
+   "sovereign": "United States",
+   "capital": null,
+   "validFrom": "1819-01-30",
+   "validTo": "1846-07-17",
+   "truth": "disputed",
+   "geometryRef": "oregon_claim_us_1819",
+   "confidence": 0.9,
+   "dispute": "oregon",
+   "instrument": "Convention of London, 20 October 1818, art. III (country \"Westward of the Stony Mountains\" free and open to both, without prejudice to any claim); the American claim ran to 54°40'N, the southern limit of the Russian claim under the conventions of 1824 and 1825.",
+   "rationale": "The United States claimed the whole country between the Spanish line of 42°N (Adams–Onís, 1819) and the Russian line of 54°40'N, which is the frame contemporaries argued inside."
   },
   {
    "id": "prince_edward_island",
@@ -2513,6 +2800,22 @@
    "note": "Granted to the Hudson's Bay Company by royal charter in 1670."
   },
   {
+   "id": "san_juan_claim",
+   "name": "San Juan Islands (disputed)",
+   "status": "disputed",
+   "sovereign": "Britain and the United States",
+   "capital": null,
+   "validFrom": "1846-07-17",
+   "validTo": "1872-10-21",
+   "truth": "disputed",
+   "geometryRef": "san_juan_claim_1846",
+   "note": "One polygon for both claims: the ground at stake is the same islands whichever channel is meant. The German Emperor awarded them to the United States on 21 October 1872.",
+   "confidence": 0.8,
+   "dispute": "san_juan",
+   "instrument": "Oregon Treaty, 15 June 1846, art. I: the line runs \"to the middle of the channel which separates the continent from Vancouver's Island; and thence southerly through the middle of the said channel, and of Fuca's Straits to the Pacific Ocean\".",
+   "rationale": "Britain read the channel as Rosario Strait and the United States as Haro Strait; the islands between them were claimed by both and occupied by both from 1859."
+  },
+  {
    "id": "saskatchewan",
    "name": "Saskatchewan",
    "status": "province",
@@ -2534,6 +2837,22 @@
    "truth": "dejure",
    "geometryRef": "stickeen_territories_1862",
    "instrument": "Imperial Order in Council, 19 July 1862: \"bounded to the West and South West by the Frontier of Russian America, to the south and South East by the boundary of British Columbia, to the East by the 125th meridian of West Longitude, and to the north by the 62nd parallel of North latitude\"."
+  },
+  {
+   "id": "sverdrup_claim",
+   "name": "The Sverdrup Islands (Norwegian claim)",
+   "status": "foreign",
+   "sovereign": "Norway (Sverdrup claim)",
+   "capital": null,
+   "validFrom": "1902-09-19",
+   "validTo": "1930-11-05",
+   "truth": "disputed",
+   "geometryRef": "sverdrup_claim_1902",
+   "note": "Norway never claimed the islands as a state: its 1930 note says \"it is not the intention of his Government to claim sovereignty\". The row is drawn as the claim the expedition made and Norway pressed on its behalf.",
+   "confidence": 0.75,
+   "dispute": "sverdrup",
+   "instrument": "Acts of possession by Otto Sverdrup's second Fram expedition, 1898–1902, pressed by Norway in the notes of 29 October 1924 and 12 March 1925.",
+   "rationale": "The islands were mapped and claimed by the expedition, and Norway never abandoned the claim until 1930; Canada's own title rested on the 1880 transfer of islands no one had surveyed."
   },
   {
    "id": "upper_canada",

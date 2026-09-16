@@ -1,6 +1,6 @@
 import { useEffect, useMemo } from 'react';
 import L from 'leaflet';
-import { resolveReferences } from '../atlas/resolve';
+import { resolveReferences, resolvedAt } from '../atlas/resolve';
 import { REFERENCE_STYLE } from '../atlas/style';
 import { useAtlasStore } from '../state/atlasStore';
 
@@ -13,9 +13,12 @@ export function ReferenceLayer({ map }: { map: L.Map }) {
   const date = useAtlasStore((s) => s.date);
   const visible = useAtlasStore((s) => s.visible && s.nrcanVisible);
 
+  // As in AtlasLayer: resolve at the current event's date so the set is stable between events,
+  // and this layer is not rebuilt on every slider step.
+  const asOf = useMemo(() => (data ? resolvedAt(data.atlas, date) : ''), [data, date]);
   const references = useMemo(
-    () => (data && visible ? resolveReferences(data.atlas, date) : []),
-    [data, date, visible],
+    () => (data && visible && asOf ? resolveReferences(data.atlas, asOf) : []),
+    [data, asOf, visible],
   );
 
   useEffect(() => {
