@@ -1,0 +1,168 @@
+# Indigenous language families: the lookup behind the `indigenous_language_family` attrs column
+# and the pre-contact base's family layer (pipeline/indigenous.py).
+#
+# What a family is here: a top-level family (or isolate) in Glottolog 5.3 (source
+# `glottolog_languoids`, CC BY 4.0). Using Glottolog's families for the census languages is what
+# lets the two sources fill one column: a cell coloured from census speakers and a cell filled
+# from the nearest Glottolog point mean the same thing by "Salishan".
+#
+# How each census language is mapped (the `source` of every row): the census language is matched
+# to one Glottolog languoid (`glottocode`), and its family is that languoid's top-level family in
+# Glottolog 5.3. Where the census name differs from Glottolog's, the row says which languoid was
+# taken and why. "n.o.s." (not otherwise specified) and "n.i.e." (not included elsewhere) rows map
+# to the Glottolog group that matches their census parent. pytest checks every glottocode's family
+# against the downloaded languoid table.
+#
+# Census characteristics are from the 2021 Census Profile (98-401-X2021), "Mother tongue for the
+# total population excluding institutional residents", single responses, the subtree under
+# characteristic 385 "Indigenous languages". Every id from 386 to 475 appears exactly once below:
+# as a language (fetched and mapped), as a group (a census subtotal of the languages under it, not
+# fetched, so no speaker is counted twice), or as a residual (no family can be named).
+
+# Shown with the family layer. The app renders the literal from its schema
+# (app/src/schema/indigenous.ts); the build copies this text into indigenous.v1.json and pytest
+# checks that the two agree.
+caveat: Derived from modern language distribution and linguistic records; not pre-contact boundaries.
+
+# `code` is the value in the attrs column (0 = unassigned) and never changes meaning. `label` is
+# what the map shows. Glottolog's name for the Inuit, Yupik and Unangan family is "Eskimo-Aleut",
+# a word many Inuit reject, so the map uses "Inuit" and keeps Glottolog's name in `glottolog_name`.
+families:
+  - { code: 1, glottocode: algi1248, glottolog_name: Algic, label: Algonquian }
+  - { code: 2, glottocode: atha1245, glottolog_name: Athabaskan-Eyak-Tlingit, label: Dene (Athabaskan) and Tlingit }
+  - { code: 3, glottocode: eski1264, glottolog_name: Eskimo-Aleut, label: Inuit }
+  - { code: 4, glottocode: haid1248, glottolog_name: Haida, label: Haida }
+  - { code: 5, glottocode: iroq1247, glottolog_name: Iroquoian, label: Iroquoian }
+  - { code: 6, glottocode: kute1249, glottolog_name: Kutenai, label: Ktunaxa }
+  - { code: 7, glottocode: sali1255, glottolog_name: Salishan, label: Salish }
+  - { code: 8, glottocode: siou1252, glottolog_name: Siouan, label: Siouan }
+  - { code: 9, glottocode: tsim1258, glottolog_name: Tsimshian, label: Tsimshianic }
+  - { code: 10, glottocode: waka1280, glottolog_name: Wakashan, label: Wakashan }
+  # No census speakers (Beothuk has had none since 1829); it enters only through the Glottolog fill.
+  - { code: 11, glottocode: beot1247, glottolog_name: Beothuk, label: Beothuk }
+
+# Glottolog "families" that are not Indigenous language families of Canada, and so never fill a
+# cell: pidgins and trade jargons (Chinook Jargon's creole is filed under Chinookan, at a
+# placeholder point in the middle of British Columbia), sign languages, Indo-European languages
+# spoken in Canada, bookkeeping entries and artificial languages. Listed so the build can fail on a
+# family it has never seen rather than drop it quietly.
+glottolog_excluded_families:
+  - { glottocode: pidg1258, glottolog_name: Pidgin }
+  - { glottocode: sign1238, glottolog_name: Sign Language }
+  - { glottocode: indo1319, glottolog_name: Indo-European }
+  - { glottocode: book1242, glottolog_name: Bookkeeping }
+  - { glottocode: arti1236, glottolog_name: Artificial Language }
+  - { glottocode: chin1490, glottolog_name: Chinookan }
+
+languages:
+  # Algonquian languages (386)
+  - { census: 387, name: Blackfoot, glottocode: siks1238, family: algi1248, source: "Glottolog siks1238 Siksika, the Blackfoot language" }
+  - { census: 389, name: Atikamekw, glottocode: atik1240, family: algi1248, source: Glottolog atik1240 Atikamekw }
+  - { census: 391, name: Ililimowin (Moose Cree), glottocode: moos1236, family: algi1248, source: Glottolog moos1236 Moose Cree }
+  - { census: 392, name: Inu Ayimun (Southern East Cree), glottocode: sout2978, family: algi1248, source: Glottolog sout2978 Southern East Cree }
+  - { census: 393, name: Iyiyiw-Ayimiwin (Northern East Cree), glottocode: nort1552, family: algi1248, source: Glottolog nort1552 Northern East Cree }
+  - { census: 394, name: Nehinawewin (Swampy Cree), glottocode: swam1239, family: algi1248, source: Glottolog swam1239 Swampy Cree }
+  - { census: 395, name: Nehiyawewin (Plains Cree), glottocode: plai1258, family: algi1248, source: Glottolog plai1258 Plains Cree }
+  - { census: 396, name: Nihithawiwin (Woods Cree), glottocode: wood1236, family: algi1248, source: Glottolog wood1236 Woods Cree }
+  - { census: 397, name: "Cree, n.o.s.", glottocode: cree1272, family: algi1248, source: "Census parent Cree languages (390) = Glottolog cree1272 Cree" }
+  - { census: 398, name: Innu (Montagnais), glottocode: mont1268, family: algi1248, source: Glottolog mont1268 Montagnais }
+  - { census: 399, name: Naskapi, glottocode: nask1242, family: algi1248, source: Glottolog nask1242 Naskapi }
+  - { census: 401, name: Mi'kmaq, glottocode: mikm1235, family: algi1248, source: Glottolog mikm1235 Mi'kmaq }
+  - { census: 402, name: Wolastoqewi (Malecite), glottocode: male1292, family: algi1248, source: Glottolog male1292 Malecite-Passamaquoddy }
+  - { census: 404, name: Anicinabemowin (Algonquin), glottocode: algo1255, family: algi1248, source: Glottolog algo1255 Algonquin }
+  - { census: 405, name: Oji-Cree, glottocode: seve1240, family: algi1248, source: "Glottolog seve1240 Severn Ojibwa, the language the census calls Oji-Cree" }
+  - { census: 407, name: Anishinaabemowin (Chippewa), glottocode: chip1241, family: algi1248, source: Glottolog chip1241 Chippewa }
+  - { census: 408, name: Daawaamwin (Odawa), glottocode: otta1242, family: algi1248, source: Glottolog otta1242 Ottawa }
+  - { census: 409, name: Saulteau (Western Ojibway), glottocode: west1510, family: algi1248, source: Glottolog west1510 Western Ojibwa }
+  - { census: 410, name: "Ojibway, n.o.s.", glottocode: ojib1241, family: algi1248, source: "Census parent Ojibway languages (406) = Glottolog ojib1241 Ojibwa" }
+  - { census: 411, name: "Algonquian languages, n.i.e.", glottocode: algo1257, family: algi1248, source: "Census parent Algonquian languages (386) = Glottolog algo1257 Algonquian" }
+  # Glottolog 5.3 classifies Michif under Plains Cree (plai1264 < cree1272), not as a mixed
+  # language; the census lists it on its own under Indigenous languages.
+  - { census: 449, name: Michif, glottocode: mich1243, family: algi1248, source: "Glottolog mich1243 Heritage Michif, classified under Plains Creeic" }
+  # Athabaskan languages (412)
+  - { census: 414, name: Dakelh (Carrier), glottocode: carr1248, family: atha1245, source: Glottolog carr1248 Dakelh }
+  - { census: 415, name: Dane-zaa (Beaver), glottocode: beav1236, family: atha1245, source: Glottolog beav1236 Beaver }
+  - { census: 416, name: "Dene, n.o.s.", glottocode: atha1247, family: atha1245, source: "Census parent Northern Athabaskan languages (413) ⊂ Glottolog atha1247 Athabaskan" }
+  - { census: 417, name: Gwich'in, glottocode: gwic1235, family: atha1245, source: Glottolog gwic1235 Gwich'in }
+  - { census: 419, name: Deh Gah Ghotie Zhatie (South Slavey), glottocode: sout2959, family: atha1245, source: Glottolog sout2959 South Slavey }
+  - { census: 420, name: Satuotine Yati (North Slavey), glottocode: nort2942, family: atha1245, source: Glottolog nort2942 North Slavey }
+  - { census: 421, name: "Slavey, n.o.s.", glottocode: slav1253, family: atha1245, source: "Census parent Slavey-Hare languages (418) ⊂ Glottolog slav1253 Slave" }
+  - { census: 423, name: Kaska (Nahani), glottocode: kask1239, family: atha1245, source: Glottolog kask1239 Kaska }
+  - { census: 424, name: Tahltan, glottocode: tahl1239, family: atha1245, source: Glottolog tahl1239 Tahltan }
+  - { census: 425, name: Tlicho (Dogrib), glottocode: dogr1252, family: atha1245, source: Glottolog dogr1252 Dogrib }
+  - { census: 426, name: Tse'khene (Sekani), glottocode: seka1250, family: atha1245, source: Glottolog seka1250 Sekani }
+  - { census: 427, name: Tsilhqot'in (Chilcotin), glottocode: chil1280, family: atha1245, source: Glottolog chil1280 Chilcotin-Nicola }
+  - { census: 428, name: Tsuu T'ina (Sarsi), glottocode: sars1236, family: atha1245, source: Glottolog sars1236 Sarsi }
+  - { census: 430, name: Northern Tutchone, glottocode: nort2941, family: atha1245, source: Glottolog nort2941 Northern Tutchone }
+  - { census: 431, name: Southern Tutchone, glottocode: sout2957, family: atha1245, source: Glottolog sout2957 Southern Tutchone }
+  - { census: 432, name: "Tutchone, n.o.s.", glottocode: tutc1236, family: atha1245, source: "Census parent Tutchone languages (429) = Glottolog tutc1236 Tutchone" }
+  - { census: 433, name: Wetsuwet'en-Babine, glottocode: babi1235, family: atha1245, source: Glottolog babi1235 Witsuwit'en-Babine }
+  # The census files Tlingit under Athabaskan languages; Glottolog joins them one level up, in
+  # Athabaskan-Eyak-Tlingit. Same family either way.
+  - { census: 434, name: Tlingit, glottocode: tlin1245, family: atha1245, source: Glottolog tlin1245 Tlingit }
+  - { census: 435, name: "Athabaskan languages, n.i.e.", glottocode: atha1247, family: atha1245, source: "Census parent Athabaskan languages (412) = Glottolog atha1247 Athabaskan" }
+  # Haida (436), a census leaf that is a family of two languages in Glottolog.
+  - { census: 436, name: Haida, glottocode: haid1248, family: haid1248, source: Glottolog haid1248 Haida }
+  # Inuktut (Inuit) languages (437)
+  - { census: 439, name: Inuinnaqtun, glottocode: west2618, family: eski1264, source: "Glottolog west2618 Western Canadian Inuktitut, which includes Inuinnaqtun" }
+  - { census: 440, name: Inuvialuktun, glottocode: west2618, family: eski1264, source: "Glottolog west2618 Western Canadian Inuktitut, which includes Inuvialuktun" }
+  - { census: 441, name: Inuktitut, glottocode: east2534, family: eski1264, source: Glottolog east2534 Eastern Canadian Inuktitut }
+  - { census: 442, name: "Inuktut (Inuit) languages, n.i.e.", glottocode: inui1246, family: eski1264, source: "Census parent Inuktut (Inuit) languages (437) = Glottolog inui1246 Inuit" }
+  # Iroquoian languages (443)
+  - { census: 444, name: Cayuga, glottocode: cayu1261, family: iroq1247, source: Glottolog cayu1261 Cayuga }
+  - { census: 445, name: Mohawk, glottocode: moha1258, family: iroq1247, source: Glottolog moha1258 Mohawk }
+  - { census: 446, name: Oneida, glottocode: onei1249, family: iroq1247, source: Glottolog onei1249 Oneida }
+  - { census: 447, name: "Iroquoian languages, n.i.e.", glottocode: iroq1247, family: iroq1247, source: "Census parent Iroquoian languages (443) = Glottolog iroq1247 Iroquoian" }
+  # Ktunaxa (448), an isolate.
+  - { census: 448, name: Ktunaxa (Kutenai), glottocode: kute1249, family: kute1249, source: Glottolog kute1249 Kutenai (isolate) }
+  # Salish languages (450)
+  - { census: 451, name: Halkomelem, glottocode: halk1245, family: sali1255, source: Glottolog halk1245 Halkomelem }
+  - { census: 452, name: Lillooet, glottocode: lill1248, family: sali1255, source: Glottolog lill1248 Lillooet }
+  - { census: 453, name: Ntlakapamux (Thompson), glottocode: thom1243, family: sali1255, source: Glottolog thom1243 Thompson }
+  - { census: 454, name: Secwepemctsin (Shuswap), glottocode: shus1248, family: sali1255, source: Glottolog shus1248 Shuswap }
+  - { census: 455, name: Squamish, glottocode: squa1248, family: sali1255, source: Glottolog squa1248 Squamish }
+  - { census: 456, name: Straits, glottocode: stra1244, family: sali1255, source: Glottolog stra1244 Northern Straits Salish }
+  - { census: 457, name: Syilx (Okanagan), glottocode: okan1243, family: sali1255, source: Glottolog okan1243 Okanagan }
+  - { census: 458, name: "Salish languages, n.i.e.", glottocode: sali1255, family: sali1255, source: "Census parent Salish languages (450) = Glottolog sali1255 Salishan" }
+  # Siouan languages (459)
+  - { census: 460, name: Assiniboine, glottocode: assi1247, family: siou1252, source: Glottolog assi1247 Assiniboine }
+  - { census: 461, name: Dakota, glottocode: dako1258, family: siou1252, source: Glottolog dako1258 Dakota }
+  - { census: 462, name: Stoney, glottocode: ston1242, family: siou1252, source: Glottolog ston1242 Stoney }
+  - { census: 463, name: "Siouan languages, n.i.e.", glottocode: siou1252, family: siou1252, source: "Census parent Siouan languages (459) = Glottolog siou1252 Siouan" }
+  # Tsimshian languages (464)
+  - { census: 465, name: Gitxsan (Gitksan), glottocode: gitx1241, family: tsim1258, source: Glottolog gitx1241 Gitxsan }
+  - { census: 466, name: Nisga'a, glottocode: nisg1240, family: tsim1258, source: Glottolog nisg1240 Nisga'a }
+  - { census: 467, name: Tsimshian, glottocode: nucl1649, family: tsim1258, source: Glottolog nucl1649 Southern-Coastal Tsimshian }
+  # Wakashan languages (468)
+  - { census: 469, name: Haisla, glottocode: hais1244, family: waka1280, source: Glottolog hais1244 Haisla }
+  - { census: 470, name: Heiltsuk, glottocode: heil1246, family: waka1280, source: Glottolog heil1246 Heiltsuk-Oowekyala }
+  - { census: 471, name: Kwak'wala (Kwakiutl), glottocode: kwak1269, family: waka1280, source: Glottolog kwak1269 Kwak'wala }
+  - { census: 472, name: Nuu-chah-nulth (Nootka), glottocode: nuuc1236, family: waka1280, source: Glottolog nuuc1236 Nuu-chah-nulth }
+  - { census: 473, name: "Wakashan languages, n.i.e.", glottocode: waka1280, family: waka1280, source: "Census parent Wakashan languages (468) = Glottolog waka1280 Wakashan" }
+
+# Census subtotals: each is the sum of the languages under it.
+groups:
+  - { census: 386, name: Algonquian languages }
+  - { census: 388, name: Cree-Innu languages }
+  - { census: 390, name: Cree languages }
+  - { census: 400, name: Eastern Algonquian languages }
+  - { census: 403, name: Ojibway-Potawatomi languages }
+  - { census: 406, name: Ojibway languages }
+  - { census: 412, name: Athabaskan languages }
+  - { census: 413, name: Northern Athabaskan languages }
+  - { census: 418, name: Slavey-Hare languages }
+  - { census: 422, name: Tahltan languages }
+  - { census: 429, name: Tutchone languages }
+  - { census: 437, name: Inuktut (Inuit) languages }
+  - { census: 438, name: Inuinnaqtun (Inuvialuktun) }
+  - { census: 443, name: Iroquoian languages }
+  - { census: 450, name: Salish languages }
+  - { census: 459, name: Siouan languages }
+  - { census: 464, name: Tsimshian languages }
+  - { census: 468, name: Wakashan languages }
+
+# Not languages: responses the census could not place in any family. Their speakers are counted in
+# indigenous_language_share but cannot choose a family, so they are not fetched.
+residuals:
+  - { census: 474, name: "Indigenous languages, n.i.e." }
+  - { census: 475, name: "Indigenous languages, n.o.s." }

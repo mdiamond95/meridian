@@ -20,7 +20,9 @@ export const SideTableSchema = z
     ),
     values: IdColumnSchema,
   })
-  .describe('Variable-length per-cell id lists in CSR form, e.g. Native Land territory ids')
+  .describe(
+    'Variable-length per-cell id lists in CSR form, e.g. Wikidata ids of the Indigenous communities in each cell',
+  )
   .meta({ id: 'SideTable' });
 
 export const AttrsFileSchema = z

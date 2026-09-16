@@ -31,6 +31,13 @@ Methods (each also recorded on its column as `method`):
 - first_contact_year (measure, year): the earliest documented direct European presence covering
   the cell's centre, from pipeline/atlas/contact.yaml. 0 means no entry covers it. Read the
   caveat in that file before reading anything into these years.
+- indigenous_language_family (id) and indigenous_language_family_confidence (index): the family
+  with the most census mother-tongue speakers in the cell (CSD speakers spread by the industry
+  weights), confidence 0.7; where there are none, the family of the nearest Glottolog language by
+  distance over the mesh, confidence 0.3. The full method is in indigenous.py; codes and labels in
+  atlas/language_families.yaml. Modern language distribution, not pre-contact boundaries.
+- sideTables.indigenous_community_ids: Wikidata item numbers of the First Nations, Inuit
+  communities and Métis Settlements whose point falls in each cell (atlas/indigenous_communities.rq).
 """
 
 from __future__ import annotations
@@ -52,6 +59,7 @@ import numpy as np
 import pandas as pd
 import shapely
 
+import indigenous
 from census import da_points, load_profile, release_memory
 from columns import MONEY_UNIT, check_column_name, encode_column, file_meta
 from common import BUILD, EQUAL_AREA_CRS, MESH_VERSION, WGS84, load_manifest, raw_file, write_json_gz
@@ -505,6 +513,44 @@ def contact_column(mesh) -> np.ndarray:
     return years
 
 
+def indigenous_columns(mesh, index, cell_from_csd) -> tuple[dict[str, np.ndarray], dict, dict, dict]:
+    """Language family per cell and the community side table (indigenous.py). Returns (columns,
+    family lookup, side table, stats)."""
+    doc = indigenous.load_families()
+    cells = mesh["cells"]
+    n = len(cells)
+    rows = indigenous.read_glottolog(raw_file("glottolog_languoids"))
+    problems = indigenous.check_census_mapping(rows, doc)
+    if problems:
+        raise ValueError("language_families.yaml disagrees with Glottolog:\n" + "\n".join(problems))
+    profile = load_profile(indigenous.CENSUS_SOURCE, indigenous.census_characteristics(doc))
+    counts, families = indigenous.cell_speakers(indigenous.family_speakers(profile, doc), cell_from_csd, n)
+    census_family = indigenous.dominant_family(counts, families)
+    del profile, counts
+
+    lats = np.array([c["centroid"][1] for c in cells])
+    lngs = np.array([c["centroid"][0] for c in cells])
+    xyz = indigenous.unit_vectors(lats, lngs)
+    seeds, dropped = indigenous.seed_cells(indigenous.glottolog_seeds(rows, doc), xyz, index, 5)
+    if dropped:
+        log(f"Glottolog points beyond {indigenous.MAX_SEED_OFFSET_KM:.0f} km of the mesh, not seeds: "
+            + ", ".join(s.name for s in dropped))  # fmt: skip
+    family, confidence, stats = indigenous.family_column(
+        census_family, [c["neighbours"] for c in cells], lats, lngs, seeds
+    )
+    stats["glottolog_seeds"] = len(seeds)
+    log(f"language families: {stats}")
+
+    communities, unnamed = indigenous.read_communities(raw_file("wikidata_indigenous_communities"))
+    community_cells = cells_of_points(
+        np.array([c.lat for c in communities]), np.array([c.lng for c in communities]), cells, index
+    )
+    offsets, values = indigenous.community_side_table(communities, community_cells, n)
+    log(f"{len(communities)} Wikidata communities ({unnamed} rows without an English label skipped)")
+    columns = {"indigenous_language_family": family, "indigenous_language_family_confidence": confidence}
+    return columns, indigenous.family_labels(doc), {"offsets": offsets, "values": values}, stats
+
+
 def overlay_inputs():
     eco = read_vector(raw_file("aafc_ecozones")).to_crs(EQUAL_AREA_CRS)
     eco = eco.dissolve("ECOZONE_ID", as_index=False)
@@ -592,6 +638,29 @@ def build() -> dict:
         add(name, values, "share", method="csd_labour_force_by_population_share_v1")
     add("industry_dominant", dominant, "id", method="argmax_industry_share_v1")
     lookups["industry_dominant"] = {"0": "no data"} | {s[:2]: NAICS_LABELS[s] for s in NAICS_SECTORS}
+
+    log("Indigenous language families")
+    family_columns, family_lookup, communities, family_stats = indigenous_columns(mesh, index, cell_from_csd)
+    add(
+        "indigenous_language_family",
+        family_columns["indigenous_language_family"],
+        "id",
+        method="census_dominant_family_glottolog_graph_fill_v1",
+    )
+    lookups["indigenous_language_family"] = family_lookup
+    add(
+        "indigenous_language_family_confidence",
+        family_columns["indigenous_language_family_confidence"],
+        "index",
+        method="census_0_7_glottolog_fill_0_3_v1",
+    )
+    side_tables = {
+        "indigenous_community_ids": {
+            "offsets": encode_column(communities["offsets"], "id", method="wikidata_point_in_cell_v1"),
+            "values": encode_column(communities["values"], "id"),
+        }
+    }
+    release_memory()
 
     gdp = gdp_column(mesh, labour, population)
     gdp_year = None
@@ -712,9 +781,6 @@ def build() -> dict:
         method="earliest_covering_entry_contact_yaml_v1",
     )
 
-    if "native_land_territories" not in load_manifest():
-        log("native_land_territories not fetched (native_land_permission pending); side table omitted")
-
     return {
         "format": "meridian.attrs",
         "version": MESH_VERSION,
@@ -726,9 +792,13 @@ def build() -> dict:
             gdp_source="statcan_gdp_36100711",
             gdp_reference_year=gdp_year or "none",
             gdp_prices="current_dollars_basic_prices",
+            indigenous_family_sources="statcan_profile_csd_indigenous_languages_2021+glottolog_5_3",
+            indigenous_family_census_cells=family_stats["census_cells"],
+            indigenous_family_glottolog_cells=family_stats["glottolog_cells"],
         ),
         "columns": columns,
         "lookups": lookups,
+        "sideTables": side_tables,
     }
 
 

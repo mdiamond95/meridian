@@ -89,12 +89,32 @@ test('the contact frontier and the pre-contact base', async ({ page }) => {
   await expect(caveat).toBeVisible();
   await expect(caveat).toContainText('European frame');
 
-  // Before the atlas begins there are no units, and the base says why rather than showing an
-  // empty country.
+  // Before the atlas begins, the base is the Indigenous language families and community names,
+  // with the caveat from the schema.
   await page.getByTestId('start-select').selectOption('1000');
   const slider = page.getByRole('slider', { name: 'Year' });
   await slider.focus();
   await page.keyboard.press('Home');
   await expect(page.getByTestId('timeline-year')).toHaveText('1000');
-  await expect(page.getByTestId('pre-contact')).toContainText('permission');
+  await expect(page.getByTestId('indigenous-caveat')).toContainText('not pre-contact boundaries');
+  await expect(page.locator('.family-label').first()).toBeAttached();
+  await expect(page.locator('.leaflet-control-attribution')).toContainText('Glottolog');
+});
+
+test('the Indigenous layers are available at any date', async ({ page }) => {
+  await page.goto('./');
+  await expect(page.locator('.leaflet-overlay-pane path').first()).toBeAttached();
+  await expect(page.getByTestId('indigenous-caveat')).toHaveCount(0);
+
+  await page.getByRole('button', { name: 'Layers' }).click();
+  const group = page.getByTestId('indigenous-group');
+  await group.getByLabel('Language families').check();
+  await expect(page.locator('.family-label').first()).toBeAttached({ timeout: 15000 });
+  await expect(page.getByTestId('indigenous-caveat')).toContainText('not pre-contact boundaries');
+
+  await group.getByLabel('Community names').check();
+  await expect(page.locator('.community-label').first()).toBeAttached();
+  await group.getByLabel('Language families').uncheck();
+  await group.getByLabel('Community names').uncheck();
+  await expect(page.getByTestId('indigenous-caveat')).toHaveCount(0);
 });

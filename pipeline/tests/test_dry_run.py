@@ -16,7 +16,7 @@ def write(tmp_path: Path, plan: str, rows: str) -> tuple[Path, Path]:
 PLAN = """
 plan_version: 1
 permissions:
-  native_land_permission: pending
+  native_land_permission: declined
 artefacts:
   - id: mesh
     phase: 1
@@ -67,15 +67,28 @@ def test_bare_string_output_is_an_error(tmp_path, capsys):
     assert "must be {path, schema}" in capsys.readouterr().err
 
 
-def test_native_land_permission_must_be_a_known_value(tmp_path, capsys):
-    plan = PLAN.replace("native_land_permission: pending", "native_land_permission: maybe")
-    assert dry_run.run(*write(tmp_path, plan, "| `statcan_pr_2021` | StatCan | | | | |\n")) == 1
-    assert "native_land_permission" in capsys.readouterr().err
+def test_native_land_decision_cannot_be_reopened(tmp_path, capsys):
+    for value in ("pending", "granted", "maybe"):
+        plan = PLAN.replace("native_land_permission: declined", f"native_land_permission: {value}")
+        assert dry_run.run(*write(tmp_path, plan, "| `statcan_pr_2021` | StatCan | | | | |\n")) == 1
+        assert "declined permanently" in capsys.readouterr().err
 
 
-def test_repo_gates_native_land_until_permission_is_granted(capsys):
+def test_no_native_land_source_or_fetch_path_remains():
     import download
 
-    assert download.native_land_permission() == "pending"
-    assert download.main(["--only", "native_land_territories"]) == 0
-    assert "not fetched" in capsys.readouterr().out
+    sources = dry_run.parse_sources(dry_run.SOURCES_PATH.read_text(encoding="utf-8"), dry_run.Report())
+    assert not [sid for sid in sources if sid.startswith("native_land")]
+    assert not hasattr(download, "native_land_permission")
+
+
+def test_sparql_sources_are_written_as_csv():
+    import download
+
+    spec = "sparql:pipeline/atlas/indigenous_communities.rq"
+    assert download.source_url(f"`{spec}`") == spec
+    assert (
+        download.filename_for("wikidata_indigenous_communities", spec)
+        == "wikidata_indigenous_communities.csv"
+    )
+    assert (download.ROOT / spec.removeprefix("sparql:")).exists()

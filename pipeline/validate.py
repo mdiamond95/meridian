@@ -71,6 +71,17 @@ def semantic_errors(doc: Any) -> list[str]:
         for name, table in doc.get("sideTables", {}).items():
             if table["offsets"]["length"] != count + 1:
                 errors.append(f"sideTables.{name}.offsets: length must be cellCount + 1")
+    elif fmt == "meridian.indigenous":
+        codes = [f["code"] for f in doc["families"]]
+        if len(codes) != len(set(codes)):
+            errors.append("families: duplicate code")
+        refs = [a["geometryRef"] for a in doc["areas"]]
+        if len(refs) != len(set(refs)):
+            errors.append("areas: duplicate geometryRef")
+        errors += [f"areas: unknown family {a['family']}" for a in doc["areas"] if a["family"] not in codes]
+        ids = [c["id"] for c in doc["communities"]]
+        if any(b <= a for a, b in zip(ids, ids[1:], strict=False)):
+            errors.append("communities: not strictly sorted by id")
     elif fmt == "meridian.regionPack":
         ids = [r["id"] for r in doc["regions"]]
         if len(ids) != len(set(ids)):

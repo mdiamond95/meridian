@@ -394,3 +394,63 @@ Mark's decisions on PR #5, and what they changed.
   0.57 km², under the 2 km² minimum that keeps thousands of Arctic islets out of the display
   topology, so both Nunavut rows share one drawn polygon. The event, its date and its instrument
   are what the artefact carries.
+
+## 2026-09-16 — Native Land declined; an in-house Indigenous language-family layer
+
+- **Native Land Digital is declined permanently, not pending.** The flag in
+  `pipeline/artefacts.yaml` says `declined` and `make dry-run` fails on any other value. The two
+  source rows, `download.py`'s gate, the app's loader (`nativeLand.ts`), the Vite define and the
+  devcontainer secret are gone; the terms note stays under "Not cleared" in
+  `docs/data-sources.md`. The permission request was never sent and is marked superseded.
+- **The replacement is built from open sources we can redistribute:** the 2021 Census Profile
+  (Open Licence), Glottolog 5.3 (CC BY 4.0) and Wikidata (CC0).
+- **A family is a Glottolog top-level family or isolate.** Each of the 70 census languages is
+  matched to one Glottolog languoid in `pipeline/atlas/language_families.yaml`, which cites that
+  languoid on every row, and pytest checks each glottocode's family against the downloaded table.
+  Using Glottolog's families for the census as well is what lets the two sources fill one column
+  without disagreeing about what "Salish" means. Two consequences worth knowing: Tlingit sits with
+  the Dene languages (Athabaskan-Eyak-Tlingit), and Michif is Algonquian (Glottolog 5.3 files it under
+  Plains Cree).
+- **Census ids 386–475 are each accounted for exactly once:** 70 languages (fetched), 18 subtotals
+  (not fetched, so no speaker counts twice), and 2 residuals, "Indigenous languages, n.i.e." and
+  "n.o.s.", which name no family and are not assigned one.
+- **The map says "Inuit", not Glottolog's "Eskimo-Aleut".** The Glottolog name is kept in the data.
+- **Census cells:** each CSD's single-response speakers by family, spread over its cells with the
+  labour-force weights (population share, area share where the CSD has no people in the mesh), the
+  largest family wins, ties to the lower code. Confidence 0.7.
+- **Glottolog cells:** every language with `CA` among its countries and coordinates, extinct and
+  dormant ones included (Beothuk, Laurentian), seeds its cell; unassigned cells take the nearest
+  seed by shortest path over the mesh graph, edges in great-circle km. Confidence 0.3. Points more
+  than 100 km from every mesh cell (languages listed for Canada but located in the United States)
+  seed nothing.
+- **Deviation from the brief: sea crossings.** The mesh graph has no edges over salt water, so it
+  is 50 components; the mainland is 89% of cells, and graph distance alone reaches about 91%, short
+  of the 95% bar. Rather than lower the bar, the fill joins components by their closest pair of cell
+  centres (Borůvka, ties by cell index), weighted like any other edge. That is still a distance over
+  the mesh, and it is the only way Baffin Island or Newfoundland has a nearest language at all.
+- **The caveat is a literal in the schema** (`INDIGENOUS_CAVEAT` in `app/src/schema/indigenous.ts`).
+  The app renders it from the schema, the pipeline writes the same text from
+  `language_families.yaml`, and pytest checks the two against the exported JSON Schema.
+- **The layer is its own artefact pair** (`indigenous.v1.json`, `indigenous.v1.topojson.gz`),
+  built by the `layers` step from the attrs column: one area per family and source, clipped to
+  Canada. Hex edges are left visible on purpose: they show the resolution the method has.
+- **Both Indigenous layers draw automatically before the atlas begins** (the pre-contact base) and
+  can be switched on at any date from the layers menu's new "Indigenous" group.
+- **Colour:** the eight largest families take the eight categorical slots; Haida, Ktunaxa and Beothuk
+  share a neutral fill. A choropleth puts every pair of families side by side, and eight hues cannot
+  keep every pair apart for every reader, so every area carries its family's name on the map, in its
+  tooltip and in the legend. Census areas are drawn solid and Glottolog-filled areas faint, so
+  confidence is visible.
+- **Community labels are Wikidata's, and uneven.** First Nation bands have a class; Inuit
+  communities are selected by region (Nunavut, Nunavik, Nunatsiavut) plus the six Inuvialuit
+  communities by item; Métis land bases are the eight Alberta Métis Settlements by item. The query
+  and its reasoning are in `pipeline/atlas/indigenous_communities.rq`. They also go into attrs as a
+  side table, `indigenous_community_ids` (Wikidata item numbers per cell). Names appear from zoom 6.
+- **Numbers from the first build:** 1,809 cells from the census and 36,623 from the Glottolog fill
+  (0 unassigned of 38,432); 72 Glottolog seeds, 10 more dropped as beyond 100 km of the mesh
+  (Cayuga, Chippewa, Dakota, Lakota, Mohawk, Munsee, North Alaskan Inupiatun, Potawatomi, Seneca,
+  Tuscarora); 49 sea crossings, the longest 112 km; median fill distance 281 km. Of 1,172 populated
+  cells with Indigenous mother-tongue speakers (by `indigenous_language_share`), 1,069 take their
+  family from the census and 103 from the fill: the DA data counts speakers there, but the CSD
+  language counts are rounded to zero or fall in the n.i.e./n.o.s. residuals. 642 Wikidata
+  communities (2 rows without an English label skipped).

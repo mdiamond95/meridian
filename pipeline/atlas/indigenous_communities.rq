@@ -1,0 +1,46 @@
+# Indigenous communities in Canada with coordinates, for map labels. Meridian source
+# `wikidata_indigenous_communities` (docs/data-sources.md); Wikidata is CC0. `make download` sends
+# this file to https://query.wikidata.org/sparql and pins the sorted result by hash.
+#
+# Wikidata has a class for First Nations and none for Inuit or Métis communities, so the parts
+# select differently:
+#   first_nation  a First Nation band (Q2882257) or a self-governing modern-treaty First Nation
+#                 (Q115790720).
+#   inuit         a territorial hamlet, city, town, northern village or town of Newfoundland and
+#                 Labrador located in Nunavut (Q2023) or one of its regions (Q2543447), in the
+#                 Kativik Regional Government (Q3084850, Nunavik) or in Nunatsiavut (Q636967); and
+#                 the six Inuvialuit communities by item, because the Northwest Territories' hamlets
+#                 are not all Inuit.
+#   metis         the eight Alberta Métis Settlements by item; no other Métis land base is a place
+#                 in Wikidata.
+# Each branch binds its own coordinates: joining them after the UNION, or using property paths
+# (P131*, P279*), times out on the public endpoint. An item can return several rows (two
+# coordinates); the build keeps the first by (item, people, point).
+SELECT ?item ?people ?name ?point WHERE {
+  {
+    VALUES ?class { wd:Q2882257 wd:Q115790720 }
+    ?item wdt:P31 ?class ; wdt:P625 ?point .
+    BIND("first_nation" AS ?people)
+  } UNION {
+    VALUES ?region { wd:Q2023 wd:Q3084850 wd:Q636967 }
+    VALUES ?class { wd:Q116175792 wd:Q515 wd:Q3957 wd:Q3559003 wd:Q44529188 }
+    ?item wdt:P131 ?region ; wdt:P31 ?class ; wdt:P625 ?point .
+    BIND("inuit" AS ?people)
+  } UNION {
+    VALUES ?class { wd:Q116175792 wd:Q515 wd:Q3957 }
+    ?nunavutRegion wdt:P31 wd:Q2543447 .
+    ?item wdt:P131 ?nunavutRegion ; wdt:P31 ?class ; wdt:P625 ?point .
+    BIND("inuit" AS ?people)
+  } UNION {
+    # Aklavik, Inuvik, Paulatuk, Sachs Harbour, Tuktoyaktuk, Ulukhaktok.
+    VALUES ?item { wd:Q420187 wd:Q338686 wd:Q465235 wd:Q719379 wd:Q719547 wd:Q718822 }
+    ?item wdt:P625 ?point .
+    BIND("inuit" AS ?people)
+  } UNION {
+    # Buffalo Lake, East Prairie, Elizabeth, Fishing Lake, Gift Lake, Kikino, Paddle Prairie, Peavine.
+    VALUES ?item { wd:Q4985779 wd:Q5329188 wd:Q5363255 wd:Q5455015 wd:Q5559997 wd:Q6406294 wd:Q7123346 wd:Q7158488 }
+    ?item wdt:P625 ?point .
+    BIND("metis" AS ?people)
+  }
+  OPTIONAL { ?item rdfs:label ?name . FILTER(LANG(?name) = "en") }
+}

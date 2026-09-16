@@ -309,6 +309,60 @@ button {
   margin: 6px 0 0;
 }
 
+.family-legend,
+.source-list {
+  margin: 6px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.family-legend li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 2px 0;
+}
+
+.source-list li {
+  margin: 4px 0;
+  font-size: 0.8rem;
+}
+
+.family-swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  flex: none;
+}
+
+/* Family names at each area's label point; Leaflet positions the marker, the span centres it. */
+.family-label span {
+  display: inline-block;
+  transform: translate(-50%, -50%);
+  white-space: nowrap;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #2b2a27;
+  text-shadow:
+    0 0 3px #fff,
+    0 0 3px #fff;
+  pointer-events: none;
+}
+
+.family-label-glottolog span {
+  font-weight: 400;
+  font-style: italic;
+}
+
+.community-label {
+  padding: 1px 4px;
+  font-size: 0.7rem;
+}
+
+.map[data-community-labels='off'] .community-label {
+  display: none;
+}
+
 @media (max-width: 1024px) {
   .pre-contact {
     max-width: none;

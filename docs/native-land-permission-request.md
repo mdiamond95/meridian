@@ -1,9 +1,11 @@
-# Native Land Digital — permission request (draft)
+# Native Land Digital — permission request (draft, superseded)
 
-Status: **not sent**. `native_land_permission: pending` in `pipeline/artefacts.yaml` keeps the
-fetch off until Native Land Digital replies. If they grant permission, set it to `granted` and
-record their reply (date, contact, any conditions) in docs/decisions.md. If they refuse, set
-`refused`.
+Status: **not sent, and superseded.** Native Land Digital's data is declined permanently
+(docs/decisions.md, 2026-09-16), so this request will not be sent. It is kept as a record of what was
+considered and why the data was never fetched. `permissions.native_land_permission: declined` in
+`pipeline/artefacts.yaml` records the decision, and no code path fetches or loads their data. The
+pre-contact base is drawn instead from an in-house language-family layer built from the 2021 Census,
+Glottolog and Wikidata (`pipeline/indigenous.py`).
 
 ---
 

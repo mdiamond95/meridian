@@ -83,9 +83,9 @@ def attrs_example(cell_count: int) -> dict:
         },
         "lookups": {"urban_class": {"0": "remote", "1": "rural", "2": "small urban", "3": "CMA"}},
         "sideTables": {
-            "native_land_territory_ids": {
-                "offsets": encode_column([0, 1, 2, 3, 4, 5, 6, 8], "id"),
-                "values": encode_column([101, 101, 101, 101, 101, 101, 101, 205], "id"),
+            "indigenous_community_ids": {
+                "offsets": encode_column([0, 0, 0, 0, 1, 1, 1, 2], "id"),
+                "values": encode_column([123033, 55624], "id"),
             }
         },
     }

@@ -1,16 +1,17 @@
-import { useEffect, useState } from 'react';
-import { NATIVE_LAND_PERMISSION, nativeLandPlan } from '../atlas/nativeLand';
+import { indigenousShown } from '../atlas/loadIndigenous';
 import { currentEvent } from '../atlas/resolve';
+import { familyColour } from '../atlas/style';
+import { INDIGENOUS_CAVEAT } from '../schema/indigenous';
 import { useAtlasStore } from '../state/atlasStore';
 
 /**
- * What the map says about the time before the atlas begins.
+ * What the map says about Indigenous nations, and about the time before the atlas begins.
  *
- * Before the first event there are no units to draw, and the honest thing is to say why rather
- * than show an empty country: the territories that would fill it are Native Land Digital's, and
- * their data is used only with permission (see src/atlas/nativeLand.ts). When the flag is granted
- * the layer loads; until then this notice stands in for it, with the contact frontier's caveat
- * beside it whenever that layer is doing the talking.
+ * Before the first event the base is the Indigenous language families and community names
+ * (src/components/IndigenousLayer.tsx); they can also be switched on at any date. Whenever either
+ * is drawn, its caveat is shown, and it comes from the schema, not from the data: this is a modern
+ * and linguistic reconstruction drawn under historical dates, and must say so every time. The
+ * contact frontier's caveat joins it whenever that layer is doing the talking.
  */
 export function PreContactBase() {
   const data = useAtlasStore((s) => s.data);
@@ -18,42 +19,67 @@ export function PreContactBase() {
   const start = useAtlasStore((s) => s.start);
   const contact = useAtlasStore((s) => s.contact);
   const contactVisible = useAtlasStore((s) => s.contactVisible);
-  const [layerError, setLayerError] = useState<string | null>(null);
+  const familiesVisible = useAtlasStore((s) => s.familiesVisible);
+  const communitiesVisible = useAtlasStore((s) => s.communitiesVisible);
+  const indigenous = useAtlasStore((s) => s.indigenous);
+  const indigenousError = useAtlasStore((s) => s.indigenousError);
 
-  const plan = nativeLandPlan(NATIVE_LAND_PERMISSION, import.meta.env.BASE_URL);
   const before = data ? currentEvent(data.atlas, date) === null : false;
+  const shown = indigenousShown({ familiesVisible, communitiesVisible }, before);
+  const showIndigenous = shown.families || shown.communities;
+  const showContactCaveat = contactVisible || start === 'frontier';
+  if (!showIndigenous && !showContactCaveat) return null;
 
-  useEffect(() => {
-    if (!plan.granted || !plan.url || !before) return;
-    let cancelled = false;
-    // Permission granted: the layer is fetched at runtime, not bundled, because it does not exist
-    // in the build until the pipeline has been allowed to fetch it.
-    fetch(plan.url)
-      .then((response) => {
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        return response.arrayBuffer();
-      })
-      .then(() => !cancelled && setLayerError(null))
-      .catch((err: unknown) => {
-        if (!cancelled) setLayerError(err instanceof Error ? err.message : String(err));
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [plan.granted, plan.url, before]);
-
-  const showCaveat = contactVisible || start === 'frontier';
-  if (!before && !showCaveat) return null;
+  const drawnFamilies = new Set(indigenous?.indigenous.areas.map((a) => a.family));
+  const legend = indigenous?.indigenous.families.filter((f) => drawnFamilies.has(f.code)) ?? [];
 
   return (
     <aside className="pre-contact" data-testid="pre-contact" aria-live="polite">
-      {before && <p className="pre-contact-notice">{plan.notice}</p>}
-      {before && layerError && (
-        <p className="pre-contact-notice">
-          Native Land’s layer is permitted but has not been built yet ({layerError}).
-        </p>
+      {showIndigenous && (
+        <section data-testid="indigenous-caveat">
+          <p className="pre-contact-notice">
+            <strong>{INDIGENOUS_CAVEAT}</strong>
+          </p>
+          {indigenousError && (
+            <p className="pre-contact-notice">
+              The Indigenous layers could not be loaded ({indigenousError}).
+            </p>
+          )}
+          {shown.families && legend.length > 0 && (
+            <details className="pre-contact-caveat" data-testid="family-legend">
+              <summary>Language families</summary>
+              <ul className="family-legend">
+                {legend.map((family) => (
+                  <li key={family.code}>
+                    <span className="family-swatch" style={{ background: familyColour(family.code) }} />
+                    {family.label}
+                  </li>
+                ))}
+              </ul>
+              <p>
+                Solid: the family with the most mother-tongue speakers (2021 Census). Faint: no speakers
+                counted, so the nearest language in Glottolog, including extinct ones.
+              </p>
+            </details>
+          )}
+          {indigenous && (
+            <details className="pre-contact-caveat">
+              <summary>Sources</summary>
+              <ul className="source-list">
+                {indigenous.indigenous.attribution.map((a) => (
+                  <li key={a.source}>
+                    {a.text}{' '}
+                    <a href={a.url} target="_blank" rel="noreferrer">
+                      {a.licence}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </details>
+          )}
+        </section>
       )}
-      {showCaveat && contact && (
+      {showContactCaveat && contact && (
         <details className="pre-contact-caveat" data-testid="contact-caveat">
           <summary>About these contact dates</summary>
           <p>{contact.contact.caveat}</p>

@@ -10,6 +10,9 @@ The URL column of docs/data-sources.md selects a fetcher:
                                    order; the server fails often, so pages retry and shrink
     sdmx:<dataflow>:<ids>[:<n>]    StatCan Census Profile API (api.statcan.gc.ca), counts for the
                                    listed characteristic ids, n ids per request → <id>.csv
+    sparql:<query file>            a SPARQL query (path relative to the repo root) sent to the Wikidata
+                                   Query Service → <id>.csv, rows sorted so a rerun of an unchanged
+                                   result is byte-identical
     gha:<workflow>:<artifact>:<file>
                                    the file from the latest successful run of a GitHub Actions
                                    fetch workflow (for hosts that block this machine), via `gh`
@@ -51,6 +54,7 @@ SDMX_BASE = (
     "https://api.statcan.gc.ca/census-recensement/profile/sdmx/rest/data/STC_CP,{flow}/A5..1.{chars}.1"
 )
 SDMX_COLUMNS = ["ALT_GEO_CODE", "CHARACTERISTIC", "OBS_VALUE", "FLAG"]
+SPARQL_ENDPOINT = "https://query.wikidata.org/sparql"
 
 
 def source_url(cell: str) -> str | None:
@@ -58,7 +62,7 @@ def source_url(cell: str) -> str | None:
     cell = cell.strip().strip("`").strip()
     if not cell:
         return None
-    if cell.startswith(("arcgis:", "sdmx:", "gha:", "manual:")):
+    if cell.startswith(("arcgis:", "sdmx:", "sparql:", "gha:", "manual:")):
         return cell
     md_link = re.search(r"\]\((https?://[^)\s]+)\)", cell)
     if md_link:
@@ -70,7 +74,7 @@ def source_url(cell: str) -> str | None:
 def filename_for(source_id: str, url: str) -> str:
     if url.startswith("arcgis:"):
         return f"{source_id}.geojson"
-    if url.startswith("sdmx:"):
+    if url.startswith(("sdmx:", "sparql:")):
         return f"{source_id}.csv"
     if url.startswith("manual:"):
         return url.removeprefix("manual:")
@@ -209,12 +213,35 @@ def fetch_gha(spec: str, dest: Path) -> None:
     print(f"    from {workflow} run {run_id}")
 
 
-def native_land_permission() -> str:
-    """The Native Land Digital permission gate from pipeline/artefacts.yaml."""
-    import yaml
-
-    plan = yaml.safe_load((ROOT / "pipeline" / "artefacts.yaml").read_text(encoding="utf-8"))
-    return str((plan.get("permissions") or {}).get("native_land_permission", "pending"))
+def fetch_sparql(spec: str, dest: Path) -> None:
+    """Run a recorded query on the Wikidata Query Service and keep the CSV, header first and rows
+    sorted: the service returns rows in no fixed order."""
+    query = (ROOT / spec.removeprefix("sparql:")).read_text(encoding="utf-8")
+    resp = None
+    for attempt in range(1, 6):
+        try:
+            resp = requests.post(
+                SPARQL_ENDPOINT,
+                data={"query": query},
+                headers={"User-Agent": USER_AGENT, "Accept": "text/csv"},
+                timeout=(30, 120),
+            )
+            resp.raise_for_status()
+            break
+        except requests.RequestException as exc:
+            if attempt == 5:
+                raise
+            print(f"    retry {attempt}: {type(exc).__name__}", file=sys.stderr, flush=True)
+            time.sleep(15 * attempt)
+    rows = list(csv.reader(io.StringIO(resp.content.decode("utf-8"))))
+    if not rows:
+        raise ValueError("empty SPARQL result")
+    out = io.StringIO()
+    writer = csv.writer(out, lineterminator="\n")
+    writer.writerow(rows[0])
+    writer.writerows(sorted(rows[1:]))
+    write_bytes(dest, out.getvalue().encode("utf-8"))
+    print(f"    {len(rows) - 1} rows")
 
 
 def resolve(template: str) -> str | None:
@@ -267,14 +294,8 @@ def main(argv: list[str] | None = None) -> int:
     manifest = json.loads(MANIFEST.read_text(encoding="utf-8")) if MANIFEST.exists() else {}
 
     failures = 0
-    native_land = native_land_permission()
     for sid, source in sources.items():
         if args.only and sid not in args.only:
-            continue
-        if sid.startswith("native_land_") and native_land != "granted":
-            print(
-                f"- {sid}: native_land_permission is {native_land!r} in pipeline/artefacts.yaml, not fetched"
-            )
             continue
         template = source_url(source.url)
         if template is None:
@@ -313,6 +334,8 @@ def main(argv: list[str] | None = None) -> int:
                     fetch_arcgis(url, dest)
                 elif template.startswith("sdmx:"):
                     fetch_sdmx(url, dest)
+                elif template.startswith("sparql:"):
+                    fetch_sparql(url, dest)
                 elif template.startswith("gha:"):
                     fetch_gha(url, dest)
                 else:

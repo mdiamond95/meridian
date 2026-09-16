@@ -4,9 +4,9 @@ Every external dataset Meridian reads or displays. `make dry-run` cross-checks t
 against `pipeline/artefacts.yaml`. `make download` (`pipeline/download.py`) fetches each row into
 `data/raw/<id>/` and records its SHA-256 in `data/raw/MANIFEST.json`.
 
-**Licence review (2026-09-15):** every pipeline input used in `data/build/` is under the Statistics
-Canada Open Licence, the Open Government Licence – Canada, or the Open Government Licence –
-Alberta. Licences were checked against open.canada.ca dataset records where they exist. Rows outside
+**Licence review (2026-09-15, extended 2026-09-16):** every pipeline input used in `data/build/` is
+under the Statistics Canada Open Licence, the Open Government Licence – Canada, the Open Government
+Licence – Alberta, CC BY 4.0 (Glottolog) or CC0 (Wikidata). Licences were checked against open.canada.ca dataset records where they exist. Rows outside
 those licences are listed under "Not cleared" below; no artefact is built from them.
 
 Code is MIT; data keeps its own licence. Every attribution string ends up on the in-app
@@ -19,7 +19,8 @@ The development Codespace runs in a US Microsoft datacenter. Several Government 
 drop its connections, so some rows use equivalent official services or pinned Internet Archive
 copies of the official files. The URL column selects a fetcher (see `pipeline/download.py`):
 `https://` downloads a file; `arcgis:` pages an ArcGIS REST layer to GeoJSON; `sdmx:` calls the
-StatCan Census Profile API; `manual:` is a file placed by hand.
+StatCan Census Profile API; `sparql:` runs a query file from the repository on the Wikidata Query
+Service; `manual:` is a file placed by hand.
 
 ## Pipeline inputs
 
@@ -72,8 +73,9 @@ StatCan Census Profile API; `manual:` is a file placed by hand.
 | `nrcan_te_1949` | NRCan Atlas of Canada, Territorial Evolution of Canada: 1949 map polygons (layer 382). **Verification reference:** compared against the constructed atlas in the checklist. Where the atlas departs from NRCan's drawing (1867, 1870, 1895, 1912, 1927), those polygons ship in `atlas.v1` as an attributed reference overlay; no atlas unit is built from it. | `arcgis:https://geoappext.nrcan.gc.ca/arcgis/rest/services/FGP/TE/MapServer/382?outFields=PROV_NAME,PT_ATT_F&outSR=4326&pageSize=50` | Open Government Licence – Canada | Contains information licensed under the Open Government Licence – Canada. | Static (2016) |
 | `nrcan_te_1999` | NRCan Atlas of Canada, Territorial Evolution of Canada: 1999 map polygons (layer 391). **Verification reference:** compared against the constructed atlas in the checklist. Where the atlas departs from NRCan's drawing (1867, 1870, 1895, 1912, 1927), those polygons ship in `atlas.v1` as an attributed reference overlay; no atlas unit is built from it. | `arcgis:https://geoappext.nrcan.gc.ca/arcgis/rest/services/FGP/TE/MapServer/391?outFields=PROV_NAME,PT_ATT_F&outSR=4326&pageSize=50` | Open Government Licence – Canada | Contains information licensed under the Open Government Licence – Canada. | Static (2016) |
 | `nrcan_te_2001` | NRCan Atlas of Canada, Territorial Evolution of Canada: 2001 map polygons (layer 400). **Verification reference:** compared against the constructed atlas in the checklist. Where the atlas departs from NRCan's drawing (1867, 1870, 1895, 1912, 1927), those polygons ship in `atlas.v1` as an attributed reference overlay; no atlas unit is built from it. | `arcgis:https://geoappext.nrcan.gc.ca/arcgis/rest/services/FGP/TE/MapServer/400?outFields=PROV_NAME,PT_ATT_F&outSR=4326&pageSize=50` | Open Government Licence – Canada | Contains information licensed under the Open Government Licence – Canada. | Static (2016) |
-| `native_land_territories` | Native Land Digital API: territories. **Not fetched**: permission pending (see "Not cleared"). | | Native Land Digital Data Sovereignty Treaty (API key terms) | Native Land Digital, https://native-land.ca | Weekly upstream |
-| `native_land_languages` | Native Land Digital API: languages. **Not fetched**: permission pending (see "Not cleared"). | | Native Land Digital Data Sovereignty Treaty (API key terms) | Native Land Digital, https://native-land.ca | Weekly upstream |
+| `statcan_profile_csd_indigenous_languages_2021` | Statistics Canada 2021 Census Profile, CSD level: mother tongue (single responses, 100% data) for each of the 70 Indigenous languages under characteristic 385, mapped to families in `pipeline/atlas/language_families.yaml` | `sdmx:DF_CSD:387,389,391,392,393,394,395,396,397,398,399,401,402,404,405,407,408,409,410,411,414,415,416,417,419,420,421,423,424,425,426,427,428,430,431,432,433,434,435,436,439,440,441,442,444,445,446,447,448,449,451,452,453,454,455,456,457,458,460,461,462,463,465,466,467,469,470,471,472,473:10` | Statistics Canada Open Licence | Adapted from Statistics Canada, Census Profile, 2021 Census of Population, 2022. This does not constitute an endorsement by Statistics Canada of this product. | Every census |
+| `glottolog_languoids` | Glottolog 5.3 languoid table (`languoid.csv`: every language, family and dialect with its family, coordinates and countries). Used for the family of each census language and, for languages located in Canada including extinct and dormant ones, to fill cells with no census speakers. | https://cdstar.eva.mpg.de//bitstreams/EAEA0-608B-9919-A962-0/glottolog_languoid.csv.zip | Creative Commons Attribution 4.0 International (CC BY 4.0), https://creativecommons.org/licenses/by/4.0/ | Language families and locations from Glottolog 5.3: Hammarström, Harald & Forkel, Robert & Haspelmath, Martin & Bank, Sebastian. 2026. Glottolog 5.3. Leipzig: Max Planck Institute for Evolutionary Anthropology. https://doi.org/10.5281/zenodo.15525265. Licensed under CC BY 4.0; family assignments per mesh cell adapted by Meridian. | Each Glottolog release (about twice a year) |
+| `wikidata_indigenous_communities` | Wikidata: First Nations, Inuit communities and Alberta Métis Settlements with coordinates and English names, for map labels. The query, and why each part selects as it does, is in `pipeline/atlas/indigenous_communities.rq`. | `sparql:pipeline/atlas/indigenous_communities.rq` | Creative Commons CC0 1.0 (public domain dedication), https://creativecommons.org/publicdomain/zero/1.0/ | Community names and locations from Wikidata (CC0). | On demand; pinned by manifest hash |
 
 ## Displayed in the app
 
@@ -109,10 +111,17 @@ StatCan Census Profile API; `manual:` is a file placed by hand.
   information licensed under the Open Government Licence – Canada." NRCan has no vector maps before
   1867 (only scanned rasters on open.canada.ca), so there is nothing to compare for earlier dates.
 
+- **Glottolog and Wikidata (2026-09-16)**: Glottolog 5.3's download page states CC BY 4.0 and gives
+  the citation used as the attribution string; the languoid zip's own README.txt says the same.
+  Wikidata's structured data is CC0 (https://www.wikidata.org/wiki/Wikidata:Licensing), so no
+  attribution is required; the app credits it anyway. Coverage is uneven: Wikidata has a class for
+  First Nation bands and none for Inuit or Métis communities, so those parts are selected by region
+  and by item (see the query file), and a community missing from Wikidata has no label.
+
 ## Not cleared (no artefact is built from these)
 
 | Row | Licence | Status |
 |---|---|---|
-| `native_land_territories`, `native_land_languages` | Native Land Digital Data Sovereignty Treaty (API key terms). The site says CC0, but the treaty forbids storing or distributing API data without explicit permission and restricts use to non-commercial and educational purposes. | **Not fetched.** Gated by `permissions.native_land_permission: pending` in `pipeline/artefacts.yaml`. Permission request drafted in `docs/native-land-permission-request.md`. |
+| Native Land Digital territories and languages (formerly `native_land_territories`, `native_land_languages`) | Native Land Digital Data Sovereignty Treaty (API key terms). The site says CC0, but the treaty forbids storing or distributing API data without explicit permission and restricts use to non-commercial and educational purposes. | **Declined permanently (2026-09-16).** Never fetched; the source rows, the download path and the app's loader were removed. `permissions.native_land_permission: declined` in `pipeline/artefacts.yaml` records the decision. The permission request in `docs/native-land-permission-request.md` was not sent. The pre-contact base uses the in-house language-family layer instead (Glottolog, census and Wikidata rows above). |
 | CARTO Positron basemap (displayed only) | CARTO basemaps terms, free tier with API key | Live tiles in the app, never stored in the repo. |
 | OpenStreetMap standard tiles (displayed only, fallback) | ODbL data; OSMF Tile Usage Policy | Development fallback, never stored in the repo. |

@@ -11,6 +11,7 @@ import { z } from 'zod';
 import { AtlasFileSchema } from '../src/schema/atlas';
 import { AttrsFileSchema } from '../src/schema/attrs';
 import { ContactFileSchema } from '../src/schema/contact';
+import { IndigenousFileSchema } from '../src/schema/indigenous';
 import { MeshFileSchema } from '../src/schema/mesh';
 import { RegionPackSchema } from '../src/schema/regionPack';
 import { TopologySchema } from '../src/schema/topojson';
@@ -23,6 +24,7 @@ const contracts = {
   'attrs.schema.json': AttrsFileSchema,
   'atlas.schema.json': AtlasFileSchema,
   'contact.schema.json': ContactFileSchema,
+  'indigenous.schema.json': IndigenousFileSchema,
   'regionPack.schema.json': RegionPackSchema,
   'topojson.schema.json': TopologySchema,
 };

@@ -104,3 +104,39 @@ export function disputedStyle(selected: boolean): PathOptions {
 
 export const HATCH_ID = 'meridian-hatch-unreached';
 export const CLAIM_HATCH_ID = 'meridian-hatch-claim';
+
+/**
+ * Indigenous language families, by family code (pipeline/atlas/language_families.yaml). The eight
+ * largest take the eight categorical slots in code order; Haida, Ktunaxa and Beothuk each cover a
+ * small, separate area and share a neutral fill. A choropleth puts every pair of families side by
+ * side, which eight hues cannot keep apart for every reader, so no family is identified by colour
+ * alone: every area carries its family's name on the map and in its tooltip, and the legend lists
+ * them.
+ */
+export const FAMILY_COLOURS: Record<number, string> = {
+  1: '#2a78d6', // Algonquian
+  2: '#eb6834', // Dene (Athabaskan) and Tlingit
+  3: '#1baf7a', // Inuit
+  5: '#eda100', // Iroquoian
+  7: '#e87ba4', // Salish
+  8: '#008300', // Siouan
+  9: '#4a3aa7', // Tsimshianic
+  10: '#e34948', // Wakashan
+};
+export const FAMILY_NEUTRAL = '#8a8a86';
+
+export function familyColour(code: number): string {
+  return FAMILY_COLOURS[code] ?? FAMILY_NEUTRAL;
+}
+
+/** Census-derived areas at full weight; areas filled from the nearest Glottolog language, lighter. */
+export function familyStyle(area: { family: number; source: 'census' | 'glottolog' }): PathOptions {
+  const colour = familyColour(area.family);
+  return {
+    color: colour,
+    weight: 0.6,
+    opacity: 0.7,
+    fillColor: colour,
+    fillOpacity: area.source === 'census' ? 0.5 : 0.2,
+  };
+}
