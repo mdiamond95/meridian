@@ -454,3 +454,55 @@ Mark's decisions on PR #5, and what they changed.
   family from the census and 103 from the fill: the DA data counts speakers there, but the CSD
   language counts are rounded to zero or fall in the n.i.e./n.o.s. residuals. 642 Wikidata
   communities (2 rows without an English label skipped).
+
+## 2026-09-16 — Phase 3 Sitting A: the splitter engine
+
+### Deviations from the brief
+- **The PRNG is canonical mulberry32, not a copy of the township generator's.** That project is not
+  on this machine or in the GitHub account, so there was nothing to copy or cross-check. The
+  implementation is the published reference (`Math.imul` and unsigned shifts only), and
+  `app/src/engine/fixtures/mulberry32.json` pins its first 8 outputs for 5 seeds. **Open:** the
+  township generator should assert the same fixture; until it does, "same sequence as the township
+  generator" is assumed, not tested.
+- **Sea crossings in the solver graph.** As in the language-family fill, the mesh graph is 50
+  components, and hard contiguity would otherwise make every island its own region. The scope
+  graph joins components at their closest cell centres (Borůvka) and marks those edges: they
+  connect a region, and they do not count as boundary length. Canada gets 49, the same as the
+  pipeline's Python.
+- **Test (a) runs 5 seeds × 3 methods on Alberta** with shortened refinement (10–30k moves), so the
+  golden test stays under 4 s. Methods: balanced (N=10), lens on `french_share` (N=4), random cuts
+  (N=15). Hashes are in `app/src/engine/golden/alberta.json`; regenerate with
+  `UPDATE_GOLDEN=1 npx vitest run src/engine/solver.test.ts`.
+
+### Determinism across engines
+- **Only operations IEEE 754 fixes to the bit.** +, −, ×, ÷ and `Math.sqrt` are the same bits on
+  every engine; `Math.exp`, `Math.cos`, `Math.pow` and `**` are not required to be. One differing bit
+  in an annealing acceptance and iPad and desktop diverge for good. So the engine uses `detExp` and
+  `detCos` (`app/src/engine/detmath.ts`: fixed-length series, exact doubling), squares by
+  multiplication, and random directions from two uniforms normalised by `sqrt`.
+- **Order is fixed by cell id.** Local indices follow mesh order, which is H3 id order; heaps and
+  searches break ties by index.
+- **`maxMs` is the one non-deterministic control.** It is a wall-time safety cap. A run that hits it
+  reports `stoppedBy: 'time'` and is not reproducible; the tests assert that no run hits it.
+
+### Model choices
+- **Cost terms are normalised so weights compare:** balance Σ((L−T)/T)²/N; compactness = cut edges ÷
+  all edges; lens = within-region sum of squares of standardised lens columns ÷ total; snap = −cut
+  snap edges ÷ snap edges (the hook is in; the layers arrive in Sitting B); soft contiguity = extra
+  pieces ÷ N.
+- **Initialisers:** `lens` splits the most heterogeneous region into equal halves along its lens
+  principal axis (N and N+1 nest); `balanced` and `random: 'cuts'` use quota bisection (a region
+  that must become q regions splits ⌊q/2⌋ : ⌈q/2⌉ by load, along its geometric axis or a random one),
+  which balances non-power-of-two N; `seeded` grows from capitals or load-weighted seeds; `random`
+  (Voronoi) grows from uniform seeds without balancing; `template` loads an assignment.
+- **Contiguity check:** a move keeps its region whole if the moved cell's neighbours in that region
+  touch one another (no search). Otherwise one search front starts per group of neighbours, the fronts
+  advance in turn and merge when they meet, and a front that runs out proves a split. The cost is
+  about twice the smaller side, not the region.
+- **Annealing:** linear cooling from 0.02 × the mean size of 400 sampled moves to a thousandth of
+  that. A sweep on Canada by population found 0.5 and 0.1 stay hot so long that N=20 plateaued at
+  max/min 2.7 and 2.3; 0.02 reaches 1.01 (N=10) and 1.04 (N=20). The plateau stop only applies in
+  the second half of the schedule, because hot moves wander above the best on purpose.
+- **The worker advances in chunks,** each a separate task, so `cancel` lands between chunks. The host
+  (`app/src/engine/protocol.ts`) is plain code with injected `post` and `schedule`, tested without a
+  Worker.
