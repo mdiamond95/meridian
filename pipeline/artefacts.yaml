@@ -9,11 +9,12 @@
 
 plan_version: 1
 
-# Permission gates. download.py fetches native_land_* sources only when this is `granted`:
-# the Native Land Digital API terms forbid storing or redistributing their data without explicit
-# permission (docs/data-sources.md, docs/native-land-permission-request.md).
+# Native Land Digital is declined permanently (docs/decisions.md, 2026-09-16). This is a record, not a
+# gate: no code path fetches or loads their data, and `make dry-run` fails on any other value so the
+# decision cannot be reopened by editing one word. The pre-contact base uses the in-house
+# language-family layer (indigenous.v1) instead.
 permissions:
-  native_land_permission: pending # pending | granted | refused
+  native_land_permission: declined
 
 # Sources fetched by a route other than their official URL. The official URL is authoritative;
 # the route is how this repository obtains the identical file (see pipeline/README.md).
@@ -34,7 +35,7 @@ artefacts:
   - id: attrs
     phase: 1
     step: pipeline/attributes.py
-    description: Per-cell attribute columns (population, language, industry, GDP allocation, treaties, ...)
+    description: Per-cell attribute columns (population, language, industry, GDP allocation, treaties, Indigenous language family, ...)
     inputs:
       - statcan_csd_2021
       - statcan_da_2021
@@ -52,7 +53,9 @@ artefacts:
       - nrcan_nhn_workunits
       - elections_fed_2023
       - elections_results_ge45
-      - native_land_territories
+      - statcan_profile_csd_indigenous_languages_2021
+      - glottolog_languoids
+      - wikidata_indigenous_communities
     outputs:
       - { path: data/build/attrs.v1.json.gz, schema: docs/schemas/attrs.schema.json }
 
@@ -76,6 +79,8 @@ artefacts:
       - nrcan_c1w_strahler_nelson
       - nrcan_c1w_strahler_pacific
       - elections_fed_2023
+      - glottolog_languoids
+      - wikidata_indigenous_communities
     outputs:
       - { path: data/build/layers/boundaries.low.v1.topojson.gz, schema: docs/schemas/topojson.schema.json }
       - { path: data/build/layers/boundaries.mid.v1.topojson.gz, schema: docs/schemas/topojson.schema.json }
@@ -85,6 +90,10 @@ artefacts:
       - { path: data/build/layers/basins.v1.topojson.gz, schema: docs/schemas/topojson.schema.json }
       - { path: data/build/layers/rivers.v1.topojson.gz, schema: docs/schemas/topojson.schema.json }
       - { path: data/build/layers/ridings.v1.topojson.gz, schema: docs/schemas/topojson.schema.json }
+      # The pre-contact base's language families (dissolved from the attrs column) and community
+      # labels. Its own pair, like the contact frontier, fetched only when the layer is asked for.
+      - { path: data/build/indigenous.v1.json, schema: docs/schemas/indigenous.schema.json }
+      - { path: data/build/indigenous.v1.topojson.gz, schema: docs/schemas/topojson.schema.json }
 
   - id: atlas
     phase: 2

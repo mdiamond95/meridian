@@ -18,12 +18,6 @@
     "5173": { "label": "Vite dev" },
     "4173": { "label": "Vite preview" }
   },
-  "secrets": {
-    "NATIVE_LAND_API_KEY": {
-      "description": "Native Land Digital API key. Pipeline only; never shipped to the app.",
-      "documentationUrl": "https://native-land.ca/resources/api-docs/"
-    }
-  },
   "customizations": {
     "vscode": {
       "extensions": [

@@ -6,6 +6,10 @@ Each layer is exported to GeoJSON (WGS84, only the properties the app needs) and
 with mapshaper (pinned version, Visvalingam weighted, shapes kept) into TopoJSON. Provinces,
 census divisions and census subdivisions share one topology per tier (low/mid/high) for
 zoom-dependent loading.
+
+The `indigenous` builder writes its own pair instead (data/build/indigenous.v1.json and
+indigenous.v1.topojson.gz): the language-family column from attrs dissolved into one area per family
+and source, clipped to Canada, with the Wikidata community labels (indigenous.py).
 """
 
 from __future__ import annotations
@@ -293,6 +297,121 @@ def export_ridings(tmp: Path) -> None:
     export(feds, tmp / "ridings.geojson", ["fed", "name"], "fed")
 
 
+INDIGENOUS_VERSION = "v1"
+INDIGENOUS_JSON = BUILD / f"indigenous.{INDIGENOUS_VERSION}.json"
+INDIGENOUS_TOPOLOGY = BUILD / f"indigenous.{INDIGENOUS_VERSION}.topojson.gz"
+INDIGENOUS_ATTRIBUTION = [
+    "glottolog_languoids",
+    "statcan_profile_csd_indigenous_languages_2021",
+    "wikidata_indigenous_communities",
+]
+STATCAN_LICENCE_URL = "https://www.statcan.gc.ca/en/terms-conditions/open-licence"
+
+
+def attribution_rows(source_ids: list[str]) -> list[dict[str, str]]:
+    """Attribution text and licence for each source, from docs/data-sources.md (one place to edit)."""
+    import re
+
+    from dry_run import SOURCES_PATH, Report, parse_sources
+
+    sources = parse_sources(SOURCES_PATH.read_text(encoding="utf-8"), Report())
+    rows = []
+    for sid in source_ids:
+        licence = sources[sid].licence
+        url = re.search(r"https://\S+", licence)
+        rows.append(
+            {
+                "source": sid,
+                "text": sources[sid].attribution,
+                "licence": licence[: url.start()].rstrip(" ,") if url else licence,
+                "url": url.group(0) if url else STATCAN_LICENCE_URL,
+            }
+        )
+    return rows
+
+
+def layer_indigenous(tmp: Path) -> list[Path]:
+    """The pre-contact base: one area per (family, source) and the community labels."""
+    import gzip
+    import json
+
+    import indigenous
+    from atlas.build import write_topology
+    from columns import decode_column
+    from common import write_json
+    from geo import cell_polygons
+    from mesh import MESH_PATH
+
+    doc = indigenous.load_families()
+    with gzip.open(MESH_PATH, "rt", encoding="utf-8") as fh:
+        cells = [c["id"] for c in json.load(fh)["cells"]]
+    with gzip.open(BUILD / f"attrs.{MESH_VERSION}.json.gz", "rt", encoding="utf-8") as fh:
+        attrs = json.load(fh)
+    family = decode_column(attrs["columns"]["indigenous_language_family"])
+    confidence = decode_column(attrs["columns"]["indigenous_language_family_confidence"])
+    del attrs
+    polys = cell_polygons(cells).to_numpy()
+    canada = canada_outline()
+
+    shapes, areas = [], []
+    for code in sorted(int(c) for c in set(family.tolist()) - {0}):
+        for source, level in (
+            ("census", indigenous.CENSUS_CONFIDENCE),
+            ("glottolog", indigenous.GLOTTOLOG_CONFIDENCE),
+        ):
+            mask = (family == code) & np.isclose(confidence, level)
+            if not mask.any():
+                continue
+            geometry = polygonal(
+                shapely.make_valid(shapely.intersection(shapely.union_all(polys[mask]), canada))
+            )
+            if geometry is None:
+                continue
+            ref = f"family_{code}_{source}"
+            largest_part = max(getattr(geometry, "geoms", [geometry]), key=lambda g: g.area)
+            label = gpd.GeoSeries([largest_part.point_on_surface()], crs=EQUAL_AREA_CRS).to_crs(WGS84).iloc[0]
+            shapes.append((ref, gpd.GeoSeries([geometry], crs=EQUAL_AREA_CRS).to_crs(WGS84).iloc[0]))
+            areas.append(
+                {
+                    "family": code,
+                    "source": source,
+                    "confidence": level,
+                    "cells": int(mask.sum()),
+                    "geometryRef": ref,
+                    "labelPoint": [round(label.x, 4), round(label.y, 4)],
+                }
+            )
+    del polys
+    release_memory()
+    write_topology(shapes, INDIGENOUS_TOPOLOGY)
+
+    communities, _ = indigenous.read_communities(raw_file("wikidata_indigenous_communities"))
+    write_json(
+        INDIGENOUS_JSON,
+        {
+            "format": "meridian.indigenous",
+            "version": INDIGENOUS_VERSION,
+            "caveat": doc["caveat"].strip(),
+            "families": [
+                {
+                    "code": f["code"],
+                    "glottocode": f["glottocode"],
+                    "glottologName": f["glottolog_name"],
+                    "label": f["label"],
+                }
+                for f in doc["families"]
+            ],
+            "areas": areas,
+            "communities": [
+                {"id": c.id, "name": c.name, "people": c.people, "lng": c.lng, "lat": c.lat}
+                for c in communities
+            ],
+            "attribution": attribution_rows(INDIGENOUS_ATTRIBUTION),
+        },
+    )
+    return [INDIGENOUS_JSON, INDIGENOUS_TOPOLOGY]
+
+
 BUILDERS = {
     "boundaries": layer_boundaries,
     "treaties": layer_treaties,
@@ -300,6 +419,7 @@ BUILDERS = {
     "basins": layer_basins,
     "rivers": layer_rivers,
     "ridings": layer_ridings,
+    "indigenous": layer_indigenous,
 }
 
 

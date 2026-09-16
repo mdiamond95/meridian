@@ -333,7 +333,7 @@
         "values"
       ],
       "additionalProperties": false,
-      "description": "Variable-length per-cell id lists in CSR form, e.g. Native Land territory ids"
+      "description": "Variable-length per-cell id lists in CSR form, e.g. Wikidata ids of the Indigenous communities in each cell"
     },
     "IdColumn": {
       "type": "object",

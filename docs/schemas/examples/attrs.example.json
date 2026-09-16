@@ -58,20 +58,20 @@
     }
   },
   "sideTables": {
-    "native_land_territory_ids": {
+    "indigenous_community_ids": {
       "offsets": {
         "kind": "id",
         "dtype": "int32",
         "byteOrder": "le",
         "length": 8,
-        "data": "AAAAAAEAAAACAAAAAwAAAAQAAAAFAAAABgAAAAgAAAA="
+        "data": "AAAAAAAAAAAAAAAAAAAAAAEAAAABAAAAAQAAAAIAAAA="
       },
       "values": {
         "kind": "id",
         "dtype": "int32",
         "byteOrder": "le",
-        "length": 8,
-        "data": "ZQAAAGUAAABlAAAAZQAAAGUAAABlAAAAZQAAAM0AAAA="
+        "length": 2,
+        "data": "meABAEjZAAA="
       }
     }
   }

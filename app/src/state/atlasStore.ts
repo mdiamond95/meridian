@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import type { LoadedAtlas } from '../atlas/loadAtlas';
 import type { LoadedContact } from '../atlas/loadContact';
+import type { LoadedIndigenous } from '../atlas/loadIndigenous';
 import { resolveUnits } from '../atlas/resolve';
 import { TRUTH_LAYERS, type TruthLayer } from '../schema/atlas';
 
@@ -36,6 +37,14 @@ interface AtlasState {
   contactError: string | null;
   /** Where the timeline starts, and whether the pre-contact base shades by contact date. */
   start: StartOption;
+  /**
+   * Indigenous language families and community names. Drawn automatically before the atlas begins
+   * (the pre-contact base); these switch them on at any date. Data fetched on first use.
+   */
+  familiesVisible: boolean;
+  communitiesVisible: boolean;
+  indigenous: LoadedIndigenous | null;
+  indigenousError: string | null;
   /** Unit id. The panel shows whichever row of that unit is valid on `date`. */
   selected: string | null;
   setLoading: () => void;
@@ -49,6 +58,10 @@ interface AtlasState {
   setContact: (contact: LoadedContact) => void;
   setContactError: (message: string) => void;
   setStart: (start: StartOption) => void;
+  toggleFamilies: () => void;
+  toggleCommunities: () => void;
+  setIndigenous: (indigenous: LoadedIndigenous) => void;
+  setIndigenousError: (message: string) => void;
   select: (id: string | null) => void;
 }
 
@@ -66,6 +79,10 @@ export const initialAtlasState = {
   contact: null,
   contactError: null,
   start: 1497 as StartOption,
+  familiesVisible: false,
+  communitiesVisible: false,
+  indigenous: null,
+  indigenousError: null,
   selected: null,
 };
 
@@ -93,5 +110,9 @@ export const useAtlasStore = create<AtlasState>()((set) => ({
   setContact: (contact) => set({ contact, contactError: null }),
   setContactError: (message) => set({ contactError: message }),
   setStart: (start) => set({ start }),
+  toggleFamilies: () => set((s) => ({ familiesVisible: !s.familiesVisible })),
+  toggleCommunities: () => set((s) => ({ communitiesVisible: !s.communitiesVisible })),
+  setIndigenous: (indigenous) => set({ indigenous, indigenousError: null }),
+  setIndigenousError: (message) => set({ indigenousError: message }),
   select: (selected) => set({ selected }),
 }));

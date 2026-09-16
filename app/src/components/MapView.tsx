@@ -4,6 +4,7 @@ import { CARTO_MISSING_WARNING, selectBasemap } from '../map/basemap';
 import { installPatterns } from '../map/patterns';
 import { AtlasLayer } from './AtlasLayer';
 import { ContactLayer } from './ContactLayer';
+import { IndigenousLayer } from './IndigenousLayer';
 import { ReferenceLayer } from './ReferenceLayer';
 
 /** Canada's extent, south-west to north-east, including Ellesmere and Cape Spear. */
@@ -42,6 +43,7 @@ export function MapView() {
 
   return (
     <div ref={containerRef} className="map" data-testid="map" data-basemap={BASEMAP.provider}>
+      {map && <IndigenousLayer map={map} />}
       {map && <ContactLayer map={map} />}
       {map && <AtlasLayer map={map} />}
       {map && <ReferenceLayer map={map} />}

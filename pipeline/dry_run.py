@@ -23,7 +23,8 @@ SOURCES_PATH = ROOT / "docs" / "data-sources.md"
 ID_RE = re.compile(r"^[a-z][a-z0-9_]*$")
 VERSIONED_RE = re.compile(r"\.v\d+\.")
 SOURCE_COLUMNS = ["id", "source", "url", "licence", "attribution", "refresh"]
-PERMISSION_VALUES = {"pending", "granted", "refused"}
+# Native Land Digital was declined permanently (docs/decisions.md, 2026-09-16); the key stays as a record.
+NATIVE_LAND_DECISION = "declined"
 
 
 @dataclass
@@ -87,12 +88,10 @@ def validate_plan(plan: object, sources: dict[str, Source], report: Report) -> l
     if unknown_top:
         report.error(f"artefacts.yaml: unknown top-level keys {sorted(unknown_top)}")
     permissions = plan.get("permissions", {})
-    if (
-        not isinstance(permissions, dict)
-        or permissions.get("native_land_permission") not in PERMISSION_VALUES
-    ):
+    if not isinstance(permissions, dict) or permissions.get("native_land_permission") != NATIVE_LAND_DECISION:
         report.error(
-            f"artefacts.yaml: permissions.native_land_permission must be one of {sorted(PERMISSION_VALUES)}"
+            f"artefacts.yaml: permissions.native_land_permission must be {NATIVE_LAND_DECISION!r}; "
+            "Native Land Digital was declined permanently (docs/decisions.md)"
         )
     for sid, route in (plan.get("source_routes") or {}).items():
         if sid not in sources:

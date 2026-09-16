@@ -22,8 +22,11 @@ From the repo root, `make download`, `make build`, `make atlas` and `make verify
   GDP table* workflow from the Actions tab, or push a change to the workflow file. Then run
   `make download ARGS="--only statcan_gdp_36100711 --refresh"` and `make build`. Artifacts expire
   after 14 days, so refresh and build together.
-- **`native_land_*`**: not fetched while `permissions.native_land_permission` in
-  `pipeline/artefacts.yaml` is anything but `granted` (docs/native-land-permission-request.md).
+- **`wikidata_indigenous_communities`** (`sparql:` fetcher): the query is
+  `atlas/indigenous_communities.rq`. The manifest records the query file's path, not its text, so
+  after editing the query run `make download ARGS="--only wikidata_indigenous_communities --refresh"`.
+- **Native Land Digital** is declined permanently and has no source row or fetch path
+  (docs/decisions.md, 2026-09-16).
 
 ## What gets built
 
@@ -34,6 +37,8 @@ From the repo root, `make download`, `make build`, `make atlas` and `make verify
 | `data/build/layers/*.v1.topojson.gz` | `polygons.py` | `docs/schemas/topojson.schema.json` |
 | `data/build/atlas.v1.json` | `atlas/build.py` | `docs/schemas/atlas.schema.json` |
 | `data/build/atlas.v1.topojson.gz` | `atlas/build.py` | `docs/schemas/topojson.schema.json` |
+| `data/build/indigenous.v1.json` | `polygons.py` (`indigenous`) | `docs/schemas/indigenous.schema.json` |
+| `data/build/indigenous.v1.topojson.gz` | `polygons.py` (`indigenous`) | `docs/schemas/topojson.schema.json` |
 
 `pipeline/artefacts.yaml` is the plan: `make dry-run` prints it, and `make validate` checks every
 file in `data/build/` against its schema. The methods for each attribute column are in the
@@ -89,10 +94,18 @@ Identical raw inputs (pinned by hash in `data/raw/MANIFEST.json`) and the locked
 - **Language, Indigenous identity and immigrant shares** come from the 25% sample and from
   suppressed small-area data. Sparse cells fall back to their CSD's shares.
 - **Industry mixes are CSD-level**, spread by population; sub-CSD variation is lost.
-- **Native Land Digital territories are not included.** Their API terms forbid storing or
-  redistributing the data without permission. If permission is granted, the polygons are
-  approximations of relationships that were never polygonal, and every layer built from them must
-  say so.
+- **Indigenous language families are not territories.** `indigenous_language_family` is derived
+  from modern language distribution and linguistic records; it is not a map of pre-contact
+  boundaries, and the layer says so on screen. Census cells (confidence 0.7) take the family with the
+  most single-response mother-tongue speakers in 2021, spread within each CSD by population, so a
+  cell reflects where speakers live now. Every other cell (confidence 0.3) takes the family of the
+  nearest Glottolog language by distance over the mesh, joined across salt water by sea crossings;
+  Glottolog gives one point per language, so these cells are an inference at a distance of hundreds of
+  kilometres, not a record. Multiple mother-tongue responses and the census's "n.i.e."/"n.o.s."
+  Indigenous responses are not assigned to a family. Community labels are Wikidata's, which is
+  uneven: First Nation bands are well covered, Inuit communities are selected by region and Métis
+  land bases by item (see `atlas/indigenous_communities.rq`). Native Land Digital's layer is declined
+  permanently.
 - **Treaty areas** are CIRNAC's approximate depictions, not legal boundaries.
 - **Mesh inclusion:** a cell is in the mesh if it is ≥ 30% Canadian land (Atlas of Canada 1:1M land +
   inland water) OR it contains the representative point of a DA with population > 0. Attribution uses

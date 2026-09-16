@@ -23,6 +23,10 @@ export function LayersMenu() {
   const toggleContact = useAtlasStore((s) => s.toggleContact);
   const start = useAtlasStore((s) => s.start);
   const setStart = useAtlasStore((s) => s.setStart);
+  const familiesVisible = useAtlasStore((s) => s.familiesVisible);
+  const toggleFamilies = useAtlasStore((s) => s.toggleFamilies);
+  const communitiesVisible = useAtlasStore((s) => s.communitiesVisible);
+  const toggleCommunities = useAtlasStore((s) => s.toggleCommunities);
 
   return (
     <nav className="layers" data-open={open} data-testid="layers" aria-label="Layers">
@@ -50,6 +54,17 @@ export function LayersMenu() {
           <label className="indent" title="NRCan's map, shown only where the atlas departs from it">
             <input type="checkbox" checked={nrcanVisible} disabled={!visible} onChange={toggleNrcan} />
             NRCan drawing
+          </label>
+        </fieldset>
+        <fieldset className="layer-group" data-testid="indigenous-group">
+          <legend>Indigenous</legend>
+          <label title="From census mother tongue and Glottolog; always drawn before the atlas begins">
+            <input type="checkbox" checked={familiesVisible} onChange={toggleFamilies} />
+            Language families
+          </label>
+          <label title="First Nations, Inuit communities and Métis Settlements, from Wikidata; always drawn before the atlas begins">
+            <input type="checkbox" checked={communitiesVisible} onChange={toggleCommunities} />
+            Community names
           </label>
         </fieldset>
         <fieldset className="layer-group">
