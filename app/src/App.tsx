@@ -3,6 +3,7 @@ import { ATLAS_TOPOLOGY_URL, ATLAS_URL } from './atlas/assets';
 import { loadAtlas } from './atlas/loadAtlas';
 import { LayersMenu } from './components/LayersMenu';
 import { MapView } from './components/MapView';
+import { PreContactBase } from './components/PreContactBase';
 import { SidePanel } from './components/SidePanel';
 import { Timeline } from './components/Timeline';
 import { useAtlasStore } from './state/atlasStore';
@@ -27,6 +28,7 @@ export function App() {
     <div className="app">
       <MapView />
       <LayersMenu />
+      <PreContactBase />
       <SidePanel />
       <Timeline />
     </div>

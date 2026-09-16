@@ -1,0 +1,141 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "#/$defs/ContactFile",
+  "$defs": {
+    "ContactBand": {
+      "type": "object",
+      "properties": {
+        "label": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Legend text, e.g. \"1600–1699\""
+        },
+        "fromYear": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": -2000,
+              "maximum": 2100
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Inclusive start, null for \"everything earlier\""
+        },
+        "untilYear": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": -2000,
+              "maximum": 2100
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Exclusive end, null for \"everything later\""
+        },
+        "geometryRef": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$",
+          "description": "Key into contact.v1.topojson.gz"
+        }
+      },
+      "required": [
+        "label",
+        "fromYear",
+        "untilYear",
+        "geometryRef"
+      ],
+      "additionalProperties": false
+    },
+    "ContactRegion": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$",
+          "description": "Stable id from contact.yaml"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "year": {
+          "type": "integer",
+          "minimum": -2000,
+          "maximum": 2100
+        },
+        "event": {
+          "type": "string",
+          "minLength": 1,
+          "description": "What fixes the year, in one sentence"
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "How well the evidence supports the year"
+        },
+        "source": {
+          "type": "string",
+          "minLength": 1
+        },
+        "note": {
+          "description": "Where the entry is weak, uncertain or contested",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "year",
+        "event",
+        "confidence",
+        "source"
+      ],
+      "additionalProperties": false
+    },
+    "ContactFile": {
+      "type": "object",
+      "properties": {
+        "format": {
+          "type": "string",
+          "const": "meridian.contact"
+        },
+        "version": {
+          "type": "string",
+          "pattern": "^v\\d+$"
+        },
+        "caveat": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Shown with the layer; not optional in the UI"
+        },
+        "bands": {
+          "minItems": 1,
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ContactBand"
+          }
+        },
+        "regions": {
+          "minItems": 1,
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ContactRegion"
+          }
+        }
+      },
+      "required": [
+        "format",
+        "version",
+        "caveat",
+        "bands",
+        "regions"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

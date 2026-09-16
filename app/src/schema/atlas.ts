@@ -60,6 +60,11 @@ export const AtlasUnitSchema = z
     validFrom: IsoDateSchema.describe('Inclusive'),
     validTo: IsoDateSchema.nullable().describe('Exclusive; null means still valid'),
     truth: z.enum(TRUTH_LAYERS),
+    dispute: z
+      .string()
+      .regex(/^[a-z][a-z0-9_]*$/)
+      .optional()
+      .describe('Groups the claim rows of one dispute, so the map can say whose claim a hatch is'),
     geometryRef: z.string().min(1).describe('Object key in the atlas TopoJSON; shared by unchanged units'),
     note: z.string().optional(),
     confidence: z

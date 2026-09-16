@@ -43,6 +43,9 @@ export const REFERENCE_STYLE: PathOptions = {
 };
 
 export function unitStyle(unit: AtlasUnit, selected: boolean): PathOptions {
+  // A claim is hatched, never filled flat: the fill would say "this is how it was" when the whole
+  // point of the row is that two powers said different things.
+  if (unit.truth === 'disputed') return disputedStyle(selected);
   const approximate =
     (unit.confidence !== undefined && unit.confidence < APPROXIMATE_BELOW) || unit.truth !== 'dejure';
   return {
@@ -52,7 +55,6 @@ export function unitStyle(unit: AtlasUnit, selected: boolean): PathOptions {
     fillColor: STATUS_COLOURS[unit.status],
     // Approximate polygons and non-de-jure layers render lighter (running rules: confidence to the UI).
     fillOpacity: approximate ? 0.22 : 0.42,
-    dashArray: unit.truth === 'disputed' ? '6 4' : undefined,
   };
 }
 
