@@ -72,6 +72,29 @@ mapshaper.
 cells and their polygons at once. It was not changed here beyond sharing the chunked DA reader, and
 it is the first thing to make lean if the margin has to grow.
 
+### `make verify` end to end again, with Sitting B's atlas (2026-09-16)
+
+**`verify: clean`**, 01:27:40 to 02:05:56 — 38 minutes, the atlas now walking 50 events, not 25.
+
+| Step | Peak process RSS | Lowest available |
+|---|---|---|
+| `mesh.py` | not instrumented | 1,128 MB |
+| `attributes.py` | 1,736 MB | 1,257 MB |
+| `polygons.py` | 1,650 MB | 1,368 MB |
+| `atlas.build` | under 1,100 MB | over 1,700 MB |
+
+Sampled every 5 s; the peak is the largest single process, Python or mapshaper.
+
+**The margin is set by what else is running, not by the pipeline.** Two runs before this one were
+killed at the attributes step by the same code that had passed the day before: a second VS Code
+window had been opened on the `phase-2b` worktree, and its extension host and Pylance server held
+about 1 GB, leaving 1.9 GB available instead of 2.6 GB. Stopping the two Pylance servers (VS Code
+restarts them on demand) brought available memory back to 3.0 GB and the run finished.
+
+So **check `free -m` before a full verify and close what you are not using. Below about 2.4 GB
+available, the attributes step will be killed** — and the failure looks like a crash with no
+traceback, not like an out-of-memory error.
+
 ### Re-taking these numbers
 
 ```sh

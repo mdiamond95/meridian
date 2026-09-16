@@ -177,7 +177,14 @@ def test_every_divergence_cites_its_instrument_and_ships_nrcans_drawing():
     for key in DIVERGENCES:
         unit = units[key]
         assert unit["instrument"] and unit["rationale"] and 0 < unit["confidence"] <= 1, key
-        refs = [r for r in references if (r["unit"], r["validFrom"]) == key]
+        # A reference may start after its row: NRCan's first map is 1867, older units start earlier.
+        refs = [
+            r
+            for r in references
+            if r["unit"] == key[0]
+            and r["validFrom"] >= unit["validFrom"]
+            and (unit["validTo"] is None or r["validFrom"] < unit["validTo"])
+        ]
         assert refs, f"no NRCan overlay for {key}"
         for ref in refs:
             assert "Open Government Licence" in ref["attribution"]

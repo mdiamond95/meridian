@@ -206,7 +206,7 @@ checks:
   - {date: 1795-01-01, point: [-75.71, 45.48], unit: lower_canada, source: "Gatineau, east of the Ottawa River line (Order in Council, 24 August 1791)"}
   - {date: 1815-01-01, point: [-61.69, 56.54], unit: newfoundland, source: "Nain (49 Geo. III c. 27, s. XIV)"}
   - {date: 1815-01-01, point: [-63.00, 49.50], unit: newfoundland, source: "Anticosti (49 Geo. III c. 27, s. XIV)"}
-  - {date: 1815-01-01, point: [-61.75, 47.40], unit: lower_canada, source: "Magdalen Islands, excepted from the 1809 Act"}
+  - {date: 1815-01-01, point: [-61.79, 47.42], unit: lower_canada, source: "Havre-aux-Maisons, Magdalen Islands, excepted from the 1809 Act (49 Geo. III c. 27, s. XIV)"}
   - {date: 1822-01-01, point: [-60.19, 46.14], unit: nova_scotia, source: "Sydney (Kempt's proclamation, 16 October 1820)"}
   - {date: 1830-01-01, point: [-63.00, 49.50], unit: lower_canada, source: "Anticosti (6 Geo. IV c. 59, s. IX)"}
   - {date: 1830-01-01, point: [-61.69, 56.54], unit: newfoundland, source: "Nain, east of the Anse-Sablon line and north of 52°N (6 Geo. IV c. 59, s. IX)"}
@@ -395,17 +395,21 @@ events:
           Treaty of Utrecht, art. XIII: "The island called Newfoundland, with the adjacent islands, shall from this
           time forward, belong of right wholly to Britain".
       - alter: defacto_french_settlement
+        confidence: 0.8
         boundary: Belts open in 1713, Plaisance evacuated to Louisbourg and Île Royale's harbours settled.
         geometry: {belts: {as_of: 1713, power: french}}
       - alter: defacto_french_posts
+        confidence: 0.3
         boundary: French posts open in 1713, including York Factory, held by France until 1714.
         geometry: {posts: {as_of: 1713, power: french}}
       - alter: defacto_english_settlement
+        confidence: 0.7
         name: British settlement
         sovereign: Britain
         boundary: The English Shore and Annapolis Royal.
         geometry: {belts: {as_of: 1713, power: british}}
       - alter: defacto_english_posts
+        confidence: 0.35
         boundary: Hudson's Bay Company posts open in 1713 (Albany; Rupert House and Moose Factory stood empty).
         geometry: {posts: {as_of: 1713, power: british}}
 
@@ -485,9 +489,14 @@ events:
         geometry:
           union:
             - was: newfoundland
-            - intersect:
-                - was: new_france
-                - union: [{shape: gulf_and_labrador_coast}, {shape: anticosti}, {shape: magdalen_islands}, {shape: labrador_islands}]
+            - minus:
+                - intersect:
+                    - was: new_france
+                    - union: [{shape: gulf_and_labrador_coast}, {shape: anticosti}, {shape: magdalen_islands},
+                              {shape: labrador_islands}]
+                # The 40 km Gulf strip laps west of the Rivière Saint-Jean; the Proclamation puts that
+                # bank in Quebec.
+                - unit: quebec
       - alter: nova_scotia
         instrument: >-
           Royal Proclamation, 7 October 1763: "to annex the Islands of St. John's and Cape Breton, or Isle Royale, with
@@ -547,9 +556,11 @@ events:
             - unit: arctic_islands
       - dissolve: new_france
       - alter: defacto_english_settlement
+        confidence: 0.7
         boundary: British settlement belts open in 1763, including the St. Lawrence belt under British rule.
         geometry: {belts: {as_of: 1763, power: british}}
       - alter: defacto_english_posts
+        confidence: 0.35
         name: British trading posts
         sovereign: Britain
         boundary: Posts open in 1763 under British rule, the former French posts of the Gulf and Labrador included.
@@ -609,6 +620,7 @@ events:
         geometry:
           minus: [{was: north_western_territory}, {unit: quebec}]
       - alter: defacto_english_posts
+        confidence: 0.35
         boundary: Posts open in 1774, now including Cumberland House, the first inland post of the Hudson's Bay Company.
         geometry: {posts: {as_of: 1774, power: british}}
 
@@ -666,6 +678,7 @@ events:
         geometry:
           minus: [{was: nova_scotia}, {unit: cape_breton}]
       - alter: defacto_english_settlement
+        confidence: 0.7
         boundary: Belts open in 1784, with the Loyalist settlements of the Saint John valley and Upper Canada.
         geometry: {belts: {as_of: 1784, power: british}}
 
@@ -708,9 +721,11 @@ events:
         boundary: Santa Cruz de Nuca on Nootka Sound, held 1789–1795.
         geometry: {posts: {as_of: 1791, power: spanish}}
       - alter: defacto_english_settlement
+        confidence: 0.7
         boundary: Belts open in 1791.
         geometry: {belts: {as_of: 1791, power: british}}
       - alter: defacto_english_posts
+        confidence: 0.35
         boundary: Posts open in 1791, from Fort Chipewyan to Moose Factory.
         geometry: {posts: {as_of: 1791, power: british}}
 
@@ -786,9 +801,11 @@ events:
           An Act for regulating the Fur Trade, 1 & 2 Geo. IV c. 66 (2 July 1821), s. VI (jurisdiction "within the said
           Indian Territories"); licence of exclusive trade, 5 December 1821.
       - alter: defacto_english_posts
+        confidence: 0.35
         boundary: Posts open in 1821, the year of the merger; many duplicate posts closed over the next few years.
         geometry: {posts: {as_of: 1821, power: british}}
       - alter: defacto_english_settlement
+        confidence: 0.7
         boundary: Belts open in 1821, with the Red River Settlement.
         geometry: {belts: {as_of: 1821, power: british}}
       - dissolve: defacto_spanish_posts
@@ -840,9 +857,11 @@ events:
       - dissolve: upper_canada
       - dissolve: lower_canada
       - alter: defacto_english_settlement
+        confidence: 0.7
         boundary: Belts open in 1841.
         geometry: {belts: {as_of: 1841, power: british}}
       - alter: defacto_english_posts
+        confidence: 0.35
         boundary: Posts open in 1841.
         geometry: {posts: {as_of: 1841, power: british}}
 
@@ -882,6 +901,7 @@ events:
         geometry:
           minus: [{was: north_western_territory}, {unit: vancouver_island}]
       - alter: defacto_english_settlement
+        confidence: 0.7
         boundary: Belts open in 1849, with Victoria.
         geometry: {belts: {as_of: 1849, power: british}}
 
@@ -917,9 +937,11 @@ events:
         geometry:
           minus: [{was: north_western_territory}, {unit: british_columbia}]
       - alter: defacto_english_settlement
+        confidence: 0.7
         boundary: Belts open in 1858, with the lower Fraser.
         geometry: {belts: {as_of: 1858, power: british}}
       - alter: defacto_english_posts
+        confidence: 0.35
         boundary: Posts open in 1858.
         geometry: {posts: {as_of: 1858, power: british}}
 
@@ -987,6 +1009,12 @@ events:
           Modern British Columbia: 49°N, the Rocky Mountain divide, 120°W and 60°N. The Alaska panhandle line is the 1903
           award, as NRCan draws it for every year.
         geometry: {modern: [BC]}
+      - alter: ruperts_land
+        boundary: >-
+          Less the sliver of Hudson Bay drainage inside modern British Columbia: the 1863 Act runs the colony's
+          eastern limit along the Rocky Mountains, which lie east of the drainage divide there.
+        geometry:
+          minus: [{was: ruperts_land}, {unit: british_columbia}]
       - dissolve: vancouver_island
 
   - date: 1867-07-01
