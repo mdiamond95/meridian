@@ -34,7 +34,9 @@ def test_a_place_takes_the_earliest_year_covering_it():
     basin = region("basin", 1743, box(-90, 50, -80, 60))
     coast = region("coast", 1610, box(-90, 50, -88, 60))
     for regions in ([basin, coast], [coast, basin]):
-        years = contact.cell_years(regions, *map(list, zip(*[(-89.0, 55.0), (-85.0, 55.0), (-70.0, 55.0)])))
+        lons = [-89.0, -85.0, -70.0]  # coast, interior, outside every entry
+        lats = [55.0, 55.0, 55.0]
+        years = contact.cell_years(regions, lons, lats)
         assert list(years) == [1610, 1743, 0]  # coast, interior, nothing covering
 
 
@@ -53,12 +55,7 @@ def test_bands_are_disjoint_and_follow_the_same_rule_as_the_years():
 def test_the_shipped_file_covers_every_drainage_basin_and_cites_everything():
     doc = contact.load_contact()
     assert doc["caveat"].strip()
-    basins = {
-        code
-        for r in doc["regions"]
-        if "drainage" in r["where"]
-        for code in r["where"]["drainage"]
-    }
+    basins = {code for r in doc["regions"] if "drainage" in r["where"] for code in r["where"]["drainage"]}
     # The 25 StatCan regions partition Canada: that is what makes the map gapless.
     assert basins == {f"{n:02d}" for n in range(1, 26)}
     for r in doc["regions"]:
