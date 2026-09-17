@@ -1,12 +1,31 @@
 {
   "version": 1,
   "senate_divisions": {
-    "maritime": ["NS", "NB", "PE"],
-    "quebec": ["QC"],
-    "ontario": ["ON"],
-    "western": ["MB", "BC", "SK", "AB"],
-    "newfoundland": ["NL"],
-    "territories": ["YT", "NT", "NU"]
+    "maritime": [
+      "NS",
+      "NB",
+      "PE"
+    ],
+    "quebec": [
+      "QC"
+    ],
+    "ontario": [
+      "ON"
+    ],
+    "western": [
+      "MB",
+      "BC",
+      "SK",
+      "AB"
+    ],
+    "newfoundland": [
+      "NL"
+    ],
+    "territories": [
+      "YT",
+      "NT",
+      "NU"
+    ]
   },
   "rules": [
     {
