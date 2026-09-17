@@ -146,3 +146,37 @@ describe('solver', () => {
     expect(result.stoppedBy).toBe('none');
   });
 });
+
+describe('seeded growth pins its seeds', () => {
+  it('never moves a seed cell, so every capital keeps its own region', () => {
+    const data = realData();
+    const capitals: [number, number][] = [
+      [-113.5064, 53.5335], // Edmonton
+      [-114.0719, 51.0447], // Calgary
+      [-111.3811, 56.7268], // Fort McMurray
+      [-112.8451, 49.6956], // Lethbridge
+    ];
+    const result = run(
+      alberta,
+      params(capitals.length, 'seeded', { balance: null, capitalPoints: capitals, iterations: 50_000 }),
+    );
+    // Each capital's cell is in its own region, in the order the capitals were given.
+    const cellOf = ([lng, lat]: [number, number]) => {
+      let best = -1;
+      let bestD = Infinity;
+      for (let u = 0; u < alberta.size; u++) {
+        const m = alberta.cells[u];
+        const dx = (data.mesh.centroids[2 * m] - lng) * Math.cos((lat * Math.PI) / 180);
+        const dy = data.mesh.centroids[2 * m + 1] - lat;
+        const d = dx * dx + dy * dy;
+        if (d < bestD) {
+          bestD = d;
+          best = m;
+        }
+      }
+      return best;
+    };
+    expect(capitals.map((c) => result.assignment[cellOf(c)])).toEqual([0, 1, 2, 3]);
+    expect(new Set(result.regions.map((r) => r.id)).size).toBe(capitals.length);
+  }, 60_000);
+});

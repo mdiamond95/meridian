@@ -59,7 +59,7 @@ export const PRESETS: Preset[] = [
     id: 'canada-14',
     name: 'Canada in 14 (capitals)',
     description:
-      "Seeded growth from today's 13 provincial and territorial capitals and Ottawa: each region is the land nearest its capital over the mesh.",
+      "Seeded growth from today's 13 provincial and territorial capitals and Ottawa: each region grows from its capital over the mesh, then refinement smooths the boundaries. The seed cells are pinned, so a region always keeps its own capital.",
     spec: {
       ...base,
       scope: { kind: 'canada' },
@@ -67,9 +67,6 @@ export const PRESETS: Preset[] = [
       n: 14,
       seed: 14,
       balance: null,
-      // Growth only: without a balance target, annealing would trade whole cities for shorter
-      // boundaries (Edmonton's region lost Edmonton); nearest-capital is the definition here.
-      iterations: 0,
       capitalPoints: CAPITALS.map((c) => c.point),
       capitalNames: CAPITALS.map((c) => c.name),
     },

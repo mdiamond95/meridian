@@ -229,8 +229,10 @@ interface Context {
   graph: ScopeGraph;
   mesh: MeshArrays;
   size: number;
-  /** balance load per local cell */
+  /** balance load per local cell (1 per cell when there is no balance column) */
   load: Float64Array;
+  /** false when `balance` is null: no balance term at all, rather than equal cell counts */
+  balanced: boolean;
   /** standardised, weight-scaled lens values, lensCount per cell */
   lens: Float64Array;
   lensCount: number;
@@ -243,6 +245,11 @@ interface Context {
   /** population per local cell (0 without a population column) */
   population: Float64Array;
   limits: { min: number; max: number } | null;
+  /**
+   * Cells refinement may never move: the seed of each region under seeded growth, so a region always
+   * keeps the capital it grew from (plan Phase 4 prep). Filled by the initialiser.
+   */
+  frozen: Set<number>;
   /** pin groups in local indices (cells outside the scope dropped; groups under 2 cells dropped) */
   together: number[][];
   apart: number[][];
@@ -333,6 +340,8 @@ function buildContext(input: SolveInput): Context {
     edgeKm,
     snap: input.snapEdges ?? null,
     xy,
+    balanced: params.balance !== null,
+    frozen: new Set<number>(),
     population,
     limits,
     together,
@@ -476,8 +485,10 @@ function uniformSeeds(ctx: Context, k: number, rng: Prng): number[] {
   return seeds;
 }
 
-function initSeeded(ctx: Context, seeds: number[], balanced: boolean): Int32Array {
+/** `freeze`: the seeds are each region's fixed point and refinement may not move them. */
+function initSeeded(ctx: Context, seeds: number[], balanced: boolean, freeze = false): Int32Array {
   const assignment = new Int32Array(ctx.size).fill(-1);
+  if (freeze) for (const seed of seeds) ctx.frozen.add(seed);
   const ids = seeds.map((_, i) => i);
   grow(ctx, seeds, ids, assignment, null, 0, byDistance(ctx), balanced ? seeds.map(() => 1) : null);
   return assignment;
@@ -669,8 +680,9 @@ export function initialise(ctx: Context, input: SolveInput, rng: Prng): Int32Arr
       if (!capitals.length && params.capitalPoints?.length)
         capitals = nearestLocalCells(ctx, params.capitalPoints);
       const seeds = capitals.length ? capitals.slice(0, n) : weightedSeeds(ctx, n, rng);
-      // Without a balance column, growth is by distance alone: the land nearest each capital.
-      return initSeeded(ctx, seeds, params.balance !== null);
+      // Without a balance column, growth is by distance alone: the land nearest each capital. The
+      // seeds are pinned: a region that grew from a capital keeps it, whatever refinement prefers.
+      return initSeeded(ctx, seeds, params.balance !== null, true);
     }
     case 'random':
       return params.random === 'cuts'
@@ -828,7 +840,7 @@ class State {
   terms(): CostBreakdown {
     const { k, target } = this;
     let balance = 0;
-    if (target > 0) {
+    if (target > 0 && this.ctx.balanced) {
       for (let r = 0; r < k; r++) {
         const dev = (this.load[r] - target) / target;
         balance += dev * dev;
@@ -1001,7 +1013,7 @@ class State {
   delta(u: number, b: number): { delta: number; piecesA: number; piecesB: number } | null {
     const { ctx, weights, k, target } = this;
     const a = this.assignment[u];
-    if (a === b || this.count[a] <= 1) return null;
+    if (a === b || this.count[a] <= 1 || ctx.frozen.has(u)) return null;
 
     let piecesA = 0;
     let piecesB = 0;
@@ -1017,7 +1029,7 @@ class State {
     }
 
     let d = 0;
-    if (weights.balance && target > 0) {
+    if (weights.balance && target > 0 && ctx.balanced) {
       const w = ctx.load[u];
       const la = this.load[a];
       const lb = this.load[b];

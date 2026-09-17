@@ -11,7 +11,7 @@ import {
   PackLibrarySchema,
   specFromPack,
 } from './pack';
-import { PRESETS } from './presets';
+import { CAPITALS, PRESETS } from './presets';
 import { runSplit } from './split';
 import { realSplitterData } from './testing/realSplitterData';
 import { decodeHash, encodeHash } from './url';
@@ -80,6 +80,34 @@ describe('shipped presets', () => {
       meta: { ...older.meta, edited: true, edits: [{ cell: data.cellIds[0], from: 0, to: 1 }] },
     };
     expect(fitPack(edited, data.meshVersion).kind).toBe('unfittable');
+  }, 60_000);
+
+  it('canada-14 keeps every capital in its own region, with refinement on', () => {
+    const pack = decodePack(read('canada-14.json'));
+    const spec = specFromPack(pack);
+    expect(spec.iterations).toBeGreaterThan(0);
+    const cellAt = ([lng, lat]: [number, number]) => {
+      let best = -1;
+      let bestD = Infinity;
+      for (let i = 0; i < data.cellIds.length; i++) {
+        const dx = (data.arrays.centroids[2 * i] - lng) * Math.cos((lat * Math.PI) / 180);
+        const dy = data.arrays.centroids[2 * i + 1] - lat;
+        const d = dx * dx + dy * dy;
+        if (d < bestD) {
+          bestD = d;
+          best = i;
+        }
+      }
+      return best;
+    };
+    // Regions follow the order of the capitals, and each capital's own cell is in its region.
+    CAPITALS.forEach((capital, i) => {
+      expect({ capital: capital.name, region: pack.assignment[cellAt(capital.point)] }).toEqual({
+        capital: capital.name,
+        region: i,
+      });
+      expect(pack.regions[i].name).toBe(capital.name);
+    });
   }, 60_000);
 
   it('share links carry a spec or a pack id through the hash', () => {

@@ -184,7 +184,7 @@ export const LENS_PRESETS: Record<LensPresetId, LensPreset> = {
   internal_colony: {
     label: 'Internal-colony index',
     description:
-      'Distance from the provincial capital, primary-industry share and sparse population, ranked within each province',
+      'Mean of three ranks within the province: distance from the provincial capital, primary-industry share (NAICS 11 + 21), and sparseness (1 − population-density rank). 0 = closest, densest, least extractive; 1 = furthest, sparsest, most extractive.',
     weights: { internal_colony_index: 1 },
   },
 };
