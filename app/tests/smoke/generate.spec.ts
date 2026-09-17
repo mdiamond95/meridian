@@ -39,9 +39,15 @@ test('a pack link loads the preset, and painting a cell marks the split edited',
   await expect(legend).toContainText("St. John's");
   await legend.getByRole('button', { name: /St\. John's/ }).click();
   await page.getByRole('button', { name: 'Paint cells' }).click();
+  // Close the panel first: on iPad it is a bottom sheet over the map, and a click on Toronto would land
+  // on the legend. The paint tool stays on.
+  const handle = page.getByTestId('panel').locator('.panel-handle');
+  await handle.click();
+  await expect(page.getByTestId('split-result')).toBeHidden();
   // Paint at the Toronto region's label, which sits on its largest place: land, and not St. John's.
   const label = await page.locator('.region-label span', { hasText: /^Toronto$/ }).boundingBox();
   if (!label) throw new Error('no Toronto label');
   await page.mouse.click(label.x + label.width / 2, label.y + label.height / 2);
+  await handle.click();
   await expect(page.getByTestId('split-result')).toContainText('edited');
 });

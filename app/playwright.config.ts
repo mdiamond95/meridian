@@ -5,6 +5,10 @@ const PORT = 4173;
 export default defineConfig({
   testDir: 'tests/smoke',
   forbidOnly: !!process.env.CI,
+  // One browser at a time: the Codespace has 8 GB and terminates processes below about 1 GB free
+  // (docs/perf.md). Projects run one after another too.
+  workers: 1,
+  fullyParallel: false,
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? 'github' : 'list',
   use: { baseURL: `http://localhost:${PORT}` },

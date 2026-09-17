@@ -8,5 +8,7 @@ export default defineConfig({
   testDir: 'tests/determinism',
   reporter: process.env.CI ? 'github' : 'list',
   forbidOnly: !!process.env.CI,
+  // Serial by design: the test launches one engine, closes it, then launches the next, so only one
+  // browser is ever resident (docs/perf.md).
   workers: 1,
 });
