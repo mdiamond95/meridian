@@ -41,6 +41,8 @@ jobs:
         run: npm test
       - name: JSON Schemas up to date
         run: npm run schemas:check -w app
+      - name: Federalism rules up to date
+        run: npm run rules:check -w app
       - name: Build
         run: npm run build
       - name: Install Playwright Chromium

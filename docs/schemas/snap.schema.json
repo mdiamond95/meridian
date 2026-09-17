@@ -33,6 +33,18 @@
               "pairs": {
                 "description": "int32 [u0, v0, u1, v1, ...], mesh cell indices, u < v",
                 "$ref": "#/$defs/IdColumn"
+              },
+              "labels": {
+                "description": "Feature names, e.g. rivers, sorted",
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "labelOf": {
+                "description": "int32, one per pair: index into labels, -1 if unnamed",
+                "$ref": "#/$defs/IdColumn"
               }
             },
             "required": [

@@ -1,7 +1,11 @@
 // @vitest-environment node
 import { readFileSync } from 'node:fs';
+import { gunzipSync } from 'node:zlib';
 import { describe, expect, it } from 'vitest';
+import { buildPresetPack } from '../dossier/presetPack';
 import { decodeColumn } from '../schema/columns';
+import { TopologySchema } from '../schema/topojson';
+import { cellTopology } from './outline';
 import {
   buildPack,
   decodePack,
@@ -34,6 +38,15 @@ const fileFetch = (async (input: RequestInfo | URL) => {
 
 describe('shipped presets', () => {
   const data = realSplitterData();
+  const topo = cellTopology(
+    TopologySchema.parse(
+      JSON.parse(
+        gunzipSync(
+          readFileSync(new URL('../../../data/build/cells.v1.topojson.gz', import.meta.url)),
+        ).toString('utf8'),
+      ),
+    ),
+  );
 
   it('the library lists every preset and every listed pack loads and validates', async () => {
     const library = await loadLibrary('/meridian/', fileFetch);
@@ -55,11 +68,11 @@ describe('shipped presets', () => {
       const pack = decodePack(read(`${id}.json`));
       // The recipe in the pack is the preset's spec, and running it gives the committed assignment.
       expect(specFromPack(pack)).toEqual(JSON.parse(JSON.stringify(preset.spec)));
-      const { finished } = runSplit(specFromPack(pack), data);
-      expect(finished.assignment).toEqual(pack.assignment);
-      expect(buildPack(preset.spec, finished.assignment, finished.regions, data.meshVersion)).toEqual(
-        read(`${id}.json`),
-      );
+      // Regenerated exactly as `npm run presets` writes it: the split, its dossiers and its analysis.
+      const rebuilt = buildPresetPack(preset, data, topo);
+      expect(rebuilt.finished.assignment).toEqual(pack.assignment);
+      expect(rebuilt.pack).toEqual(read(`${id}.json`));
+      expect(rebuilt.dossiers.map((d) => d.name)).toEqual(pack.regions.map((r) => r.name));
     },
     60_000,
   );
@@ -132,9 +145,9 @@ describe('shipped presets', () => {
     const assignment = Int32Array.from(finished.assignment);
     const cell = assignment.findIndex((r) => r === 0);
     assignment[cell] = 1;
-    const edited = buildPack(spec, assignment, finished.regions, data.meshVersion, [
-      { cell: data.cellIds[cell], from: 0, to: 1 },
-    ]);
+    const edited = buildPack(spec, assignment, finished.regions, data.meshVersion, {
+      edits: [{ cell: data.cellIds[cell], from: 0, to: 1 }],
+    });
     expect(edited.meta.edited).toBe(true);
     expect(decodeColumn(edited.assignment)[cell]).toBe(1);
   }, 60_000);

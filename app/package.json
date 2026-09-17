@@ -16,12 +16,15 @@
     "schemas:check": "tsx scripts/export-schemas.ts --check",
     "frame-time": "playwright test --config playwright.perf.config.ts",
     "determinism": "playwright test --config playwright.determinism.config.ts",
-    "presets": "tsx scripts/make-presets.ts"
+    "presets": "tsx scripts/make-presets.ts",
+    "rules": "tsx scripts/build-rules.ts",
+    "rules:check": "tsx scripts/build-rules.ts --check"
   },
   "dependencies": {
     "leaflet": "^1.9.4",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "yaml": "2.8.1",
     "zod": "^4.6.5",
     "zustand": "^5.0.15"
   },

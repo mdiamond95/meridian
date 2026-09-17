@@ -32,8 +32,8 @@ export interface SplitterData {
   places: Place[];
   placeByCsd: Map<string, Place>;
   cmas: Cma[];
-  /** mesh edge key (u * cellCount + v, u < v) for each river crossing */
-  riverEdges: Set<number>;
+  /** mesh edge key (u * cellCount + v, u < v) → the river's name, '' when unnamed */
+  riverEdges: Map<number, string>;
 }
 
 export interface MeshWire {
@@ -62,9 +62,15 @@ export function splitterData(
   }
   const lookups = attrs.lookups ?? {};
   const n = mesh.cells.length;
-  const riverEdges = new Set<number>();
-  const pairs = snap.layers.rivers ? decodeColumn(snap.layers.rivers.pairs) : new Int32Array(0);
-  for (let i = 0; i + 1 < pairs.length; i += 2) riverEdges.add(pairs[i] * n + pairs[i + 1]);
+  const riverEdges = new Map<number, string>();
+  const rivers = snap.layers.rivers;
+  const pairs = rivers ? decodeColumn(rivers.pairs) : new Int32Array(0);
+  const labels = rivers?.labels ?? [];
+  const labelOf = rivers?.labelOf ? decodeColumn(rivers.labelOf) : null;
+  for (let i = 0; i + 1 < pairs.length; i += 2) {
+    const label = labelOf ? (labels[labelOf[i / 2]] ?? '') : '';
+    riverEdges.set(pairs[i] * n + pairs[i + 1], label);
+  }
   return {
     meshVersion: mesh.version,
     arrays,

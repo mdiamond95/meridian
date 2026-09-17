@@ -585,3 +585,72 @@ Mark's decisions on PR #5, and what they changed.
 - Each pack records its full spec; `src/splitter/presets.test.ts` regenerates all three and fails if a
   committed pack no longer matches. They are also the test cases for the loader, the library, share
   links, re-fit and edit recording.
+
+## 2026-09-17 — Phase 4: dossiers and set analysis
+
+### Borders in words
+- **Each boundary arc is one hexagon edge with a cell on each side,** so "what does this follow?" is a
+  question about two cells: a different province, a river crossing between them (named, from the snap
+  artefact), the Continental Divide, a drainage divide, the edge of a treaty area or an ecozone. Runs
+  that follow nothing get a second look as a run: a long flat stretch is a parallel or a meridian, and
+  what is left is open country, named by the nearest town.
+- **The pipeline's snap artefact now carries the river's name per edge** (549 named rivers over 11,373
+  crossings), because "the Athabasca River" is the useful sentence, not "a river".
+- **A surveyed line and a line this tool drew are not the same claim.** On the edge of the mesh a flat
+  run is "the 49°N parallel (the international boundary)". Inside the mesh it is "about 49°N": the
+  split drew it, and it must not borrow the authority of a line someone surveyed. The first draft said
+  "the 49°N parallel" for both, which was wrong in southern Alberta.
+- **Runs under 45 km fold into their neighbours,** and neighbours that say the same thing merge. At 60
+  km the rivers disappeared from the Alberta set, which the golden test exists to catch.
+- **Township lines are in the classifier's vocabulary but never emitted:** there is no DLS data
+  (docs/backlog.md).
+- **Golden (Mark, 2026-09-17):** alberta-15 must name a parallel or township line, a river and a
+  provincial border, correctly — Alberta's real neighbours, real river names, parallels between 49°N
+  and 60°N, and the 49th parallel marked as the international boundary.
+
+### Names
+- **A name comes from the ground:** the river running through the region, its drainage basin, its
+  ecozone, its Inuit region, or the province with a direction. Ties are broken by the pack's seed, and
+  names are unique within a set.
+- **Indigenous names are never applied to a region without an Indigenous-majority population.** It is a
+  hard gate in `candidates()`, not a weighting, and `namesRespectIndigenousRule` is asserted for all
+  three presets.
+- **Chosen names win:** a seeded region keeps its capital's name, a carved metro keeps the CMA's, and a
+  manual rename beats both and is kept in the pack.
+
+### Written fields
+- **The style rule:** one sentence, concrete, and no adjective that could apply to any region. Every
+  line is built from that region's own numbers and names; `VAGUE_WORDS` lists what a generated line
+  may not say, and the tests hold every line to it, to one sentence, and to containing a number or a
+  name.
+- **Every templated line carries `placeholder: true` and opens with ⟨draft⟩,** in the app and in the
+  Markdown export, so a draft is never mistaken for written prose.
+
+### Set analysis
+- **Power ranking** = 0.5 × GDP share + 0.3 × extractive-labour share + 0.2 × chokepoints, where
+  chokepoints are the boundary runs a major river or a provincial border crosses (rivers and borders
+  stand in for infrastructure until there is a highway and rail layer).
+- **Reconciliation compares the regions with the scope cell by cell,** and `ok` allows a rounding
+  difference of one person.
+- **Federalism rules live in `app/src/dossier/federalism.yaml`,** one entry per rule with the
+  instrument and section it comes from, and a named evaluator. `npm run rules` compiles it to
+  `federalism.rules.json`, which the app, Vitest and the presets script all import; `npm run
+  rules:check` keeps them in step in CI. Vite's `?raw` import would not have loaded under tsx or Node.
+  Six rules: Senate divisions, the 7/50 formula, equalization, Quebec's asymmetry, territorial status,
+  and the senatorial floor. A verdict is `holds`, `strained` or `breaks`, and says what the instrument
+  requires and what the set does — it is not legal advice. Provinces-as-regions holds the three
+  structural rules, which is the test that the panel is not just saying "breaks".
+- **GDP carries its allocation caveat everywhere it appears:** dossier, set panel, Generate panel, map
+  tooltip and Markdown.
+
+### Compare mode
+- **Regions are matched by overlap, greedily and largest first,** so "reassigned" means cells that
+  changed hands between matched regions, not cells whose region has a different number. Actual Canada
+  (the 13 provinces and territories) is always available as the other side.
+- **The swipe divider clips the two map panes** (`clip-path: inset(...)`), with a draggable handle and
+  arrow-key support; the panel has a slider for the same value.
+
+### Packs
+- A pack now carries every region's dossier and the set analysis, and the region's name comes from the
+  dossier. `buildPresetPack` is the one path that builds a preset, used by `npm run presets` and by the
+  test that regenerates them, so the script and the test cannot drift.

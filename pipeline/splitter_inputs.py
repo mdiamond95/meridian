@@ -8,8 +8,9 @@ Built by the `layers` step (polygons.py registers these builders after `rivers`,
                         its mesh cells (carve-CMA-first).
 - cells.v1.topojson.gz  the mesh's hexagons as one topology, one geometry per cell in mesh order,
                         so the app can dissolve regions by dropping shared arcs.
-- snap.v1.json.gz       mesh edges whose centre-to-centre segment crosses a river of the rivers layer
-                        (the one snap layer that is a line, not a partition the app can compare).
+- snap.v1.json.gz       mesh edges whose centre-to-centre segment crosses a river of the rivers layer,
+                        with the river's name (the one snap layer that is a line, not a partition the
+                        app can compare; the names let a dossier say which river a border follows).
 """
 
 from __future__ import annotations
@@ -209,12 +210,36 @@ def layer_snap(tmp: Path) -> list[Path]:
     mesh = mesh_doc()
     cells = mesh["cells"]
     rivers = load_gz(BUILD / "layers" / f"rivers.{MESH_VERSION}.topojson.gz")
-    tree = shapely.STRtree(topojson_lines(rivers))
+    arcs = topojson_lines(rivers)
+    # One geometry per river (a MultiLineString of arcs), so a crossing can name the river.
+    geometries = rivers["objects"]["rivers"]["geometries"]
+    shapes, names = [], []
+    for geometry in geometries:
+        # A river clipped away by the coastline is a null geometry with no arcs.
+        if not geometry.get("arcs"):
+            continue
+        refs = geometry["arcs"] if geometry["type"] == "MultiLineString" else [geometry["arcs"]]
+        parts = [arcs[ref if ref >= 0 else ~ref] for group in refs for ref in group]
+        shapes.append(shapely.union_all(parts))
+        names.append((geometry.get("properties") or {}).get("name") or "")
+    tree = shapely.STRtree(shapes)
+
     pairs = [(u, v) for u, c in enumerate(cells) for v in c["neighbours"] if u < v]
     segments = shapely.linestrings([[cells[u]["centroid"], cells[v]["centroid"]] for u, v in pairs])
-    hit, _ = tree.query(segments, predicate="intersects")
-    crossing = sorted({pairs[i] for i in np.unique(hit)})
+    hit, river = tree.query(segments, predicate="intersects")
+    # An edge can cross two rivers; it takes the first by name, then by river index, so reruns agree.
+    best: dict[tuple[int, int], tuple[str, int]] = {}
+    for i, r in zip(hit.tolist(), river.tolist(), strict=True):
+        key = pairs[i]
+        candidate = (names[r], r)
+        if key not in best or candidate < best[key]:
+            best[key] = candidate
+
+    labels = sorted({name for name, _ in best.values() if name})
+    label_id = {name: i for i, name in enumerate(labels)}
+    crossing = sorted(best)
     flat = np.array([x for pair in crossing for x in pair], dtype=np.int64)
+    label_of = np.array([label_id.get(best[pair][0], -1) for pair in crossing], dtype=np.int64)
     write_json_gz(
         SNAP,
         {
@@ -226,6 +251,8 @@ def layer_snap(tmp: Path) -> list[Path]:
                     "description": "Mesh edges whose centre-to-centre segment crosses a river of Strahler "
                     "order 7 or more (layers/rivers)",
                     "pairs": encode_column(flat, "id", method="centre_segment_intersects_rivers_layer_v1"),
+                    "labels": labels,
+                    "labelOf": encode_column(label_of, "id", method="first_river_by_name_v1"),
                 }
             },
         },

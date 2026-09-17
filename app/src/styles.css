@@ -689,3 +689,115 @@ button {
 .map[data-tool='apart'] {
   cursor: crosshair;
 }
+
+/* --- Dossiers, set analysis and compare mode (Phase 4) ----------------------------------------- */
+
+.draft {
+  margin: 6px 0;
+}
+
+.borders {
+  margin: 4px 0 10px;
+  padding-left: 18px;
+  font-size: 0.84rem;
+}
+
+.borders li {
+  margin: 2px 0;
+}
+
+.rank {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+}
+
+.rank th,
+.rank td {
+  text-align: left;
+  padding: 3px 4px;
+  border-bottom: 1px solid #e3e6ea;
+}
+
+.rank td:nth-child(n + 3),
+.rank th:nth-child(n + 3) {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.federalism {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.federalism li {
+  margin: 0 0 10px;
+}
+
+.federalism p {
+  margin: 2px 0;
+  font-size: 0.84rem;
+}
+
+.verdict {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 999px;
+}
+
+.verdict.breaks {
+  background: #fbe3df;
+  color: #a1260d;
+}
+
+.verdict.strained {
+  background: #fdf0d5;
+  color: #8a4b00;
+}
+
+.verdict.holds {
+  background: #e3f3e6;
+  color: #1d6a2b;
+}
+
+.compare-divider {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 14px;
+  margin-left: -7px;
+  z-index: 600;
+  cursor: ew-resize;
+  touch-action: none;
+}
+
+.compare-divider::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 6px;
+  width: 2px;
+  background: #1f2328;
+  opacity: 0.85;
+}
+
+.compare-grip {
+  position: absolute;
+  top: 50%;
+  left: -6px;
+  width: 26px;
+  height: 26px;
+  margin-top: -13px;
+  border-radius: 50%;
+  background: #fff;
+  border: 2px solid #1f2328;
+  box-shadow: 0 1px 4px rgb(0 0 0 / 25%);
+}
+
+.dossier h3,
+.set-analysis h3 {
+  margin: 12px 0 4px;
+}

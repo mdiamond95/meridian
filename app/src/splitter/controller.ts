@@ -1,10 +1,13 @@
 import { resolvedAt } from '../atlas/resolve';
+import { buildDossiers, buildSetAnalysis } from '../dossier/dossier';
+import { setMarkdown } from '../dossier/markdown';
 import { SolverClient } from '../engine/client';
 import type { Columns } from '../engine/solver';
 import { useAtlasStore } from '../state/atlasStore';
 import { useSplitStore, type CurrentSplit } from '../state/splitStore';
 import { CELLS_URL, SPLITTER_URLS } from './assets';
 import { loadCellTopology, loadSplitterData } from './data';
+import { actualCanada, compareSplits, type ComparableSplit } from './compare';
 import { buildPack, fitPack, loadLibrary, loadPack, specFromPack } from './pack';
 import { regionColours } from './palette';
 import { cellTopology } from './outline';
@@ -56,19 +59,63 @@ function neededColumns(spec: SplitSpec, columns: Columns): Columns {
 }
 
 function show(prepared: PreparedSplit, assignment: Int32Array, source: CurrentSplit['source']) {
-  const { data } = useSplitStore.getState();
+  const { data, topology } = useSplitStore.getState();
   if (!data) return;
-  const finished = { assignment, regions: nameRegions(prepared, assignment, countRegions(assignment), data) };
+  const regions = nameRegions(prepared, assignment, countRegions(assignment), data);
+  const split: CurrentSplit = {
+    prepared,
+    assignment,
+    regions,
+    colours: regionColours(prepared.scopeGraph, assignment, regions.length),
+    edits: [],
+    source,
+    dossiers: null,
+    setAnalysis: null,
+  };
+  useSplitStore.getState().set({ split, selectedRegion: null });
+  if (topology) describeSplit(topology);
+}
+
+/**
+ * Dossiers and set analysis for the split on screen (plan Phase 4). They are built after the split is
+ * drawn: walking every region's boundary takes a moment on a 26-region Canada, and the map should not
+ * wait for prose.
+ */
+export function describeSplit(topology = useSplitStore.getState().topology) {
+  const { split, data } = useSplitStore.getState();
+  if (!split || !data || !topology) return;
+  // Names that were chosen rather than generated: a seeded region's capital, and every carved metro.
+  const manualNames: Record<number, string> = {};
+  const solverRegions = split.regions.length - split.prepared.carved.length;
+  split.prepared.carved.forEach((cma, i) => (manualNames[solverRegions + i] = cma.name));
+  if (split.prepared.spec.method === 'seeded') {
+    split.prepared.spec.capitalNames?.forEach((name, i) => {
+      if (i < solverRegions) manualNames[i] = name;
+    });
+  }
+  const input = {
+    data,
+    topo: topology,
+    prepared: split.prepared,
+    assignment: split.assignment,
+    regionCount: split.regions.length,
+    manualNames,
+  };
+  const { dossiers, aggregates, names } = buildDossiers(input);
+  const setAnalysis = buildSetAnalysis({
+    ...input,
+    aggregates,
+    names,
+    pieces: split.regions.map((r) => r.pieces),
+  });
+  if (useSplitStore.getState().split !== split) return; // a newer split arrived while this one was described
   useSplitStore.getState().set({
     split: {
-      prepared,
-      assignment: finished.assignment,
-      regions: finished.regions,
-      colours: regionColours(prepared.scopeGraph, finished.assignment, finished.regions.length),
-      edits: [],
-      source,
+      ...split,
+      dossiers,
+      setAnalysis,
+      regions: split.regions.map((region, i) => ({ ...region, name: dossiers[i]?.name ?? region.name })),
     },
-    selectedRegion: null,
   });
 }
 
@@ -166,6 +213,9 @@ export function paintCell(cell: number) {
       assignment,
       regions,
       edits: [...split.edits, { cell: data.cellIds[cell], from, to: selectedRegion }],
+      // The dossiers describe the split as it was; the panel rebuilds them on demand.
+      dossiers: null,
+      setAnalysis: null,
     },
   });
 }
@@ -173,7 +223,11 @@ export function paintCell(cell: number) {
 export function currentPack() {
   const { split, data } = useSplitStore.getState();
   if (!split || !data) return null;
-  return buildPack(split.prepared.spec, split.assignment, split.regions, data.meshVersion, split.edits);
+  return buildPack(split.prepared.spec, split.assignment, split.regions, data.meshVersion, {
+    edits: split.edits,
+    dossiers: split.dossiers ?? undefined,
+    setAnalysis: split.setAnalysis ?? undefined,
+  });
 }
 
 export function downloadPack() {
@@ -214,4 +268,68 @@ export function nearestPlace(lng: number, lat: number) {
     }
   }
   return best;
+}
+
+/** The whole set as Markdown (vision §7), as a download. */
+export function downloadMarkdown() {
+  const { split } = useSplitStore.getState();
+  if (!split?.dossiers || !split.setAnalysis) return;
+  const title = split.source.kind === 'pack' ? split.source.id : `${split.regions.length} regions`;
+  const text = setMarkdown(split.setAnalysis, split.dossiers, title);
+  const url = URL.createObjectURL(new Blob([text], { type: 'text/markdown' }));
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `meridian-${title.replace(/\s+/g, '-')}.md`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+/** Compare the current split with a preset, or with actual Canada. */
+export async function loadComparison(id: string): Promise<void> {
+  await ensureSplitterData();
+  const { data, split, library } = useSplitStore.getState();
+  if (!data || !split) return;
+  try {
+    let other: ComparableSplit;
+    let name: string;
+    if (id === 'actual-canada') {
+      other = actualCanada(data);
+      name = 'Actual Canada';
+    } else {
+      const entry = library?.packs.find((p) => p.id === id);
+      if (!entry) throw new Error(`no pack ${id}`);
+      const pack = await loadPack(BASE, entry.file);
+      const fit = fitPack(pack, data.meshVersion);
+      if (fit.kind === 'unfittable') throw new Error(`${entry.name}: ${fit.reason}`);
+      other = { assignment: pack.assignment, names: pack.regions.map((r) => r.name) };
+      name = entry.name;
+    }
+    const mine: ComparableSplit = { assignment: split.assignment, names: split.regions.map((r) => r.name) };
+    const graph = split.prepared.scopeGraph;
+    useSplitStore.getState().set({
+      compare: {
+        id,
+        name,
+        assignment: other.assignment,
+        names: other.names,
+        colours: regionColours(graph, other.assignment, other.names.length),
+        difference: compareSplits(mine, other, data),
+        divider: useSplitStore.getState().compare?.divider ?? 0.5,
+      },
+    });
+  } catch (err) {
+    useSplitStore.getState().set({ error: message(err) });
+  }
+}
+
+export function setDivider(divider: number) {
+  const { compare } = useSplitStore.getState();
+  if (compare)
+    useSplitStore
+      .getState()
+      .set({ compare: { ...compare, divider: Math.min(0.95, Math.max(0.05, divider)) } });
+}
+
+export function stopComparing() {
+  if (useSplitStore.getState().compare) useSplitStore.getState().set({ compare: null });
 }

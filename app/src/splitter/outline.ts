@@ -13,6 +13,8 @@ import type { Topology } from '../schema/topojson';
 export type LatLngRing = [number, number][];
 
 export interface CellTopology {
+  /** arc → the cells that use it; filled lazily by arcOwners */
+  owners?: Map<number, number[]>;
   /** per arc: integer [x, y] points (delta-decoded, not transformed) */
   arcs: number[][][];
   /** per cell: signed arc refs of its ring */
@@ -34,6 +36,101 @@ export function cellTopology(topology: Topology): CellTopology {
     rings: object.geometries.map((g) => g.arcs[0]),
     transform: t ? { scale: [t.scale[0], t.scale[1]], translate: [t.translate[0], t.translate[1]] } : null,
   };
+}
+
+/** Which cells use each arc (one or two): built once per topology, for boundary walks. */
+export function arcOwners(topo: CellTopology): Map<number, number[]> {
+  if (topo.owners) return topo.owners;
+  const owners = new Map<number, number[]>();
+  topo.rings.forEach((ring, cell) => {
+    for (const ref of ring) {
+      const arc = ref < 0 ? ~ref : ref;
+      const list = owners.get(arc);
+      if (list) list.push(cell);
+      else owners.set(arc, [cell]);
+    }
+  });
+  topo.owners = owners;
+  return owners;
+}
+
+export interface BoundaryArc {
+  arc: number;
+  /** the region's cell on this arc */
+  inside: number;
+  /** the cell on the other side, or -1 outside the mesh */
+  outside: number;
+  /** [lat, lng] along the arc, in walking order */
+  points: LatLngRing;
+}
+
+/**
+ * A region's boundary as closed runs of arcs, each with the cells on either side, walked clockwise
+ * and starting at the north-west corner (plan Phase 4, borders in words).
+ */
+export function regionBoundary(topo: CellTopology, assignment: Int32Array, region: number): BoundaryArc[][] {
+  const owners = arcOwners(topo);
+  const refs = new Map<number, number>(); // arc → the ref as the region walks it
+  for (let cell = 0; cell < assignment.length; cell++) {
+    if (assignment[cell] !== region) continue;
+    for (const ref of topo.rings[cell]) {
+      const arc = ref < 0 ? ~ref : ref;
+      const both = owners.get(arc) ?? [];
+      const other = both.find((c) => c !== cell) ?? -1;
+      if (other >= 0 && assignment[other] === region) continue; // interior
+      refs.set(arc, ref);
+    }
+  }
+  const pieces: BoundaryArc[] = [];
+  const byStart = new Map<string, number[]>();
+  for (const [arc, ref] of refs) {
+    const raw = ref < 0 ? topo.arcs[arc].slice().reverse() : topo.arcs[arc];
+    const inside = (owners.get(arc) ?? []).find((c) => assignment[c] === region) ?? -1;
+    const outside = (owners.get(arc) ?? []).find((c) => c !== inside) ?? -1;
+    const key = `${raw[0][0]},${raw[0][1]}`;
+    const list = byStart.get(key);
+    if (list) list.push(pieces.length);
+    else byStart.set(key, [pieces.length]);
+    pieces.push({ arc, inside, outside, points: raw.map((p) => toLatLng(topo, p)) });
+  }
+
+  const used = new Uint8Array(pieces.length);
+  const rings: BoundaryArc[][] = [];
+  const raws = [...refs].map(([arc, ref]) => (ref < 0 ? topo.arcs[arc].slice().reverse() : topo.arcs[arc]));
+  for (let start = 0; start < pieces.length; start++) {
+    if (used[start]) continue;
+    const ring: BoundaryArc[] = [];
+    let current = start;
+    for (;;) {
+      used[current] = 1;
+      ring.push(pieces[current]);
+      const raw = raws[current];
+      const end = raw[raw.length - 1];
+      const next = (byStart.get(`${end[0]},${end[1]}`) ?? []).find((i) => !used[i]);
+      if (next === undefined) break;
+      current = next;
+    }
+    rings.push(orient(ring));
+  }
+  return rings;
+}
+
+/** Clockwise (negative shoelace in lng/lat), starting at the north-west arc. */
+function orient(ring: BoundaryArc[]): BoundaryArc[] {
+  const points = ring.flatMap((a) => a.points);
+  let area = 0;
+  for (let i = 0, j = points.length - 1; i < points.length; j = i++) {
+    area += (points[j][1] - points[i][1]) * (points[j][0] + points[i][0]);
+  }
+  const walked =
+    area > 0 ? ring : [...ring].reverse().map((a) => ({ ...a, points: [...a.points].reverse() }));
+  let best = 0;
+  walked.forEach((arc, i) => {
+    const [lat, lng] = arc.points[0];
+    const [bestLat, bestLng] = walked[best].points[0];
+    if (lat > bestLat + 0.05 || (Math.abs(lat - bestLat) <= 0.05 && lng < bestLng)) best = i;
+  });
+  return [...walked.slice(best), ...walked.slice(0, best)];
 }
 
 /** Rings per region id for a mesh-indexed assignment (cells with -1 are skipped). */

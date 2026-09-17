@@ -10,6 +10,7 @@ import {
   runCurrentSpec,
   shareLink,
 } from '../splitter/controller';
+import { GDP_CAVEAT } from '../schema/dossier';
 import { LENS_PRESETS, lensCandidates, type LensPresetId } from '../splitter/lenses';
 import { SNAP_LAYERS } from '../splitter/snap';
 import { withLensPreset } from '../splitter/split';
@@ -620,8 +621,10 @@ function Result() {
                 <dd>{fmt.format(Math.round(r.areaKm2))} km²</dd>
                 {r.gdp !== null && (
                   <>
-                    <dt>GDP (estimate)</dt>
-                    <dd>${fmt.format(Math.round(r.gdp))} M</dd>
+                    <dt title={GDP_CAVEAT}>GDP (estimate)</dt>
+                    <dd title={GDP_CAVEAT}>
+                      ${fmt.format(Math.round(r.gdp))} M <span className="hint">allocated, not measured</span>
+                    </dd>
                   </>
                 )}
                 <dt>Compactness</dt>
