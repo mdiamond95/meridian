@@ -506,3 +506,19 @@ Mark's decisions on PR #5, and what they changed.
 - **The worker advances in chunks,** each a separate task, so `cancel` lands between chunks. The host
   (`app/src/engine/protocol.ts`) is plain code with injected `post` and `schedule`, tested without a
   Worker.
+
+## 2026-09-17 — PRNG reference and the cross-engine determinism gate
+
+- **The standard mulberry32 and its pinned fixture are the reference from now on**
+  (`app/src/engine/prng.ts`, `app/src/engine/fixtures/mulberry32.json`). Anything that claims to
+  share Meridian's random sequence, the township generator included, conforms to that fixture; the
+  open question from Sitting A ("same sequence as the township generator") is closed that way.
+- **The determinism gate is a test, not a two-device check.** `npm run determinism -w app`
+  (`app/tests/determinism/engines.spec.ts`) bundles the engine with esbuild, launches Chromium,
+  WebKit and Firefox, runs two fixed cases on the committed mesh (Alberta, bisect, N=15; Canada,
+  equal population, N=10; seed 20260917; `src/engine/testing/determinismCases.ts`) and asserts
+  identical assignment hashes in all three, equal to `src/engine/golden/cross-engine.json`. Vitest
+  asserts the same hashes in Node. It runs in CI after the smoke tests. First run: all three
+  engines and Node agree, which confirms the `detmath` approach.
+- **esbuild is now a direct dev dependency** (pinned 0.28.2, the version already installed through
+  Vite and tsx), because the gate imports it.

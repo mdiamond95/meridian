@@ -22,7 +22,7 @@ export default tseslint.config(
     },
   },
   {
-    files: ['scripts/**', 'tests/smoke/**', '*.config.ts'],
+    files: ['scripts/**', 'tests/smoke/**', 'tests/determinism/**', '*.config.ts'],
     languageOptions: { globals: globals.node },
   },
   prettier,
