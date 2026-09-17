@@ -3,7 +3,10 @@ import { STATUS_LABELS, TRUTH_LABELS } from '../atlas/style';
 import { TRUTH_LAYERS } from '../schema/atlas';
 import { useAtlasStore } from '../state/atlasStore';
 import { useUiStore } from '../state/uiStore';
+import { ComparePanel } from './ComparePanel';
+import { DossierPanel } from './DossierPanel';
 import { GeneratePanel } from './GeneratePanel';
+import { SetPanel } from './SetPanel';
 
 /** Right-hand panel on wide screens; a bottom sheet on iPad and phones. */
 export function SidePanel() {
@@ -20,19 +23,31 @@ export function SidePanel() {
       </button>
       <div id="panel-body" className="panel-body" hidden={!open}>
         <div className="tabs" role="tablist">
-          <button role="tab" aria-selected={tab === 'details'} onClick={() => setTab('details')}>
-            Details
-          </button>
-          <button
-            role="tab"
-            aria-selected={tab === 'generate'}
-            data-testid="generate-tab"
-            onClick={() => setTab('generate')}
-          >
-            Generate
-          </button>
+          {(
+            [
+              ['details', 'Details'],
+              ['generate', 'Generate'],
+              ['dossier', 'Region'],
+              ['set', 'Set'],
+              ['compare', 'Compare'],
+            ] as const
+          ).map(([id, label]) => (
+            <button
+              key={id}
+              role="tab"
+              aria-selected={tab === id}
+              data-testid={`${id}-tab`}
+              onClick={() => setTab(id)}
+            >
+              {label}
+            </button>
+          ))}
         </div>
-        {tab === 'details' ? <PanelContent /> : <GeneratePanel />}
+        {tab === 'details' && <PanelContent />}
+        {tab === 'generate' && <GeneratePanel />}
+        {tab === 'dossier' && <DossierPanel />}
+        {tab === 'set' && <SetPanel />}
+        {tab === 'compare' && <ComparePanel />}
       </div>
     </aside>
   );

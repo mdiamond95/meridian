@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { BYTE_ORDER, IdColumnSchema, IsoDateSchema } from './columns';
+import { RegionDossierSchema, SetAnalysisSchema } from './dossier';
 import { H3CellIdSchema, PROVINCE_CODES } from './mesh';
 
 /**
@@ -69,7 +70,9 @@ export const RegionSchema = z
     name: z.string(),
     capital: z.string().nullable(),
     stats: z.record(z.string(), z.number()),
-    dossier: z.record(z.string(), z.unknown()).describe('Filled in Phase 4'),
+    dossier: z
+      .union([RegionDossierSchema, z.strictObject({})])
+      .describe("The region's dossier, or {} before Phase 4 filled it"),
   })
   .meta({ id: 'Region' });
 
@@ -82,7 +85,9 @@ export const RegionPackSchema = z
       'int32, length = mesh cell count; region id per cell, -1 = outside scope',
     ),
     regions: z.array(RegionSchema),
-    setAnalysis: z.record(z.string(), z.unknown()).describe('Filled in Phase 4'),
+    setAnalysis: z
+      .union([SetAnalysisSchema, z.strictObject({})])
+      .describe('The set analysis, or {} before Phase 4 filled it'),
   })
   .superRefine((pack, ctx) => {
     const seen = new Set<number>();

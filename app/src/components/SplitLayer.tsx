@@ -11,6 +11,7 @@ import { useSplitStore } from '../state/splitStore';
  */
 
 const PANE = 'split-regions';
+const COMPARE_PANE = 'split-compare';
 const fmt = new Intl.NumberFormat('en-CA');
 
 function escapeHtml(text: string) {
@@ -28,7 +29,12 @@ export function SplitLayer({ map }: { map: L.Map }) {
   const pinDraft = useSplitStore((s) => s.pinDraft);
   const renderer = useRef<L.Canvas | null>(null);
 
+  const compare = useSplitStore((s) => s.compare);
   const locate = useMemo(() => (data ? cellLocator(data.arrays) : null), [data]);
+  const compareRings = useMemo(
+    () => (compare && topology ? regionRings(topology, compare.assignment) : null),
+    [compare, topology],
+  );
   const rings = useMemo(
     () => (split && topology ? regionRings(topology, split.assignment) : null),
     [split, topology],
@@ -74,7 +80,9 @@ export function SplitLayer({ map }: { map: L.Map }) {
       polygon.bindTooltip(
         `<strong>${escapeHtml(region.name)}</strong><br>${fmt.format(region.population)} people · ` +
           `${fmt.format(Math.round(region.areaKm2))} km²` +
-          (region.gdp !== null ? `<br>GDP ≈ $${fmt.format(Math.round(region.gdp))} M` : '') +
+          (region.gdp !== null
+            ? `<br>GDP ≈ $${fmt.format(Math.round(region.gdp))} M (estimate, allocated)`
+            : '') +
           `<br>compactness ${region.compactness.toFixed(2)}${region.pieces > 1 ? ` · ${region.pieces} pieces` : ''}`,
         { sticky: true },
       );
@@ -142,6 +150,44 @@ export function SplitLayer({ map }: { map: L.Map }) {
       group.remove();
     };
   }, [map, data, spec.together, spec.apart, pinDraft, drawPoints]);
+
+  // The other split, right of the divider; this split is clipped to the left of it.
+  useEffect(() => {
+    const pane = map.getPane(PANE);
+    if (!compare || !compareRings) {
+      if (pane) pane.style.clipPath = '';
+      return;
+    }
+    if (!map.getPane(COMPARE_PANE)) map.createPane(COMPARE_PANE).style.zIndex = '451';
+    const other = map.getPane(COMPARE_PANE) as HTMLElement;
+    const percent = Math.round(compare.divider * 100);
+    if (pane) pane.style.clipPath = `inset(0 ${100 - percent}% 0 0)`;
+    other.style.clipPath = `inset(0 0 0 ${percent}%)`;
+    const group = L.featureGroup();
+    compare.names.forEach((name, id) => {
+      const shape = compareRings.get(id);
+      if (!shape) return;
+      const polygon = L.polygon(shape, {
+        pane: COMPARE_PANE,
+        renderer: L.canvas({ pane: COMPARE_PANE, padding: 0.5 }),
+        color: '#1f2328',
+        weight: 1.2,
+        opacity: 0.9,
+        fillColor: compare.colours[id],
+        fillOpacity: 0.42,
+        fillRule: 'evenodd',
+        interactive: false,
+      });
+      polygon.bindTooltip(`${escapeHtml(name)} — ${escapeHtml(compare.name)}`, { sticky: true });
+      group.addLayer(polygon);
+    });
+    group.addTo(map);
+    return () => {
+      group.remove();
+      other.style.clipPath = '';
+      if (pane) pane.style.clipPath = '';
+    };
+  }, [map, compare, compareRings]);
 
   // Map tools.
   useEffect(() => {

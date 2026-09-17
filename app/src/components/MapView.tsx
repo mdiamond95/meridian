@@ -3,6 +3,7 @@ import L from 'leaflet';
 import { CARTO_MISSING_WARNING, selectBasemap } from '../map/basemap';
 import { installPatterns } from '../map/patterns';
 import { AtlasLayer } from './AtlasLayer';
+import { CompareDivider } from './CompareDivider';
 import { ContactLayer } from './ContactLayer';
 import { IndigenousLayer } from './IndigenousLayer';
 import { ReferenceLayer } from './ReferenceLayer';
@@ -49,6 +50,7 @@ export function MapView() {
       {map && <AtlasLayer map={map} />}
       {map && <ReferenceLayer map={map} />}
       {map && <SplitLayer map={map} />}
+      <CompareDivider />
     </div>
   );
 }

@@ -27,12 +27,17 @@
           }
         },
         "setAnalysis": {
-          "type": "object",
-          "propertyNames": {
-            "type": "string"
-          },
-          "additionalProperties": {},
-          "description": "Filled in Phase 4"
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SetAnalysis"
+            },
+            {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": false
+            }
+          ],
+          "description": "The set analysis, or {} before Phase 4 filled it"
         }
       },
       "required": [
@@ -354,12 +359,17 @@
           }
         },
         "dossier": {
-          "type": "object",
-          "propertyNames": {
-            "type": "string"
-          },
-          "additionalProperties": {},
-          "description": "Filled in Phase 4"
+          "anyOf": [
+            {
+              "$ref": "#/$defs/RegionDossier"
+            },
+            {
+              "type": "object",
+              "properties": {},
+              "additionalProperties": false
+            }
+          ],
+          "description": "The region's dossier, or {} before Phase 4 filled it"
         }
       },
       "required": [
@@ -368,6 +378,671 @@
         "capital",
         "stats",
         "dossier"
+      ],
+      "additionalProperties": false
+    },
+    "RegionDossier": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "nameSource": {
+          "type": "string",
+          "enum": [
+            "generated",
+            "manual"
+          ]
+        },
+        "nameReason": {
+          "type": "string",
+          "minLength": 1
+        },
+        "capital": {
+          "anyOf": [
+            {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "population": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                }
+              },
+              "required": [
+                "name",
+                "population"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "mainCities": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "minLength": 1
+              },
+              "population": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              }
+            },
+            "required": [
+              "name",
+              "population"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "secondaryCities": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "minLength": 1
+              },
+              "population": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              }
+            },
+            "required": [
+              "name",
+              "population"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "population": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "areaKm2": {
+          "type": "number",
+          "minimum": 0
+        },
+        "densityPerKm2": {
+          "type": "number",
+          "minimum": 0
+        },
+        "gdpCadMillions": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "gdpCaveat": {
+          "type": "string",
+          "const": "GDP is an estimate: provincial GDP by industry shared over cells by census labour force (allocation_v1), not a measurement of what a region produces."
+        },
+        "gdpPerCapita": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "growth2016to2021": {
+          "type": "number",
+          "description": "Share, e.g. 0.052 for +5.2%"
+        },
+        "primaryIndustries": {
+          "maxItems": 3,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string",
+                "minLength": 1
+              },
+              "label": {
+                "type": "string",
+                "minLength": 1
+              },
+              "share": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              }
+            },
+            "required": [
+              "code",
+              "label",
+              "share"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "dependencyScore": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Share of the labour force in the top industry"
+        },
+        "urbanShare": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "People in a CMA or CA"
+        },
+        "internalColonyIndex": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "distanceToCapitalKmMean": {
+          "type": "number",
+          "minimum": 0
+        },
+        "languages": {
+          "type": "object",
+          "properties": {
+            "english": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "french": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "indigenous": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "other": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            }
+          },
+          "required": [
+            "english",
+            "french",
+            "indigenous",
+            "other"
+          ],
+          "additionalProperties": false
+        },
+        "indigenous": {
+          "type": "object",
+          "properties": {
+            "identityShare": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "languageFamilies": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "label": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "share": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                  }
+                },
+                "required": [
+                  "label",
+                  "share"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "majority": {
+              "type": "boolean",
+              "description": "Indigenous identity over half the population"
+            }
+          },
+          "required": [
+            "identityShare",
+            "languageFamilies",
+            "majority"
+          ],
+          "additionalProperties": false
+        },
+        "treatyComposition": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "label": {
+                "type": "string",
+                "minLength": 1
+              },
+              "share": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              }
+            },
+            "required": [
+              "label",
+              "share"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "governingParty": {
+          "type": "object",
+          "properties": {
+            "party": {
+              "type": "string",
+              "minLength": 1
+            },
+            "share": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "hypothetical": {
+              "type": "boolean",
+              "const": true
+            }
+          },
+          "required": [
+            "party",
+            "share",
+            "hypothetical"
+          ],
+          "additionalProperties": false
+        },
+        "bordersInWords": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": "Clockwise from the north-west"
+        },
+        "characterLine": {
+          "$ref": "#/$defs/DossierText"
+        },
+        "rivalRegion": {
+          "anyOf": [
+            {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "name": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "similarity": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "id",
+                "name",
+                "similarity"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "oneSentence": {
+          "$ref": "#/$defs/DossierText"
+        },
+        "whatWouldKillIt": {
+          "$ref": "#/$defs/DossierText"
+        },
+        "whatWouldSaveIt": {
+          "$ref": "#/$defs/DossierText"
+        }
+      },
+      "required": [
+        "name",
+        "nameSource",
+        "nameReason",
+        "capital",
+        "mainCities",
+        "secondaryCities",
+        "population",
+        "areaKm2",
+        "densityPerKm2",
+        "gdpCadMillions",
+        "gdpCaveat",
+        "gdpPerCapita",
+        "growth2016to2021",
+        "primaryIndustries",
+        "dependencyScore",
+        "urbanShare",
+        "internalColonyIndex",
+        "distanceToCapitalKmMean",
+        "languages",
+        "indigenous",
+        "treatyComposition",
+        "governingParty",
+        "bordersInWords",
+        "characterLine",
+        "rivalRegion",
+        "oneSentence",
+        "whatWouldKillIt",
+        "whatWouldSaveIt"
+      ],
+      "additionalProperties": false
+    },
+    "DossierText": {
+      "type": "object",
+      "properties": {
+        "text": {
+          "type": "string",
+          "minLength": 1
+        },
+        "placeholder": {
+          "type": "boolean",
+          "description": "True while the text is templated and waiting to be rewritten"
+        }
+      },
+      "required": [
+        "text",
+        "placeholder"
+      ],
+      "additionalProperties": false
+    },
+    "SetAnalysis": {
+      "type": "object",
+      "properties": {
+        "scope": {
+          "type": "string",
+          "minLength": 1
+        },
+        "regions": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "powerRanking": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1
+              },
+              "economicLeverage": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1,
+                "description": "Share of the set GDP estimate"
+              },
+              "chokepoints": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991,
+                "description": "Boundary crossings of major rivers and ridings"
+              },
+              "resourceOwnership": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1,
+                "description": "Share of the set extractive labour force"
+              },
+              "score": {
+                "type": "number"
+              },
+              "rank": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "economicLeverage",
+              "chokepoints",
+              "resourceOwnership",
+              "score",
+              "rank"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "ratios": {
+          "type": "object",
+          "properties": {
+            "population": {
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "area": {
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "gdp": {
+              "type": [
+                "number",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "population",
+            "area",
+            "gdp"
+          ],
+          "additionalProperties": false
+        },
+        "metrosSplit": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "cma": {
+                "type": "string",
+                "minLength": 1
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1
+              },
+              "regions": {
+                "type": "array",
+                "items": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                }
+              }
+            },
+            "required": [
+              "cma",
+              "name",
+              "regions"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "reconciliation": {
+          "type": "object",
+          "properties": {
+            "population": {
+              "type": "object",
+              "properties": {
+                "regions": {
+                  "type": "number"
+                },
+                "scope": {
+                  "type": "number"
+                },
+                "difference": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "regions",
+                "scope",
+                "difference"
+              ],
+              "additionalProperties": false
+            },
+            "gdp": {
+              "type": "object",
+              "properties": {
+                "regions": {
+                  "type": "number"
+                },
+                "scope": {
+                  "type": "number"
+                },
+                "difference": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "regions",
+                "scope",
+                "difference"
+              ],
+              "additionalProperties": false
+            },
+            "ok": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "population",
+            "gdp",
+            "ok"
+          ],
+          "additionalProperties": false
+        },
+        "contiguityLog": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1
+              },
+              "pieces": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991
+              },
+              "note": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "pieces",
+              "note"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "federalism": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9_]*$"
+              },
+              "title": {
+                "type": "string",
+                "minLength": 1
+              },
+              "citation": {
+                "type": "string",
+                "minLength": 1
+              },
+              "url": {
+                "type": "string",
+                "format": "uri"
+              },
+              "verdict": {
+                "type": "string",
+                "enum": [
+                  "breaks",
+                  "strained",
+                  "holds"
+                ]
+              },
+              "detail": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "id",
+              "title",
+              "citation",
+              "url",
+              "verdict",
+              "detail"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "gdpCaveat": {
+          "type": "string",
+          "const": "GDP is an estimate: provincial GDP by industry shared over cells by census labour force (allocation_v1), not a measurement of what a region produces."
+        }
+      },
+      "required": [
+        "scope",
+        "regions",
+        "powerRanking",
+        "ratios",
+        "metrosSplit",
+        "reconciliation",
+        "contiguityLog",
+        "federalism",
+        "gdpCaveat"
       ],
       "additionalProperties": false
     }

@@ -2,6 +2,8 @@ import { create } from 'zustand';
 import type { Progress } from '../engine/solver';
 import type { SplitterData } from '../splitter/data';
 import type { CellTopology } from '../splitter/outline';
+import type { RegionDossier, SetAnalysis } from '../schema/dossier';
+import type { Difference } from '../splitter/compare';
 import type { Edit, Fit, PackLibrary } from '../splitter/pack';
 import { defaultSpec, type NamedRegion, type PreparedSplit, type SplitSpec } from '../splitter/split';
 
@@ -18,6 +20,21 @@ export interface CurrentSplit {
   edits: Edit[];
   /** where it came from: a run, or a pack from the library */
   source: { kind: 'run' } | { kind: 'pack'; id: string; fit: Fit };
+  /** filled once the split is described (Phase 4); null while it is being rebuilt */
+  dossiers: RegionDossier[] | null;
+  setAnalysis: SetAnalysis | null;
+}
+
+export interface Comparison {
+  /** what the current split is being compared with */
+  id: string;
+  name: string;
+  assignment: Int32Array;
+  names: string[];
+  colours: string[];
+  difference: Difference;
+  /** 0-1 across the map: left of it the current split, right of it the other */
+  divider: number;
 }
 
 interface SplitState {
@@ -37,6 +54,7 @@ interface SplitState {
   drawPoints: [number, number][];
   /** CSDs picked for the pin group being built */
   pinDraft: string[];
+  compare: Comparison | null;
   setSpec: (patch: Partial<SplitSpec>) => void;
   replaceSpec: (spec: SplitSpec) => void;
   setTool: (tool: MapTool) => void;
@@ -59,6 +77,7 @@ export const useSplitStore = create<SplitState>()((set) => ({
   selectedRegion: null,
   drawPoints: [],
   pinDraft: [],
+  compare: null,
   setSpec: (patch) => set((s) => ({ spec: { ...s.spec, ...patch } })),
   replaceSpec: (spec) => set({ spec }),
   setTool: (tool) =>

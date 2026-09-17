@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { encodeColumn, decodeColumn } from '../schema/columns';
+import type { RegionDossier, SetAnalysis } from '../schema/dossier';
 import { RegionPackSchema, type RegionPack, type RegionPackWire } from '../schema/regionPack';
 import type { NamedRegion, SplitSpec } from './split';
 
@@ -24,13 +25,21 @@ export function specFromPack(pack: Pick<RegionPackWire, 'meta'>): SplitSpec {
   return { ...(params as unknown as SpecParams), scope, seed, method, date };
 }
 
+export interface PackExtras {
+  edits?: Edit[];
+  /** one per region, in id order (Phase 4) */
+  dossiers?: RegionDossier[];
+  setAnalysis?: SetAnalysis;
+}
+
 export function buildPack(
   spec: SplitSpec,
   assignment: Int32Array,
   regions: NamedRegion[],
   meshVersion: string,
-  edits: Edit[] = [],
+  extras: PackExtras = {},
 ): RegionPackWire {
+  const { edits = [], dossiers, setAnalysis } = extras;
   const { scope, seed, method, date, ...params } = spec;
   return RegionPackSchema.parse({
     format: 'meridian.regionPack',
@@ -48,7 +57,7 @@ export function buildPack(
     assignment: encodeColumn(assignment, { kind: 'id' }),
     regions: regions.map((r) => ({
       id: r.id,
-      name: r.name,
+      name: dossiers?.[r.id]?.name ?? r.name,
       capital: r.capital,
       stats: {
         population: r.population,
@@ -59,9 +68,9 @@ export function buildPack(
         compactness: Math.round(r.compactness * 1000) / 1000,
         carved: r.carved ? 1 : 0,
       },
-      dossier: {},
+      dossier: dossiers?.[r.id] ?? {},
     })),
-    setAnalysis: {},
+    setAnalysis: setAnalysis ?? {},
   });
 }
 

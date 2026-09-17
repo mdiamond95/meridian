@@ -65,6 +65,8 @@ export const SnapFileSchema = z
       z.strictObject({
         description: z.string().min(1),
         pairs: IdColumnSchema.describe('int32 [u0, v0, u1, v1, ...], mesh cell indices, u < v'),
+        labels: z.array(z.string().min(1)).optional().describe('Feature names, e.g. rivers, sorted'),
+        labelOf: IdColumnSchema.optional().describe('int32, one per pair: index into labels, -1 if unnamed'),
       }),
     ),
   })

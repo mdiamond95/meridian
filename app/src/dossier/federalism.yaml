@@ -1,0 +1,72 @@
+# What a redrawn map would break in the federation: one rule per entry, each with the instrument it
+# comes from. The rules are evaluated against a set of regions by src/dossier/federalism.ts, which
+# matches `evaluator` to a function; nothing here decides anything on its own.
+#
+# Every citation is to the text of the instrument. The verdicts are mechanical readings of the
+# numbers, not legal advice: they say what the instrument requires and what the set does.
+
+version: 1
+
+senate_divisions:
+  # Constitution Act, 1867, s. 22: the Senate's four divisions, plus Newfoundland and the territories.
+  maritime: [NS, NB, PE]
+  quebec: [QC]
+  ontario: [ON]
+  western: [MB, BC, SK, AB]
+  newfoundland: [NL]
+  territories: [YT, NT, NU]
+
+rules:
+  - id: senate_regions
+    title: Senate divisions
+    citation: Constitution Act, 1867, s. 22 (four divisions of 24 senators, with Newfoundland and the territories added)
+    url: https://laws-lois.justice.gc.ca/eng/const/page-1.html
+    evaluator: senate_divisions
+    detail: >-
+      The Senate is built from four equal divisions of provinces. A region that spans two divisions
+      has no seat count that follows from the text.
+
+  - id: amending_formula_7_50
+    title: The 7/50 amending formula
+    citation: Constitution Act, 1982, s. 38(1) (resolutions of two-thirds of the provinces with at least half the population)
+    url: https://laws-lois.justice.gc.ca/eng/const/page-13.html
+    evaluator: seven_fifty
+    detail: >-
+      Two-thirds of the units, holding at least half the population, can amend the constitution. With
+      a different number of units, the threshold is a different set of people.
+
+  - id: equalization
+    title: Equalization
+    citation: Constitution Act, 1982, s. 36(2) (equalization payments so provinces can provide reasonably comparable services at reasonably comparable levels of taxation)
+    url: https://laws-lois.justice.gc.ca/eng/const/page-13.html
+    evaluator: fiscal_capacity
+    detail: >-
+      Equalization measures fiscal capacity per person against the national average. Redrawing the
+      units moves the average and changes who is below it.
+
+  - id: quebec_asymmetry
+    title: Quebec's asymmetry
+    citation: Constitution Act, 1867, ss. 94, 133 and Constitution Act, 1982, s. 59 (Quebec's civil law, its legislature and its language guarantees)
+    url: https://laws-lois.justice.gc.ca/eng/const/page-1.html
+    evaluator: quebec_intact
+    detail: >-
+      Quebec's civil law, language guarantees and opt-outs attach to Quebec as a unit. A set that
+      cuts Quebec into pieces has to say which piece they attach to.
+
+  - id: territorial_status
+    title: Territorial status
+    citation: Northwest Territories Act, S.C. 2014, c. 2, s. 2; Yukon Act, S.C. 2002, c. 7; Nunavut Act, S.C. 1993, c. 28 (territories are created by Parliament, not by the constitutional amending formula)
+    url: https://laws-lois.justice.gc.ca/eng/acts/N-27.4/
+    evaluator: territories_intact
+    detail: >-
+      The territories exist by federal statute and can be changed by Parliament alone; provinces
+      cannot. A region joining territory to province mixes the two.
+
+  - id: senate_floor
+    title: The senatorial floor on Commons seats
+    citation: Constitution Act, 1867, s. 51A (no province has fewer Commons seats than senators)
+    url: https://laws-lois.justice.gc.ca/eng/const/page-1.html
+    evaluator: senate_floor
+    detail: >-
+      The floor keeps small provinces over-represented in the Commons. It is written for provinces
+      as they are; new units of very different size change who it protects.
