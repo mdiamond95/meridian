@@ -16,7 +16,7 @@
     {
       "id": "canada-14",
       "name": "Canada in 14 (capitals)",
-      "description": "Seeded growth from today's 13 provincial and territorial capitals and Ottawa: each region is the land nearest its capital over the mesh.",
+      "description": "Seeded growth from today's 13 provincial and territorial capitals and Ottawa: each region grows from its capital over the mesh, then refinement smooths the boundaries. The seed cells are pinned, so a region always keeps its own capital.",
       "file": "canada-14.json"
     }
   ]

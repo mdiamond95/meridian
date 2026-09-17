@@ -202,6 +202,7 @@ function SpecForm() {
           ))}
         </select>
       </label>
+      {spec.lensPreset && <p className="hint">{LENS_PRESETS[spec.lensPreset].description}</p>}
       {Object.keys(spec.lens).length > 0 && (
         <div className="lens-weights">
           <label className="slider">
