@@ -15,7 +15,8 @@
     "schemas": "tsx scripts/export-schemas.ts",
     "schemas:check": "tsx scripts/export-schemas.ts --check",
     "frame-time": "playwright test --config playwright.perf.config.ts",
-    "determinism": "playwright test --config playwright.determinism.config.ts"
+    "determinism": "playwright test --config playwright.determinism.config.ts",
+    "presets": "tsx scripts/make-presets.ts"
   },
   "dependencies": {
     "leaflet": "^1.9.4",

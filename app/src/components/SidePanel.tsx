@@ -3,11 +3,14 @@ import { STATUS_LABELS, TRUTH_LABELS } from '../atlas/style';
 import { TRUTH_LAYERS } from '../schema/atlas';
 import { useAtlasStore } from '../state/atlasStore';
 import { useUiStore } from '../state/uiStore';
+import { GeneratePanel } from './GeneratePanel';
 
 /** Right-hand panel on wide screens; a bottom sheet on iPad and phones. */
 export function SidePanel() {
   const open = useUiStore((s) => s.panelOpen);
   const toggle = useUiStore((s) => s.togglePanel);
+  const tab = useUiStore((s) => s.panelTab);
+  const setTab = useUiStore((s) => s.setPanelTab);
 
   return (
     <aside className="panel" data-open={open} data-testid="panel" aria-label="Details">
@@ -16,7 +19,20 @@ export function SidePanel() {
         <span>Details</span>
       </button>
       <div id="panel-body" className="panel-body" hidden={!open}>
-        <PanelContent />
+        <div className="tabs" role="tablist">
+          <button role="tab" aria-selected={tab === 'details'} onClick={() => setTab('details')}>
+            Details
+          </button>
+          <button
+            role="tab"
+            aria-selected={tab === 'generate'}
+            data-testid="generate-tab"
+            onClick={() => setTab('generate')}
+          >
+            Generate
+          </button>
+        </div>
+        {tab === 'details' ? <PanelContent /> : <GeneratePanel />}
       </div>
     </aside>
   );

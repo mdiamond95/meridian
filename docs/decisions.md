@@ -522,3 +522,66 @@ Mark's decisions on PR #5, and what they changed.
   engines and Node agree, which confirms the `detmath` approach.
 - **esbuild is now a direct dev dependency** (pinned 0.28.2, the version already installed through
   Vite and tsx), because the gate imports it.
+
+## 2026-09-17 — Phase 3 Sitting B: the Generate panel, constraints and presets
+
+### Pipeline inputs for the splitter (`pipeline/splitter_inputs.py`, built by the layers step)
+- **`places.v1.json.gz`:** the gazetteer (4,830 populated CSDs, each with a representative point and
+  mesh cell) and 40 CMAs with their cells. **A cell belongs to a CMA through its mesh CSD**, and a CSD
+  to the CMA holding its point. Testing cell centres instead cost Toronto 1.2 million people, because
+  its waterfront hexagons have their centres in Lake Ontario. Ottawa–Gatineau's two provincial parts
+  are one CMA.
+- **`cells.v1.topojson.gz`:** every mesh hexagon as one topology (1.44 MB gzipped, quantised to
+  about 70 m), so the app dissolves regions by dropping shared arcs. Every hex edge is its own arc
+  (each vertex is where three cells meet).
+- **`snap.v1.json.gz`:** 11,373 mesh edges whose centre-to-centre segment crosses a Strahler 7+
+  river. The other snap layers are partitions the app compares directly (basins, ocean drainage for
+  the Continental Divide, treaties, CD, CSD, 0.5° graticule, ridings, ecozones). **Township lines are
+  listed but unavailable:** there is no Dominion Land Survey data in the pipeline.
+- `places` and `snap` are gzipped like the mesh; `data/build` is 7.6 MB, under the Phase 1 budget.
+
+### Engine additions
+- **Population limits and pins are penalty terms,** weight 10 when set: people outside [min, max]
+  ÷ total population; keep-together cells not with their group's first cell ÷ pinned cells, plus
+  keep-apart pairs sharing a region ÷ pairs. Unused, they are exactly zero and leave every golden hash
+  unchanged. The result reports remaining violations.
+- **Capitals can be points** (`capitalPoints`), each resolved to the nearest scope cell, so a pack's
+  recipe survives a mesh change.
+- **Seeded growth without a balance target grows by distance alone.** It previously balanced by load
+  whatever the setting.
+- **Region stats are a standalone function,** so painting recomputes them.
+
+### App
+- **A split is a `SplitSpec`** (`app/src/splitter/split.ts`): scope, date, method, N, seed, lens,
+  balance, contiguity, capitals, limits, pins (as CSD uids), carve-CMA-first, snap layers, weights and
+  iterations. The panel edits it, the share link carries it, and a pack's `meta.params` holds it.
+- **Lenses** (`lenses.ts`): shares, measures and money are used as they are; categorical ids become
+  0/1 indicators; GDP per capita, growth since 2016, primary-industry share and a density rank are
+  derived. **Internal-colony index** = the mean of three ranks within the province: distance from
+  the capital, primary-industry share, and sparseness (1 − density rank). Ranks use sorting only, so
+  lens columns are identical on every engine.
+- **Carving CMAs** takes every CMA above a population threshold (default 1,000,000) wholly inside the
+  scope, removes its cells from the solve, and adds it as its own named region.
+- **Region names** come from the CSD with the most people inside the region; names are unique (a city
+  split three ways names one region, and the next becomes, say, "Calgary (2)"). Seeded regions with
+  named capitals take the capital's name.
+- **Colours:** the eight categorical hues, assigned greedily so neighbours differ. Colour does not
+  identify a region on its own: every region is named on the map and in the legend.
+- **Manual painting** writes `meta.edited` and `meta.edits` (H3 id, from, to) into the pack; the
+  RegionPack schema gained both as optional fields. A share link reproduces the split without edits.
+- **Re-fit across mesh versions** (`fitPack`): same mesh → the assignment as it is; another mesh →
+  regenerated from the pack's seed and params; edited on another mesh → refused with the reason.
+- **Share links** are `#split=<base64url spec>` or `#pack=<id>`, followed on load and on hashchange.
+
+### The three presets (`app/src/splitter/presets.ts`, `npm run presets -w app`)
+- **alberta-15:** Alberta, lens bisection on the Economic preset, N=15, seed 15, balanced by
+  population.
+- **canada-26:** Canada, lens bisection on the internal-colony index, N=26, seed 26. Population is
+  deliberately unbalanced (largest/smallest 174): the lens, not the head count, drives the cuts.
+- **canada-14:** growth from the 13 provincial and territorial legislatures **and Ottawa**, which
+  makes 14. No balance target and **no refinement:** with nothing to balance, annealing optimised
+  compactness alone and traded whole cities for shorter boundaries (Edmonton's region lost Edmonton).
+  Each region is the land nearest its capital over the mesh.
+- Each pack records its full spec; `src/splitter/presets.test.ts` regenerates all three and fails if a
+  committed pack no longer matches. They are also the test cases for the loader, the library, share
+  links, re-fit and edit recording.

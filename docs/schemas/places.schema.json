@@ -1,0 +1,134 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "#/$defs/PlacesFile",
+  "$defs": {
+    "PlacesFile": {
+      "type": "object",
+      "properties": {
+        "format": {
+          "type": "string",
+          "const": "meridian.places"
+        },
+        "version": {
+          "type": "string",
+          "pattern": "^v\\d+$"
+        },
+        "meshVersion": {
+          "type": "string",
+          "pattern": "^v\\d+$"
+        },
+        "places": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Place"
+          },
+          "description": "Sorted by csd"
+        },
+        "cmas": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Cma"
+          },
+          "description": "Sorted by cma"
+        }
+      },
+      "required": [
+        "format",
+        "version",
+        "meshVersion",
+        "places",
+        "cmas"
+      ],
+      "additionalProperties": false,
+      "title": "Meridian PlacesFile"
+    },
+    "Place": {
+      "type": "object",
+      "properties": {
+        "csd": {
+          "type": "string",
+          "pattern": "^\\d{7}$",
+          "description": "StatCan CSDUID"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "province": {
+          "type": "string",
+          "pattern": "^\\d{2}$",
+          "description": "StatCan PRUID"
+        },
+        "population": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "maximum": 9007199254740991,
+          "description": "2021 Census"
+        },
+        "lng": {
+          "type": "number",
+          "minimum": -180,
+          "maximum": 180
+        },
+        "lat": {
+          "type": "number",
+          "minimum": -90,
+          "maximum": 90
+        },
+        "cell": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991,
+          "description": "Mesh cell index holding the representative point (or nearest)"
+        }
+      },
+      "required": [
+        "csd",
+        "name",
+        "province",
+        "population",
+        "lng",
+        "lat",
+        "cell"
+      ],
+      "additionalProperties": false
+    },
+    "Cma": {
+      "type": "object",
+      "properties": {
+        "cma": {
+          "type": "string",
+          "pattern": "^\\d{3}$",
+          "description": "StatCan CMAUID"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "population": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991,
+          "description": "Sum of the attrs population of its cells"
+        },
+        "cells": {
+          "minItems": 1,
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "description": "Mesh cells whose centre lies in the CMA, ascending"
+        }
+      },
+      "required": [
+        "cma",
+        "name",
+        "population",
+        "cells"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

@@ -95,6 +95,38 @@
           "type": "string",
           "const": "le",
           "description": "Byte order of every encoded column in the pack"
+        },
+        "edited": {
+          "description": "True once cells were painted by hand; the pack can no longer be regenerated from seed + params",
+          "type": "boolean"
+        },
+        "edits": {
+          "description": "Manual edits in the order they were made",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "cell": {
+                "$ref": "#/$defs/H3CellId"
+              },
+              "from": {
+                "type": "integer",
+                "minimum": -1,
+                "maximum": 9007199254740991
+              },
+              "to": {
+                "type": "integer",
+                "minimum": -1,
+                "maximum": 9007199254740991
+              }
+            },
+            "required": [
+              "cell",
+              "from",
+              "to"
+            ],
+            "additionalProperties": false
+          }
         }
       },
       "required": [
@@ -239,6 +271,11 @@
       "type": "string",
       "format": "date",
       "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+    },
+    "H3CellId": {
+      "type": "string",
+      "pattern": "^8[0-9a-f]{14}$",
+      "description": "H3 cell index as lowercase hex (mode 1, so it starts with 8); never a number"
     },
     "IdColumn": {
       "type": "object",

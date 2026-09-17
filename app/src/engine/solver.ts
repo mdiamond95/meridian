@@ -12,6 +12,9 @@ import { mulberry32, type Prng } from './prng';
  *   lens         within-region sum of squares of the standardised lens columns / total sum of squares
  *   snap         − cut edges lying on a snap layer / all snap edges (a bonus)
  *   contiguity   (soft only) extra pieces Σ_k (pieces_k − 1) / N
+ *   limits       people outside [min, max] population per region / total population
+ *   pins         keep-together cells not with their group's first cell / pinned cells, plus
+ *                keep-apart pairs sharing a region / pairs
  *
  * Initialisers give a first split; refine() anneals over boundary cells. Contiguity is `hard`
  * (a move that would split a region is refused), `soft` (allowed, at a cost) or `off`.
@@ -31,6 +34,17 @@ export interface Weights {
   lens: number;
   snap: number;
   contiguity: number;
+  /** population limits penalty; 10 when limits are set and no weight is given */
+  limits?: number;
+  /** keep-together / keep-apart penalty; 10 when pins are set and no weight is given */
+  pins?: number;
+}
+
+export interface Pins {
+  /** each group's cells (mesh indices) should share one region */
+  together: number[][];
+  /** each group's cells (mesh indices) should all be in different regions */
+  apart: number[][];
 }
 
 export interface Params {
@@ -40,6 +54,11 @@ export interface Params {
   random?: 'voronoi' | 'cuts';
   /** seeded: capital cells (mesh indices); without them, n seeds are drawn weighted by balance load */
   capitals?: number[];
+  /** seeded: capitals as [lng, lat], each resolved to the nearest scope cell (used when `capitals` is empty) */
+  capitalPoints?: [number, number][];
+  /** population per region, as a penalty (the balance column is separate) */
+  populationLimits?: { min?: number; max?: number };
+  pins?: Pins;
   /** attrs column, or 'cells' / 'area'; null = no balance term */
   balance: BalanceColumn | null;
   /** attrs column → weight */
@@ -92,6 +111,17 @@ export interface CostBreakdown {
   lens: number;
   snap: number;
   contiguity: number;
+  limits: number;
+  pins: number;
+}
+
+export interface ConstraintReport {
+  /** people above max plus people below min, summed over regions */
+  populationOutsideLimits: number;
+  /** keep-together cells not in their group's region */
+  togetherViolations: number;
+  /** keep-apart pairs sharing a region */
+  apartViolations: number;
 }
 
 export interface RegionStats {
@@ -117,6 +147,7 @@ export interface SolveResult {
   assignment: Int32Array;
   regions: RegionStats[];
   cost: CostBreakdown;
+  constraints: ConstraintReport;
   iterations: number;
   stoppedBy: StopReason;
 }
@@ -209,6 +240,14 @@ interface Context {
   snap: Uint8Array | null;
   /** planar coordinates (km) per local cell, for geometric axes */
   xy: Float64Array;
+  /** population per local cell (0 without a population column) */
+  population: Float64Array;
+  limits: { min: number; max: number } | null;
+  /** pin groups in local indices (cells outside the scope dropped; groups under 2 cells dropped) */
+  together: number[][];
+  apart: number[][];
+  /** local cell → indices into together / apart */
+  pinned: Map<number, { together: number[]; apart: number[] }>;
 }
 
 function buildContext(input: SolveInput): Context {
@@ -263,7 +302,43 @@ function buildContext(input: SolveInput): Context {
   const kx = cosDeg(lat0);
   for (let u = 0; u < size; u++) xy[2 * u] *= kx;
 
-  return { graph, mesh, size, load, lens, lensCount, lensNames, edgeKm, snap: input.snapEdges ?? null, xy };
+  const population = new Float64Array(size);
+  const popColumn = columns.population;
+  if (popColumn) for (let u = 0; u < size; u++) population[u] = popColumn[graph.cells[u]];
+  const limitSpec = params.populationLimits;
+  const limits =
+    limitSpec && (limitSpec.min !== undefined || limitSpec.max !== undefined)
+      ? { min: limitSpec.min ?? 0, max: limitSpec.max ?? Infinity }
+      : null;
+  const toLocal = (group: number[]) => [...new Set(group.map((m) => graph.local[m]).filter((u) => u >= 0))];
+  const together = (params.pins?.together ?? []).map(toLocal).filter((g) => g.length > 1);
+  const apart = (params.pins?.apart ?? []).map(toLocal).filter((g) => g.length > 1);
+  const pinned = new Map<number, { together: number[]; apart: number[] }>();
+  const entry = (u: number) => {
+    let e = pinned.get(u);
+    if (!e) pinned.set(u, (e = { together: [], apart: [] }));
+    return e;
+  };
+  together.forEach((g, i) => g.forEach((u) => entry(u).together.push(i)));
+  apart.forEach((g, i) => g.forEach((u) => entry(u).apart.push(i)));
+
+  return {
+    graph,
+    mesh,
+    size,
+    load,
+    lens,
+    lensCount,
+    lensNames,
+    edgeKm,
+    snap: input.snapEdges ?? null,
+    xy,
+    population,
+    limits,
+    together,
+    apart,
+    pinned,
+  };
 }
 
 function cosDeg(deg: number) {
@@ -558,6 +633,29 @@ function initTemplate(ctx: Context, template: Int32Array): Int32Array {
   return assignment;
 }
 
+/** The scope cell nearest each point (planar km at the point's latitude; ties by index), without repeats. */
+function nearestLocalCells(ctx: Context, points: [number, number][]): number[] {
+  const out: number[] = [];
+  for (const [lng, lat] of points) {
+    const kx = cosDeg(lat);
+    let best = -1;
+    let bestKm = Infinity;
+    for (let u = 0; u < ctx.size; u++) {
+      if (out.includes(u)) continue;
+      const m = ctx.graph.cells[u];
+      const dx = (ctx.mesh.centroids[2 * m] - lng) * kx;
+      const dy = ctx.mesh.centroids[2 * m + 1] - lat;
+      const km = dx * dx + dy * dy;
+      if (km < bestKm) {
+        bestKm = km;
+        best = u;
+      }
+    }
+    if (best >= 0) out.push(best);
+  }
+  return out;
+}
+
 export function initialise(ctx: Context, input: SolveInput, rng: Prng): Int32Array {
   const { params } = input;
   const n = Math.min(params.n, ctx.size);
@@ -567,9 +665,12 @@ export function initialise(ctx: Context, input: SolveInput, rng: Prng): Int32Arr
     case 'balanced':
       return initQuota(ctx, n, null);
     case 'seeded': {
-      const capitals = (params.capitals ?? []).map((m) => ctx.graph.local[m]).filter((u) => u >= 0);
+      let capitals = (params.capitals ?? []).map((m) => ctx.graph.local[m]).filter((u) => u >= 0);
+      if (!capitals.length && params.capitalPoints?.length)
+        capitals = nearestLocalCells(ctx, params.capitalPoints);
       const seeds = capitals.length ? capitals.slice(0, n) : weightedSeeds(ctx, n, rng);
-      return initSeeded(ctx, seeds, true);
+      // Without a balance column, growth is by distance alone: the land nearest each capital.
+      return initSeeded(ctx, seeds, params.balance !== null);
     }
     case 'random':
       return params.random === 'cuts'
@@ -590,6 +691,10 @@ class State {
   readonly load: Float64Array;
   readonly lensSum: Float64Array;
   readonly lensSq: Float64Array;
+  readonly regionPopulation: Float64Array;
+  readonly totalPopulation: number;
+  readonly pinnedCells: number;
+  readonly apartPairs: number;
   readonly pieces: Int32Array;
   readonly target: number;
   readonly sst: number;
@@ -616,6 +721,8 @@ class State {
     this.load = new Float64Array(this.k);
     this.lensSum = new Float64Array(this.k * lensCount);
     this.lensSq = new Float64Array(this.k);
+    this.regionPopulation = new Float64Array(this.k);
+    let totalPopulation = 0;
     let totalLoad = 0;
     const sum = new Float64Array(lensCount);
     let sq = 0;
@@ -624,6 +731,8 @@ class State {
       this.count[r]++;
       this.load[r] += ctx.load[u];
       totalLoad += ctx.load[u];
+      this.regionPopulation[r] += ctx.population[u];
+      totalPopulation += ctx.population[u];
       for (let c = 0; c < lensCount; c++) {
         const x = ctx.lens[u * lensCount + c];
         this.lensSum[r * lensCount + c] += x;
@@ -635,6 +744,9 @@ class State {
     for (let c = 0; c < lensCount; c++) sq -= (sum[c] * sum[c]) / size;
     this.sst = sq;
     this.target = totalLoad / this.k;
+    this.totalPopulation = totalPopulation;
+    this.pinnedCells = ctx.together.reduce((n, g) => n + g.length, 0);
+    this.apartPairs = ctx.apart.reduce((n, g) => n + (g.length * (g.length - 1)) / 2, 0);
 
     let edges = 0;
     let snapEdges = 0;
@@ -737,14 +849,57 @@ class State {
     let extra = 0;
     for (let r = 0; r < k; r++) extra += Math.max(0, this.pieces[r] - 1);
     const contiguity = this.contiguity === 'soft' ? extra / k : 0;
+    const report = this.constraintReport();
+    const limits =
+      this.ctx.limits && this.totalPopulation > 0 ? report.populationOutsideLimits / this.totalPopulation : 0;
+    const pins =
+      (this.pinnedCells ? report.togetherViolations / this.pinnedCells : 0) +
+      (this.apartPairs ? report.apartViolations / this.apartPairs : 0);
     const w = this.weights;
     const total =
       w.balance * balance +
       w.compactness * compactness +
       w.lens * lens +
       w.snap * snap +
-      w.contiguity * contiguity;
-    return { total, balance, compactness, lens, snap, contiguity };
+      w.contiguity * contiguity +
+      (w.limits ?? 10) * limits +
+      (w.pins ?? 10) * pins;
+    return { total, balance, compactness, lens, snap, contiguity, limits, pins };
+  }
+
+  outside(population: number): number {
+    const limits = this.ctx.limits;
+    if (!limits) return 0;
+    return Math.max(0, population - limits.max) + Math.max(0, limits.min - population);
+  }
+
+  /** Keep-together violations of a group, with cell `u` counted in region `r`. */
+  togetherViolations(group: number[], u = -1, r = -1): number {
+    const regionOf = (c: number) => (c === u ? r : this.assignment[c]);
+    const anchor = regionOf(group[0]);
+    let n = 0;
+    for (let i = 1; i < group.length; i++) if (regionOf(group[i]) !== anchor) n++;
+    return n;
+  }
+
+  /** Keep-apart pairs of a group sharing a region, with cell `u` counted in region `r`. */
+  apartViolations(group: number[], u = -1, r = -1): number {
+    const regionOf = (c: number) => (c === u ? r : this.assignment[c]);
+    let n = 0;
+    for (let i = 0; i < group.length; i++) {
+      for (let j = i + 1; j < group.length; j++) if (regionOf(group[i]) === regionOf(group[j])) n++;
+    }
+    return n;
+  }
+
+  constraintReport(): ConstraintReport {
+    let populationOutsideLimits = 0;
+    for (let r = 0; r < this.k; r++) populationOutsideLimits += this.outside(this.regionPopulation[r]);
+    let togetherViolations = 0;
+    for (const g of this.ctx.together) togetherViolations += this.togetherViolations(g);
+    let apartViolations = 0;
+    for (const g of this.ctx.apart) apartViolations += this.apartViolations(g);
+    return { populationOutsideLimits, togetherViolations, apartViolations };
   }
 
   /**
@@ -907,6 +1062,34 @@ class State {
       d += (weights.compactness * (inA - inB)) / this.edges;
       if (ctx.snap) d -= (weights.snap * (snapA - snapB)) / this.snapEdges;
     }
+    if (ctx.limits && this.totalPopulation > 0) {
+      const p = ctx.population[u];
+      const pa = this.regionPopulation[a];
+      const pb = this.regionPopulation[b];
+      const change = this.outside(pa - p) + this.outside(pb + p) - this.outside(pa) - this.outside(pb);
+      d += ((weights.limits ?? 10) * change) / this.totalPopulation;
+    }
+    const pins = ctx.pinned.get(u);
+    if (pins) {
+      let change = 0;
+      if (this.pinnedCells) {
+        let t = 0;
+        for (const i of pins.together) {
+          const g = ctx.together[i];
+          t += this.togetherViolations(g, u, b) - this.togetherViolations(g);
+        }
+        change += t / this.pinnedCells;
+      }
+      if (this.apartPairs) {
+        let t = 0;
+        for (const i of pins.apart) {
+          const g = ctx.apart[i];
+          t += this.apartViolations(g, u, b) - this.apartViolations(g);
+        }
+        change += t / this.apartPairs;
+      }
+      d += (weights.pins ?? 10) * change;
+    }
     if (this.contiguity === 'soft') {
       const extraBefore = Math.max(0, this.pieces[a] - 1) + Math.max(0, this.pieces[b] - 1);
       const extraAfter =
@@ -937,6 +1120,8 @@ class State {
     this.count[b]++;
     this.load[a] -= ctx.load[u];
     this.load[b] += ctx.load[u];
+    this.regionPopulation[a] -= ctx.population[u];
+    this.regionPopulation[b] += ctx.population[u];
     for (let c = 0; c < L; c++) {
       const x = ctx.lens[u * L + c];
       this.lensSum[a * L + c] -= x;
@@ -1040,34 +1225,41 @@ function proposal(state: State, graph: ScopeGraph, rng: Prng): [number, number] 
 
 // --- stats ------------------------------------------------------------------------------------
 
-function regionStats(state: State, input: SolveInput): RegionStats[] {
-  const { ctx } = state;
-  const { graph, mesh } = ctx;
-  const { columns, params } = input;
+/**
+ * Per-region stats for any mesh-indexed assignment over a scope graph: the solver's result, or an
+ * assignment after manual painting. Regions are 0..k-1; pieces are counted here, over the graph.
+ */
+export function computeRegionStats(
+  mesh: MeshArrays,
+  graph: ScopeGraph,
+  columns: Columns,
+  lensNames: string[],
+  assignment: Int32Array,
+  k: number,
+): RegionStats[] {
   const population = columns.population;
   const gdp = columns.gdp_estimate;
-  const lensNames = Object.keys(params.lens).sort();
-  const regions: RegionStats[] = [];
-  for (let r = 0; r < state.k; r++) {
-    regions.push({
-      id: r,
-      cells: 0,
-      population: 0,
-      areaKm2: 0,
-      gdp: gdp ? 0 : null,
-      lensMeans: {},
-      lensVariances: {},
-      compactness: 0,
-      pieces: state.pieces[r],
-    });
-  }
-  const weightSum = new Float64Array(state.k);
-  const perimeter = new Float64Array(state.k);
-  const lensSum = lensNames.map(() => new Float64Array(state.k));
-  const lensSq = lensNames.map(() => new Float64Array(state.k));
-  for (let u = 0; u < ctx.size; u++) {
+  const names = [...lensNames].sort();
+  const regions: RegionStats[] = Array.from({ length: k }, (_, id) => ({
+    id,
+    cells: 0,
+    population: 0,
+    areaKm2: 0,
+    gdp: gdp ? 0 : null,
+    lensMeans: {},
+    lensVariances: {},
+    compactness: 0,
+    pieces: 0,
+  }));
+  const weightSum = new Float64Array(k);
+  const perimeter = new Float64Array(k);
+  const lensSum = names.map(() => new Float64Array(k));
+  const lensSq = names.map(() => new Float64Array(k));
+  const regionOf = (u: number) => assignment[graph.cells[u]];
+  for (let u = 0; u < graph.size; u++) {
     const m = graph.cells[u];
-    const r = state.assignment[u];
+    const r = regionOf(u);
+    if (r < 0 || r >= k) continue;
     const region = regions[r];
     region.cells++;
     region.areaKm2 += mesh.areas[m];
@@ -1075,7 +1267,7 @@ function regionStats(state: State, input: SolveInput): RegionStats[] {
     if (gdp && region.gdp !== null) region.gdp += gdp[m];
     const w = population ? population[m] : 1;
     weightSum[r] += w;
-    lensNames.forEach((name, c) => {
+    names.forEach((name, c) => {
       const x = columns[name]?.[m] ?? 0;
       lensSum[c][r] += w * x;
       lensSq[c][r] += w * x * x;
@@ -1084,13 +1276,31 @@ function regionStats(state: State, input: SolveInput): RegionStats[] {
     const side = Math.sqrt((2 * mesh.areas[m]) / (3 * 1.7320508075688772));
     let same = 0;
     for (let e = graph.offsets[u]; e < graph.offsets[u + 1]; e++) {
-      if (!graph.crossing[e] && state.assignment[graph.targets[e]] === r) same++;
+      if (!graph.crossing[e] && regionOf(graph.targets[e]) === r) same++;
     }
     perimeter[r] += Math.max(0, 6 - same) * side;
   }
+  const seen = new Uint8Array(graph.size);
+  for (let s = 0; s < graph.size; s++) {
+    const r = regionOf(s);
+    if (seen[s] || r < 0 || r >= k) continue;
+    regions[r].pieces++;
+    seen[s] = 1;
+    const stack = [s];
+    while (stack.length) {
+      const u = stack.pop() as number; // the loop checks length
+      for (let e = graph.offsets[u]; e < graph.offsets[u + 1]; e++) {
+        const v = graph.targets[e];
+        if (!seen[v] && regionOf(v) === r) {
+          seen[v] = 1;
+          stack.push(v);
+        }
+      }
+    }
+  }
   for (const region of regions) {
     const r = region.id;
-    lensNames.forEach((name, c) => {
+    names.forEach((name, c) => {
       const mean = weightSum[r] > 0 ? lensSum[c][r] / weightSum[r] : 0;
       region.lensMeans[name] = mean;
       region.lensVariances[name] =
@@ -1125,8 +1335,16 @@ export function* solveSteps(input: SolveInput): Generator<Progress, SolveResult,
   for (let r = 0; r < state.k; r++) state.pieces[r] = state.countPieces(r);
   return {
     assignment,
-    regions: regionStats(state, input),
+    regions: computeRegionStats(
+      input.mesh,
+      graph,
+      input.columns,
+      Object.keys(params.lens),
+      assignment,
+      state.k,
+    ),
     cost: state.terms(),
+    constraints: state.constraintReport(),
     iterations: ran.moves,
     stoppedBy,
   };

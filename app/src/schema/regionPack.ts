@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { BYTE_ORDER, IdColumnSchema, IsoDateSchema } from './columns';
-import { PROVINCE_CODES } from './mesh';
+import { H3CellIdSchema, PROVINCE_CODES } from './mesh';
 
 /**
  * RegionPack v1 — a split of the mesh into regions, plus how it was made and what it
@@ -44,6 +44,22 @@ export const RegionPackMetaSchema = z
     scope: ScopeSchema,
     date: IsoDateSchema.nullable().describe('Atlas date the split was made against; null = present day'),
     byteOrder: z.literal(BYTE_ORDER).describe('Byte order of every encoded column in the pack'),
+    edited: z
+      .boolean()
+      .optional()
+      .describe(
+        'True once cells were painted by hand; the pack can no longer be regenerated from seed + params',
+      ),
+    edits: z
+      .array(
+        z.strictObject({
+          cell: H3CellIdSchema,
+          from: z.int().min(-1),
+          to: z.int().min(-1),
+        }),
+      )
+      .optional()
+      .describe('Manual edits in the order they were made'),
   })
   .meta({ id: 'RegionPackMeta' });
 

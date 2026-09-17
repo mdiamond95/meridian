@@ -31,6 +31,7 @@ from census import release_memory
 from common import BUILD, EQUAL_AREA_CRS, MESH_VERSION, WGS84, gzip_bytes, raw_file, write_bytes
 from geo import read_vector, zip_dataset
 from mesh import PRUID_TO_CODE
+from splitter_inputs import layer_cells, layer_places, layer_snap
 
 MAPSHAPER_VERSION = "0.7.61"
 LAYERS = BUILD / "layers"
@@ -420,6 +421,10 @@ BUILDERS = {
     "rivers": layer_rivers,
     "ridings": layer_ridings,
     "indigenous": layer_indigenous,
+    # Splitter inputs (splitter_inputs.py); snap reads the rivers layer built above.
+    "places": layer_places,
+    "cells": layer_cells,
+    "snap": layer_snap,
 }
 
 

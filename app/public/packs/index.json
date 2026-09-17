@@ -1,0 +1,23 @@
+{
+  "format": "meridian.packLibrary",
+  "packs": [
+    {
+      "id": "alberta-15",
+      "name": "Alberta in 15 (economic lens)",
+      "description": "Alberta bisected on the Economic lens until there are 15 regions, balanced by population.",
+      "file": "alberta-15.json"
+    },
+    {
+      "id": "canada-26",
+      "name": "Canada in 26 (internal-colony index)",
+      "description": "Canada bisected on the internal-colony index until there are 26 regions, balanced by population.",
+      "file": "canada-26.json"
+    },
+    {
+      "id": "canada-14",
+      "name": "Canada in 14 (capitals)",
+      "description": "Seeded growth from today's 13 provincial and territorial capitals and Ottawa: each region is the land nearest its capital over the mesh.",
+      "file": "canada-14.json"
+    }
+  ]
+}

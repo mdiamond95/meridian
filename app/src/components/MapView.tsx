@@ -6,6 +6,7 @@ import { AtlasLayer } from './AtlasLayer';
 import { ContactLayer } from './ContactLayer';
 import { IndigenousLayer } from './IndigenousLayer';
 import { ReferenceLayer } from './ReferenceLayer';
+import { SplitLayer } from './SplitLayer';
 
 /** Canada's extent, south-west to north-east, including Ellesmere and Cape Spear. */
 const CANADA_BOUNDS: L.LatLngBoundsExpression = [
@@ -47,6 +48,7 @@ export function MapView() {
       {map && <ContactLayer map={map} />}
       {map && <AtlasLayer map={map} />}
       {map && <ReferenceLayer map={map} />}
+      {map && <SplitLayer map={map} />}
     </div>
   );
 }
