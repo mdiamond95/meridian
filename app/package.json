@@ -14,7 +14,9 @@
     "smoke": "playwright test",
     "schemas": "tsx scripts/export-schemas.ts",
     "schemas:check": "tsx scripts/export-schemas.ts --check",
-    "frame-time": "playwright test --config playwright.perf.config.ts"
+    "frame-time": "playwright test --config playwright.perf.config.ts",
+    "determinism": "playwright test --config playwright.determinism.config.ts",
+    "presets": "tsx scripts/make-presets.ts"
   },
   "dependencies": {
     "leaflet": "^1.9.4",
@@ -32,6 +34,7 @@
     "@types/react": "^18.3.31",
     "@types/react-dom": "^18.3.7",
     "@vitejs/plugin-react": "^6.1.1",
+    "esbuild": "0.28.2",
     "eslint": "^10.10.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-react-hooks": "^7.1.1",

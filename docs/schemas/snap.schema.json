@@ -1,0 +1,105 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "#/$defs/SnapFile",
+  "$defs": {
+    "SnapFile": {
+      "type": "object",
+      "properties": {
+        "format": {
+          "type": "string",
+          "const": "meridian.snap"
+        },
+        "version": {
+          "type": "string",
+          "pattern": "^v\\d+$"
+        },
+        "meshVersion": {
+          "type": "string",
+          "pattern": "^v\\d+$"
+        },
+        "layers": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]*$"
+          },
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "description": {
+                "type": "string",
+                "minLength": 1
+              },
+              "pairs": {
+                "description": "int32 [u0, v0, u1, v1, ...], mesh cell indices, u < v",
+                "$ref": "#/$defs/IdColumn"
+              }
+            },
+            "required": [
+              "description",
+              "pairs"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "format",
+        "version",
+        "meshVersion",
+        "layers"
+      ],
+      "additionalProperties": false,
+      "title": "Meridian SnapFile"
+    },
+    "IdColumn": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "type": "string",
+          "const": "id"
+        },
+        "dtype": {
+          "type": "string",
+          "const": "int32"
+        },
+        "byteOrder": {
+          "type": "string",
+          "const": "le",
+          "description": "Byte order of data; always little-endian"
+        },
+        "length": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991,
+          "description": "Element count, not byte count"
+        },
+        "data": {
+          "type": "string",
+          "format": "base64",
+          "contentEncoding": "base64",
+          "pattern": "^$|^(?:[0-9a-zA-Z+/]{4})*(?:(?:[0-9a-zA-Z+/]{2}==)|(?:[0-9a-zA-Z+/]{3}=))?$",
+          "description": "Base64 of the element bytes in byteOrder"
+        },
+        "method": {
+          "description": "How the values were produced, e.g. \"allocation_v1\" for estimated GDP",
+          "type": "string"
+        },
+        "confidence": {
+          "description": "0–1; present on any estimated column so the UI can label it",
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      },
+      "required": [
+        "kind",
+        "dtype",
+        "byteOrder",
+        "length",
+        "data"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

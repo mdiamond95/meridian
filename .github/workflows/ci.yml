@@ -47,6 +47,10 @@ jobs:
         run: npx -w app playwright install --with-deps chromium
       - name: Smoke (Playwright on built site)
         run: npm run smoke
+      - name: Install Playwright WebKit and Firefox
+        run: npx -w app playwright install --with-deps webkit firefox
+      - name: Determinism gate (same split in Chromium, WebKit and Firefox)
+        run: npm run determinism -w app
 
   pipeline:
     name: Pipeline — lint, test, dry run

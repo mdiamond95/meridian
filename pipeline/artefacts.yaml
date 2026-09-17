@@ -56,6 +56,8 @@ artefacts:
       - statcan_profile_csd_indigenous_languages_2021
       - glottolog_languoids
       - wikidata_indigenous_communities
+      - statcan_cma_2021
+      - statcan_profile_csd_2021
     outputs:
       - { path: data/build/attrs.v1.json.gz, schema: docs/schemas/attrs.schema.json }
 
@@ -81,6 +83,8 @@ artefacts:
       - elections_fed_2023
       - glottolog_languoids
       - wikidata_indigenous_communities
+      - statcan_cma_2021
+      - statcan_profile_csd_2021
     outputs:
       - { path: data/build/layers/boundaries.low.v1.topojson.gz, schema: docs/schemas/topojson.schema.json }
       - { path: data/build/layers/boundaries.mid.v1.topojson.gz, schema: docs/schemas/topojson.schema.json }
@@ -94,6 +98,11 @@ artefacts:
       # labels. Its own pair, like the contact frontier, fetched only when the layer is asked for.
       - { path: data/build/indigenous.v1.json, schema: docs/schemas/indigenous.schema.json }
       - { path: data/build/indigenous.v1.topojson.gz, schema: docs/schemas/topojson.schema.json }
+      # Splitter inputs (splitter_inputs.py): the place gazetteer and CMAs, the hex topology for
+      # dissolving regions in the app, and the mesh edges that cross rivers (a snap layer).
+      - { path: data/build/places.v1.json.gz, schema: docs/schemas/places.schema.json }
+      - { path: data/build/cells.v1.topojson.gz, schema: docs/schemas/topojson.schema.json }
+      - { path: data/build/snap.v1.json.gz, schema: docs/schemas/snap.schema.json }
 
   - id: atlas
     phase: 2

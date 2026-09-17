@@ -144,3 +144,15 @@ Two changes, both measured:
 
 Re-take with `npm run frame-time` after `npm run build`; close other editor windows first, for the
 same reason as the pipeline numbers above.
+
+## Browser tests on the Codespace (2026-09-17)
+
+The Codespace has 8 GB, and the host terminates the largest process when free memory falls below
+about 1 GB. Browser tests therefore run strictly one at a time:
+
+- `app/playwright.config.ts` (smoke) has `workers: 1`, so desktop and iPad projects run in turn.
+- `npm run determinism -w app` launches Chromium, closes it, then WebKit, then Firefox; only one engine
+  is resident at any moment, and it needs no preview server.
+- Order when checking by hand: `make verify` first, alone; then pytest; then `npm run build` (which
+  exits); then `npm run smoke`; then `npm run determinism`. Never the build, the preview server and a
+  browser engine at the same time, and never a browser run during `make verify`.

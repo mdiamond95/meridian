@@ -14,5 +14,12 @@
     "skipLibCheck": true,
     "noEmit": true
   },
-  "include": ["vite.config.ts", "playwright.config.ts", "scripts", "tests/smoke"]
+  "include": [
+    "vite.config.ts",
+    "playwright.config.ts",
+    "playwright.determinism.config.ts",
+    "scripts",
+    "tests/smoke",
+    "tests/determinism"
+  ]
 }

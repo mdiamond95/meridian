@@ -39,6 +39,9 @@ From the repo root, `make download`, `make build`, `make atlas` and `make verify
 | `data/build/atlas.v1.topojson.gz` | `atlas/build.py` | `docs/schemas/topojson.schema.json` |
 | `data/build/indigenous.v1.json` | `polygons.py` (`indigenous`) | `docs/schemas/indigenous.schema.json` |
 | `data/build/indigenous.v1.topojson.gz` | `polygons.py` (`indigenous`) | `docs/schemas/topojson.schema.json` |
+| `data/build/places.v1.json.gz` | `polygons.py` (`places`, `splitter_inputs.py`) | `docs/schemas/places.schema.json` |
+| `data/build/cells.v1.topojson.gz` | `polygons.py` (`cells`, `splitter_inputs.py`) | `docs/schemas/topojson.schema.json` |
+| `data/build/snap.v1.json.gz` | `polygons.py` (`snap`, `splitter_inputs.py`) | `docs/schemas/snap.schema.json` |
 
 `pipeline/artefacts.yaml` is the plan: `make dry-run` prints it, and `make validate` checks every
 file in `data/build/` against its schema. The methods for each attribute column are in the
