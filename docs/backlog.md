@@ -4,6 +4,44 @@ Work that is wanted but not scheduled. Each entry says what it is for, what it n
 blocks it. Phases and their gates are in docs/plan.md; decisions already taken are in
 docs/decisions.md.
 
+## 1.1 headline
+
+### Scenario overlays may use the same boundary primitives as base events
+**For:** scenarios that can hold their counterfactual all the way to today.
+- A scenario's geometry can only reuse drawings from the base atlas: a unit as it stood on a date,
+  or a union of several (Phase 6 decision).
+- Base events build theirs from boundary primitives, in the expression language of
+  `pipeline/atlas/events.yaml`:
+  - named shapes (`shape:`), modern provinces (`modern:`), drainage regions (`drainage:`);
+  - `union`, `minus` and `intersect`;
+  - earlier drawings (`was:`, `unit:`), lines, and `mainland`.
+- Scenarios should be able to use the same language. They would still draw no line of their own
+  invention: every edge would come from a primitive the base cites.
+
+**First test case: No 1912 extensions, to today.** The scenario now reverts to the record:
+- for Quebec in 1927, because no base drawing is the 1927 Quebec without the land the 1912 Act gave
+  it;
+- for Manitoba and Ontario in 1999, because no base drawing is Keewatin south of 60°N on its own.
+
+With primitives, both become expressions over lines the base already cites: the 1912 Acts' limits,
+the 60th parallel, and Nunavut's modern boundary. The test is that the
+scenario:
+- resolves cleanly at every event date;
+- keeps Manitoba, Ontario and Quebec at their pre-1912 extent today;
+- assigns the land north of them to the territories;
+- skips no base event.
+
+**Work:**
+- Evaluate scenario geometry through the same expression evaluator as the atlas build. That is
+  Python today, run at build time, so the options are:
+  - compile scenarios in the pipeline, as the base is;
+  - or port the evaluator's operators to TypeScript on the TopoJSON arcs. `apply.ts` already has
+    `merge` there.
+- Extend `docs/schemas/scenario.schema.json`.
+- Rewrite `docs/scenarios/no-1912-extensions.yaml`'s later events.
+
+**Supersedes** the earlier `minus` entry: `minus` is one of these primitives.
+
 ## Data
 
 ### Dominion Land Survey township polygons — the township snap layer
@@ -54,29 +92,16 @@ and cited by hand, and a thin or one-industry table would be a misleading map.
 
 ## Engine and app
 
-### Dossiers off the main thread
-**For:** responsiveness when a large split lands.
-- A 30-region split of Canada holds the main thread for about 800 ms, 1.2 s on the profile run.
-  Most of it is `describeSplit`: dossiers 434 ms, set analysis, and ring dissolving 162 ms
-  (`docs/perf.md`, Phase 7).
-- On an iPad that is a visible freeze.
+### Share the splitter data between the page and the worker
+**For:** memory on an iPad. Since 1.0.1 the worker loads its own copy of the splitter data and the
+cell topology, so the page can stay unblocked. The renderer holds about 180 MB more than in 1.0.0
+(about 870 MB under iPad emulation, `docs/perf.md`).
 
-**Work:** run `buildDossiers` and `buildSetAnalysis` in the solver worker, or a second worker, from
-the assignment and the columns the worker already holds. The main thread would get names and
-dossiers back. Names are the catch: the map's labels come from the dossiers, so the first paint would
-either wait or show the solver's provisional names.
-
-**Blocked on:** nothing; it is a refactor of `app/src/dossier/` inputs into transferable form.
-
-### A `minus` geometry operation for scenarios
-**For:** holding "No 1912 extensions" to today.
-- It now reverts to the record for Quebec in 1927 and for Manitoba and Ontario in 1999, because no
-  base drawing is 1927 Quebec without its Labrador side, or Keewatin south of 60°N alone.
-- `minus: [a, b]`, one base drawing less another, draws no line the base does not have. It would
-  also let later scenarios take a piece off a unit.
-
-**Blocked on:** Mark's decision. It amends the Phase 6 rule, "geometry only from base drawings, a
-unit or a union", and needs arc-level difference in `app/src/scenario/apply.ts`.
+**Work:** decode once, in the worker, and transfer the typed arrays the page needs (centroids,
+columns for painting and stats) rather than decoding the same files on both sides. The page keeps
+little else: the gazetteer and the ring cache. Transferring detaches the worker's copy, so either
+the page keeps only what it needs and the worker the rest, or the worker hands out copies it makes
+off the main thread.
 
 ### Cache the cell topology too
 **For:** the second open of the Generate panel. The decoded mesh and attributes come from IndexedDB
