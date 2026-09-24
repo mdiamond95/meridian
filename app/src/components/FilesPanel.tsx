@@ -256,6 +256,7 @@ function Import() {
       </label>
       <input
         type="file"
+        aria-label="Import a region pack, pack tree, GeoJSON or KML file"
         data-testid="import-file"
         accept=".json,.geojson,.kml,application/json,application/geo+json,application/vnd.google-earth.kml+xml"
         onChange={(e) => {

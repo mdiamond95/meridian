@@ -1,10 +1,12 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import type { AtlasFile, AtlasUnit } from '../schema/atlas';
+import type { AtlasEvent, AtlasFile, AtlasUnit } from '../schema/atlas';
 import { initialAtlasState, startYear, useAtlasStore } from '../state/atlasStore';
 import {
   currentEvent,
   dateToYear,
   formatDate,
+  nextEvent,
+  previousEvent,
   resolveReferences,
   resolvedAt,
   resolveUnits,
@@ -196,5 +198,26 @@ describe('the timeline start and the disputed layer', () => {
     expect(new Set(disputed.map((u) => u.dispute))).toEqual(new Set(['oregon']));
     // Both claims end with the treaty.
     expect(resolveUnits(atlas, '1846-07-17', ['disputed'])).toEqual([]);
+  });
+});
+
+describe('event keys (plan Phase 7 §3: Page Up and Page Down on the timeline)', () => {
+  const events = [
+    { date: '1867-07-01' },
+    { date: '1870-07-15' },
+    { date: '1870-07-15' },
+    { date: '1873-07-01' },
+  ] as AtlasEvent[];
+
+  it('Page Up goes to the first event after the date', () => {
+    expect(nextEvent(events, '1867-12-31')?.date).toBe('1870-07-15');
+    expect(nextEvent(events, '1870-07-15')?.date).toBe('1873-07-01');
+    expect(nextEvent(events, '1873-07-01')).toBeNull();
+  });
+
+  it("Page Down goes back to the current window's event, then the one before", () => {
+    expect(previousEvent(events, '1871-12-31')?.date).toBe('1870-07-15');
+    expect(previousEvent(events, '1870-07-15')?.date).toBe('1867-07-01');
+    expect(previousEvent(events, '1867-07-01')).toBeNull();
   });
 });

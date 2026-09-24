@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef } from 'react';
 import L from 'leaflet';
 import { nearestPlace, paintCell } from '../splitter/controller';
 import { cellLocator, regionRings } from '../splitter/outline';
+import { REGION_FILL_OPACITY } from '../splitter/palette';
 import { useSplitStore } from '../state/splitStore';
 
 /**
@@ -73,7 +74,7 @@ export function SplitLayer({ map }: { map: L.Map }) {
         weight: isSelected ? 3 : 1.2,
         opacity: 0.9,
         fillColor: split.colours[region.id],
-        fillOpacity: isSelected ? 0.6 : 0.42,
+        fillOpacity: isSelected ? REGION_FILL_OPACITY + 0.18 : REGION_FILL_OPACITY,
         fillRule: 'evenodd',
         interactive: tool === 'none',
       });
@@ -174,7 +175,7 @@ export function SplitLayer({ map }: { map: L.Map }) {
         weight: 1.2,
         opacity: 0.9,
         fillColor: compare.colours[id],
-        fillOpacity: 0.42,
+        fillOpacity: REGION_FILL_OPACITY,
         fillRule: 'evenodd',
         interactive: false,
       });
