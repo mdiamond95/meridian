@@ -1,5 +1,6 @@
 /**
- * Regenerate the shipped presets in app/public/packs/ from src/splitter/presets.ts.
+ * Regenerate the shared presets in the top-level packs/ folder from src/splitter/presets.ts, named
+ * <id>.<meshVersion>.json (docs/interop.md).
  *
  *   npm run presets
  */
@@ -11,7 +12,7 @@ import { cellTopology } from '../src/splitter/outline';
 import { PRESETS } from '../src/splitter/presets';
 import { realSplitterData } from '../src/splitter/testing/realSplitterData';
 
-const out = new URL('../public/packs/', import.meta.url);
+const out = new URL('../../packs/', import.meta.url);
 const data = realSplitterData();
 const topo = cellTopology(
   TopologySchema.parse(
@@ -25,7 +26,7 @@ const topo = cellTopology(
 for (const preset of PRESETS) {
   const started = Date.now();
   const { result, finished, dossiers, setAnalysis, pack } = buildPresetPack(preset, data, topo);
-  writeFileSync(new URL(`${preset.id}.json`, out), JSON.stringify(pack) + '\n');
+  writeFileSync(new URL(`${preset.id}.${data.meshVersion}.json`, out), JSON.stringify(pack) + '\n');
   const pops = finished.regions.map((r) => r.population);
   console.log(
     `${preset.id}: ${finished.regions.length} regions in ${Date.now() - started} ms (${result.stoppedBy}), ` +
@@ -40,6 +41,11 @@ for (const preset of PRESETS) {
 
 const library = {
   format: 'meridian.packLibrary',
-  packs: PRESETS.map(({ id, name, description }) => ({ id, name, description, file: `${id}.json` })),
+  packs: PRESETS.map(({ id, name, description }) => ({
+    id,
+    name,
+    description,
+    file: `${id}.${data.meshVersion}.json`,
+  })),
 };
 writeFileSync(new URL('index.json', out), JSON.stringify(library, null, 2) + '\n');

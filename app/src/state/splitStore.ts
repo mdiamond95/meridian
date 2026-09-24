@@ -4,6 +4,7 @@ import type { SplitterData } from '../splitter/data';
 import type { CellTopology } from '../splitter/outline';
 import type { RegionDossier, SetAnalysis } from '../schema/dossier';
 import type { Difference } from '../splitter/compare';
+import type { RegionPack } from '../schema/regionPack';
 import type { Edit, Fit, PackLibrary } from '../splitter/pack';
 import { defaultSpec, type NamedRegion, type PreparedSplit, type SplitSpec } from '../splitter/split';
 
@@ -18,11 +19,29 @@ export interface CurrentSplit {
   regions: NamedRegion[];
   colours: string[];
   edits: Edit[];
-  /** where it came from: a run, or a pack from the library */
-  source: { kind: 'run' } | { kind: 'pack'; id: string; fit: Fit };
+  /** where it came from; decides whether a share link can reproduce it */
+  source: SplitSource;
   /** filled once the split is described (Phase 4); null while it is being rebuilt */
   dossiers: RegionDossier[] | null;
   setAnalysis: SetAnalysis | null;
+}
+
+export type SplitSource =
+  /** run from the spec in the Generate panel */
+  | { kind: 'run' }
+  /** a shipped preset */
+  | { kind: 'pack'; id: string; fit: Fit }
+  /** a pack file or a pack saved in this browser; `refit` when moved from another mesh version */
+  | { kind: 'file'; name: string; refit: string | null }
+  /** cells assigned from an imported GeoJSON or KML */
+  | { kind: 'template'; name: string };
+
+/** A pack made on another mesh, waiting for the user to choose re-fit or regenerate. */
+export interface PendingImport {
+  name: string;
+  pack: RegionPack;
+  from: string;
+  to: string;
 }
 
 export interface Comparison {
@@ -55,6 +74,11 @@ interface SplitState {
   /** CSDs picked for the pin group being built */
   pinDraft: string[];
   compare: Comparison | null;
+  /** the snap layer from an imported file (session only: it is not in any share link) */
+  importedSnap: { name: string; edges: Set<number> } | null;
+  pendingImport: PendingImport | null;
+  /** a passing message from import, export or the library */
+  notice: string | null;
   setSpec: (patch: Partial<SplitSpec>) => void;
   replaceSpec: (spec: SplitSpec) => void;
   setTool: (tool: MapTool) => void;
@@ -78,6 +102,9 @@ export const useSplitStore = create<SplitState>()((set) => ({
   drawPoints: [],
   pinDraft: [],
   compare: null,
+  importedSnap: null,
+  pendingImport: null,
+  notice: null,
   setSpec: (patch) => set((s) => ({ spec: { ...s.spec, ...patch } })),
   replaceSpec: (spec) => set({ spec }),
   setTool: (tool) =>

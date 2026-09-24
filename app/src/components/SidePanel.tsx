@@ -5,6 +5,7 @@ import { useAtlasStore } from '../state/atlasStore';
 import { useUiStore } from '../state/uiStore';
 import { ComparePanel } from './ComparePanel';
 import { DossierPanel } from './DossierPanel';
+import { FilesPanel } from './FilesPanel';
 import { GeneratePanel } from './GeneratePanel';
 import { SetPanel } from './SetPanel';
 
@@ -30,6 +31,7 @@ export function SidePanel() {
               ['dossier', 'Region'],
               ['set', 'Set'],
               ['compare', 'Compare'],
+              ['files', 'Files'],
             ] as const
           ).map(([id, label]) => (
             <button
@@ -48,6 +50,7 @@ export function SidePanel() {
         {tab === 'dossier' && <DossierPanel />}
         {tab === 'set' && <SetPanel />}
         {tab === 'compare' && <ComparePanel />}
+        {tab === 'files' && <FilesPanel />}
       </div>
     </aside>
   );

@@ -32,6 +32,9 @@ export const SNAP_LAYERS: SnapLayer[] = [
   { id: 'ecozones', label: 'Ecozones', available: true },
 ];
 
+/** The layer made from an imported GeoJSON or KML file (src/import/template.ts); session only. */
+export const IMPORTED_SNAP = 'imported';
+
 const PACIFIC = 1;
 
 /** 1 per graph edge (aligned with graph.targets) lying on any selected layer; undefined for none. */
@@ -39,8 +42,11 @@ export function snapEdges(
   graph: ScopeGraph,
   layers: readonly string[],
   data: SplitterData,
+  /** edge keys (u * n + v, u < v) of the imported layer, when one is loaded */
+  imported?: ReadonlySet<number>,
 ): Uint8Array | undefined {
   const selected = SNAP_LAYERS.filter((l) => l.available && layers.includes(l.id)).map((l) => l.id);
+  if (imported && layers.includes(IMPORTED_SNAP)) selected.push(IMPORTED_SNAP);
   if (!selected.length) return undefined;
   const n = data.cellIds.length;
   const { columns, arrays } = data;
@@ -85,6 +91,8 @@ export function snapEdges(
             return differs(columns.fed_riding_id, a, b);
           case 'ecozones':
             return differs(columns.ecozone_id, a, b);
+          case IMPORTED_SNAP:
+            return !!imported?.has(Math.min(a, b) * n + Math.max(a, b));
           default:
             return false;
         }

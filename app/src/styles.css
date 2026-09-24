@@ -597,6 +597,25 @@ button {
   flex: 1;
 }
 
+.library-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 0;
+}
+
+.pending {
+  padding: 8px;
+  border: 1px solid #e0b060;
+  border-radius: 6px;
+  background: #fff8ea;
+}
+
+.pending p {
+  margin: 0 0 6px;
+}
+
 .hint {
   color: #5b6068;
   font-size: 0.8rem;

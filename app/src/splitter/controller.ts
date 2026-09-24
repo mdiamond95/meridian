@@ -1,6 +1,5 @@
 import { resolvedAt } from '../atlas/resolve';
 import { buildDossiers, buildSetAnalysis } from '../dossier/dossier';
-import { setMarkdown } from '../dossier/markdown';
 import { SolverClient } from '../engine/client';
 import type { Columns } from '../engine/solver';
 import { useAtlasStore } from '../state/atlasStore';
@@ -11,8 +10,29 @@ import { actualCanada, compareSplits, type ComparableSplit } from './compare';
 import { buildPack, fitPack, loadLibrary, loadPack, specFromPack } from './pack';
 import { regionColours } from './palette';
 import { cellTopology } from './outline';
-import { finishSplit, nameRegions, prepareSplit, type PreparedSplit, type SplitSpec } from './split';
+import {
+  finishSplit,
+  nameRegions,
+  prepareSplit,
+  preparedFromAssignment,
+  type PreparedSplit,
+  type SplitSpec,
+} from './split';
 import { encodeHash } from './url';
+import { maybeGunzip } from '../data/loadMesh';
+import { exportInput } from '../export/build';
+import { exportFile, saveFile, type ExportFormat } from '../export/download';
+import { getSaved, savePack } from '../import/library';
+import { checkPack, MESH_ARCHIVE, refitAssignment } from '../import/pack';
+import {
+  assignByTemplate,
+  parseGeoFile,
+  templateFromGeoJSON,
+  templateScope,
+  templateSnapEdges,
+} from '../import/template';
+import type { RegionPack } from '../schema/regionPack';
+import { IMPORTED_SNAP } from './snap';
 
 /**
  * The splitter's actions: load its data, run a split in the worker, load a pack, paint cells, share
@@ -47,8 +67,12 @@ export function ensureSplitterData(): Promise<void> {
 
 function context() {
   const { data: atlas } = useAtlasStore.getState();
-  const { regionSource } = useSplitStore.getState();
-  return { atlas: atlas ?? undefined, packAssignment: regionSource ?? undefined };
+  const { regionSource, importedSnap } = useSplitStore.getState();
+  return {
+    atlas: atlas ?? undefined,
+    packAssignment: regionSource ?? undefined,
+    importedSnap: importedSnap?.edges,
+  };
 }
 
 /** The columns a run reads, so the worker is not sent all eighty. */
@@ -58,10 +82,19 @@ function neededColumns(spec: SplitSpec, columns: Columns): Columns {
   return Object.fromEntries([...names].filter((n) => columns[n]).map((n) => [n, columns[n]]));
 }
 
-function show(prepared: PreparedSplit, assignment: Int32Array, source: CurrentSplit['source']) {
+function show(
+  prepared: PreparedSplit,
+  assignment: Int32Array,
+  source: CurrentSplit['source'],
+  /** names chosen elsewhere (an imported map's), by region id */
+  names?: Map<number, string>,
+) {
   const { data, topology } = useSplitStore.getState();
   if (!data) return;
-  const regions = nameRegions(prepared, assignment, countRegions(assignment), data);
+  const regions = nameRegions(prepared, assignment, countRegions(assignment), data).map((r) => ({
+    ...r,
+    name: names?.get(r.id) ?? r.name,
+  }));
   const split: CurrentSplit = {
     prepared,
     assignment,
@@ -88,6 +121,8 @@ export function describeSplit(topology = useSplitStore.getState().topology) {
   const manualNames: Record<number, string> = {};
   const solverRegions = split.regions.length - split.prepared.carved.length;
   split.prepared.carved.forEach((cma, i) => (manualNames[solverRegions + i] = cma.name));
+  if (split.source.kind === 'template' || split.prepared.spec.method === 'template')
+    split.regions.forEach((r) => (manualNames[r.id] = r.name));
   if (split.prepared.spec.method === 'seeded') {
     split.prepared.spec.capitalNames?.forEach((name, i) => {
       if (i < solverRegions) manualNames[i] = name;
@@ -231,14 +266,7 @@ export function currentPack() {
 }
 
 export function downloadPack() {
-  const pack = currentPack();
-  if (!pack) return;
-  const url = URL.createObjectURL(new Blob([JSON.stringify(pack)], { type: 'application/json' }));
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `meridian-${pack.meta.method}-${pack.regions.length}-seed${pack.meta.seed}.json`;
-  a.click();
-  URL.revokeObjectURL(url);
+  void exportCurrent('pack');
 }
 
 /** The share link for the current split: its pack id if it is an unedited preset, else its spec. */
@@ -272,16 +300,7 @@ export function nearestPlace(lng: number, lat: number) {
 
 /** The whole set as Markdown (vision §7), as a download. */
 export function downloadMarkdown() {
-  const { split } = useSplitStore.getState();
-  if (!split?.dossiers || !split.setAnalysis) return;
-  const title = split.source.kind === 'pack' ? split.source.id : `${split.regions.length} regions`;
-  const text = setMarkdown(split.setAnalysis, split.dossiers, title);
-  const url = URL.createObjectURL(new Blob([text], { type: 'text/markdown' }));
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `meridian-${title.replace(/\s+/g, '-')}.md`;
-  a.click();
-  URL.revokeObjectURL(url);
+  void exportCurrent('markdown');
 }
 
 /** Compare the current split with a preset, or with actual Canada. */
@@ -332,4 +351,230 @@ export function setDivider(divider: number) {
 
 export function stopComparing() {
   if (useSplitStore.getState().compare) useSplitStore.getState().set({ compare: null });
+}
+
+// --- Phase 5: import, export, the pack library, share links ---------------------------------------
+
+/**
+ * Whether a share link reproduces the split on screen. A link carries a spec (or a preset's id), so
+ * it cannot carry hand edits, an imported map, a re-fit, or an imported snap layer.
+ */
+export function shareability(split: CurrentSplit | null): { ok: true } | { ok: false; reason: string } {
+  if (!split) return { ok: false, reason: 'Generate or load a split first.' };
+  if (split.edits.length)
+    return { ok: false, reason: 'Edited by hand: download the pack or save it to keep the edits.' };
+  if (split.source.kind === 'template' || split.prepared.spec.method === 'template')
+    return { ok: false, reason: 'Made from an imported map, which a link cannot carry: download the pack.' };
+  if (split.source.kind === 'file' && split.source.refit)
+    return { ok: false, reason: 'Re-fitted from another mesh version: download the pack.' };
+  if (split.prepared.spec.snap.includes(IMPORTED_SNAP))
+    return { ok: false, reason: 'Snaps to an imported layer, which a link cannot carry: download the pack.' };
+  return { ok: true };
+}
+
+function title(split: CurrentSplit): string {
+  switch (split.source.kind) {
+    case 'pack':
+      return (
+        useSplitStore.getState().library?.packs.find((p) => p.id === (split.source as { id: string }).id)
+          ?.name ?? split.source.id
+      );
+    case 'file':
+    case 'template':
+      return split.source.name;
+    default:
+      return `${split.regions.length} regions`;
+  }
+}
+
+export async function exportCurrent(format: ExportFormat): Promise<void> {
+  const { split, data, topology } = useSplitStore.getState();
+  const pack = currentPack();
+  if (!split || !data || !topology || !pack) return;
+  try {
+    const input = exportInput(
+      {
+        title: title(split),
+        assignment: split.assignment,
+        regions: split.regions,
+        colours: split.colours,
+        dossiers: split.dossiers,
+        setAnalysis: split.setAnalysis,
+        pack,
+      },
+      data,
+      topology,
+    );
+    const file = await exportFile(input, format);
+    if (!file) {
+      useSplitStore
+        .getState()
+        .set({ notice: 'The dossiers are still being written; try again in a moment.' });
+      return;
+    }
+    saveFile(file, file.name);
+  } catch (err) {
+    useSplitStore.getState().set({ error: `export failed: ${message(err)}` });
+  }
+}
+
+/** Show a decoded pack made on this mesh: its own recipe when it has one, its cells as they are. */
+function showPack(pack: RegionPack, source: CurrentSplit['source']) {
+  const { data } = useSplitStore.getState();
+  if (!data) return;
+  const spec = specFromPack(pack);
+  const template = pack.meta.method === 'template';
+  const fromCells = () => preparedFromAssignment({ ...spec, n: pack.regions.length }, pack.assignment, data);
+  let prepared: PreparedSplit;
+  try {
+    // A recipe's own scope, carved metros included; a scope that needs context this page does not
+    // have (another pack's region) falls back to the cells the pack assigns.
+    prepared =
+      template || (source.kind === 'file' && source.refit)
+        ? fromCells()
+        : prepareSplit(spec, data, context());
+  } catch {
+    prepared = fromCells();
+  }
+  useSplitStore.getState().replaceSpec(spec);
+  // A template's names were chosen in the map it came from; anything else is named as it was generated.
+  show(
+    prepared,
+    pack.assignment,
+    source,
+    template ? new Map(pack.regions.map((r) => [r.id, r.name])) : undefined,
+  );
+  const split = useSplitStore.getState().split;
+  if (split && pack.meta.edits?.length) {
+    useSplitStore.getState().set({ split: { ...split, edits: pack.meta.edits } });
+  }
+}
+
+/** A pack from a file or the library. Another mesh version waits for the user's choice. */
+export async function importPack(json: unknown, name: string): Promise<void> {
+  await ensureSplitterData();
+  const { data } = useSplitStore.getState();
+  if (!data) return;
+  try {
+    const check = checkPack(json, data.meshVersion);
+    if (check.kind === 'other-mesh') {
+      useSplitStore
+        .getState()
+        .set({ pendingImport: { name, pack: check.pack, from: check.from, to: check.to } });
+      return;
+    }
+    showPack(check.pack, { kind: 'file', name, refit: null });
+    useSplitStore.getState().set({ pendingImport: null, error: null, notice: `Loaded ${name}.` });
+  } catch (err) {
+    useSplitStore.getState().set({ error: `${name}: ${message(err)}` });
+  }
+}
+
+/** The pending pack re-fitted onto this mesh by nearest cell centre (keeps edits and templates). */
+export async function refitPending(): Promise<void> {
+  const { pendingImport, data } = useSplitStore.getState();
+  if (!pendingImport || !data) return;
+  try {
+    const response = await fetch(`${MESH_ARCHIVE}mesh.${pendingImport.from}.json.gz`);
+    if (!response.ok)
+      throw new Error(`mesh ${pendingImport.from} is not available (HTTP ${response.status})`);
+    const old = JSON.parse(new TextDecoder().decode(await maybeGunzip(await response.arrayBuffer()))) as {
+      cells: { centroid: [number, number] }[];
+    };
+    const oldCentroids = Float64Array.from(old.cells.flatMap((c) => c.centroid));
+    const assignment = refitAssignment(oldCentroids, pendingImport.pack.assignment, data.arrays.centroids);
+    const pack = {
+      ...pendingImport.pack,
+      meta: { ...pendingImport.pack.meta, meshVersion: data.meshVersion },
+      assignment,
+    };
+    showPack(pack, { kind: 'file', name: pendingImport.name, refit: pendingImport.from });
+    useSplitStore.getState().set({
+      pendingImport: null,
+      notice: `Re-fitted ${pendingImport.name} from mesh ${pendingImport.from} onto ${data.meshVersion}.`,
+    });
+  } catch (err) {
+    useSplitStore.getState().set({ error: `re-fit failed: ${message(err)}` });
+  }
+}
+
+/** The pending pack regenerated from its seed and params on this mesh (unedited packs only). */
+export async function regeneratePending(): Promise<void> {
+  const { pendingImport, data } = useSplitStore.getState();
+  if (!pendingImport || !data) return;
+  const fit = fitPack(pendingImport.pack, data.meshVersion);
+  if (fit.kind !== 'regenerate' || pendingImport.pack.meta.method === 'template') {
+    useSplitStore
+      .getState()
+      .set({ error: `${pendingImport.name} has no recipe to rerun; re-fit it instead.` });
+    return;
+  }
+  useSplitStore.getState().set({ pendingImport: null });
+  useSplitStore.getState().replaceSpec(fit.spec);
+  await runCurrentSpec();
+}
+
+export type ImportUse = 'template' | 'snap' | 'scope';
+
+/** A GeoJSON or KML file as a template split, a snap layer, or the scope of the next run. */
+export async function importGeo(text: string, name: string, use: ImportUse): Promise<void> {
+  await ensureSplitterData();
+  const { data, topology } = useSplitStore.getState();
+  if (!data || !topology) return;
+  try {
+    const template = templateFromGeoJSON(parseGeoFile(text));
+    if (use === 'scope') {
+      useSplitStore.getState().setSpec({ scope: { kind: 'polygon', geometry: templateScope(template) } });
+      useSplitStore.getState().set({ notice: `The scope is now ${name}; run a split to use it.` });
+      return;
+    }
+    const assignment = assignByTemplate(template, data, topology);
+    if (use === 'snap') {
+      const { spec } = useSplitStore.getState();
+      useSplitStore.getState().set({ importedSnap: { name, edges: templateSnapEdges(assignment, data) } });
+      if (!spec.snap.includes(IMPORTED_SNAP))
+        useSplitStore.getState().setSpec({ snap: [...spec.snap, IMPORTED_SNAP] });
+      useSplitStore.getState().set({ notice: `${name} is a snap layer for the next run.` });
+      return;
+    }
+    // Template: region ids must be 0..k-1 for the split; keep the file's order.
+    const ids = [...new Set(template.regions.map((r) => r.id))].sort((a, b) => a - b);
+    const dense = new Map(ids.map((id, i) => [id, i]));
+    const cells = assignment.map((r) => (r < 0 ? -1 : (dense.get(r) ?? -1)));
+    if (!cells.some((r) => r >= 0)) throw new Error('the polygons cover no mesh cell');
+    const spec = {
+      ...useSplitStore.getState().spec,
+      method: 'template' as const,
+      n: ids.length,
+      scope: { kind: 'polygon' as const, geometry: templateScope(template) },
+    };
+    const names = new Map(template.regions.map((r) => [dense.get(r.id) ?? -1, r.name]));
+    show(preparedFromAssignment(spec, cells, data), cells, { kind: 'template', name }, names);
+    useSplitStore.getState().set({ notice: `${name}: ${ids.length} regions from the file.` });
+  } catch (err) {
+    useSplitStore.getState().set({ error: `${name}: ${message(err)}` });
+  }
+}
+
+export async function saveCurrentToLibrary(name: string): Promise<boolean> {
+  const pack = currentPack();
+  if (!pack) return false;
+  const result = await savePack(name, pack);
+  useSplitStore
+    .getState()
+    .set(
+      result.ok
+        ? { notice: `Saved ${name} in this browser.` }
+        : { error: `Could not save: ${result.reason}` },
+    );
+  return result.ok;
+}
+
+export async function loadFromLibrary(id: string, name: string): Promise<void> {
+  const result = await getSaved(id);
+  if (!result.ok) {
+    useSplitStore.getState().set({ error: `Could not load ${name}: ${result.reason}` });
+    return;
+  }
+  await importPack(result.value, name);
 }

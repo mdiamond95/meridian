@@ -84,6 +84,8 @@ export interface ScopeContext {
   atlas?: LoadedAtlas;
   /** for region scopes: the pack assignment the region id refers to */
   packAssignment?: Int32Array;
+  /** the imported snap layer's edge keys, when one is loaded */
+  importedSnap?: ReadonlySet<number>;
 }
 
 export interface PreparedSplit {
@@ -167,7 +169,30 @@ export function prepareSplit(spec: SplitSpec, data: SplitterData, context: Scope
     solveGraph,
     carved,
     params,
-    snap: snapEdges(solveGraph, spec.snap, data),
+    snap: snapEdges(solveGraph, spec.snap, data, context.importedSnap),
+  };
+}
+
+/**
+ * A prepared split for an assignment that no spec reproduces — a template drawn elsewhere, or a pack
+ * re-fitted from another mesh: the scope is simply the cells it assigns.
+ */
+export function preparedFromAssignment(
+  spec: SplitSpec,
+  assignment: Int32Array,
+  data: SplitterData,
+): PreparedSplit {
+  const mask = Uint8Array.from(assignment, (r) => (r >= 0 ? 1 : 0));
+  const graph = buildScopeGraph(data.arrays, mask);
+  return {
+    spec,
+    scopeMask: mask,
+    scopeGraph: graph,
+    solveMask: mask,
+    solveGraph: graph,
+    carved: [],
+    params: { ...defaultParams(spec.n, spec.method), n: spec.n, method: spec.method },
+    snap: undefined,
   };
 }
 

@@ -8,6 +8,7 @@ import {
   ensureSplitterData,
   loadPreset,
   runCurrentSpec,
+  shareability,
   shareLink,
 } from '../splitter/controller';
 import { GDP_CAVEAT } from '../schema/dossier';
@@ -592,6 +593,7 @@ function Result() {
   const setTool = useSplitStore((s) => s.setTool);
   const [copied, setCopied] = useState(false);
   if (!split) return null;
+  const share = shareability(split);
   const pops = split.regions.map((r) => r.population);
   const ratio = Math.min(...pops) > 0 ? Math.max(...pops) / Math.min(...pops) : Infinity;
 
@@ -657,6 +659,8 @@ function Result() {
         </button>
         <button onClick={downloadPack}>Download pack</button>
         <button
+          disabled={!share.ok}
+          title={share.ok ? 'Copy a link that reruns this split' : share.reason}
           onClick={() => {
             const link = shareLink();
             void navigator.clipboard?.writeText(link).then(() => setCopied(true));
@@ -666,11 +670,7 @@ function Result() {
           {copied ? 'Link copied' : 'Share link'}
         </button>
       </div>
-      {split.edits.length > 0 && (
-        <p className="hint">
-          A share link reproduces the split without edits; download the pack to keep them.
-        </p>
-      )}
+      {!share.ok && <p className="hint">{share.reason}</p>}
     </section>
   );
 }

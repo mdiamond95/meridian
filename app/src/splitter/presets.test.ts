@@ -25,7 +25,7 @@ import { decodeHash, encodeHash } from './url';
  * (plan Phase 3 Sitting B §6, amended). Regenerate with `npm run presets` and say why in the commit.
  */
 
-const PACKS = new URL('../../public/packs/', import.meta.url);
+const PACKS = new URL('../../../packs/', import.meta.url);
 const read = (file: string) => JSON.parse(readFileSync(new URL(file, PACKS), 'utf8')) as unknown;
 const fileFetch = (async (input: RequestInfo | URL) => {
   const name = String(input).split('/packs/')[1];
@@ -65,20 +65,20 @@ describe('shipped presets', () => {
   it.each(PRESETS.map((p) => [p.id, p] as const))(
     '%s regenerates from its recorded seed and params',
     (id, preset) => {
-      const pack = decodePack(read(`${id}.json`));
+      const pack = decodePack(read(`${id}.v1.json`));
       // The recipe in the pack is the preset's spec, and running it gives the committed assignment.
       expect(specFromPack(pack)).toEqual(JSON.parse(JSON.stringify(preset.spec)));
       // Regenerated exactly as `npm run presets` writes it: the split, its dossiers and its analysis.
       const rebuilt = buildPresetPack(preset, data, topo);
       expect(rebuilt.finished.assignment).toEqual(pack.assignment);
-      expect(rebuilt.pack).toEqual(read(`${id}.json`));
+      expect(rebuilt.pack).toEqual(read(`${id}.v1.json`));
       expect(rebuilt.dossiers.map((d) => d.name)).toEqual(pack.regions.map((r) => r.name));
     },
     60_000,
   );
 
   it('re-fits across mesh versions: exact on this mesh, regenerated from another, refused when edited', () => {
-    const pack = decodePack(read('alberta-15.json'));
+    const pack = decodePack(read('alberta-15.v1.json'));
     expect(fitPack(pack, data.meshVersion)).toEqual({ kind: 'exact' });
 
     const older = { ...pack, meta: { ...pack.meta, meshVersion: 'v0' } };
@@ -96,7 +96,7 @@ describe('shipped presets', () => {
   }, 60_000);
 
   it('canada-14 keeps every capital in its own region, with refinement on', () => {
-    const pack = decodePack(read('canada-14.json'));
+    const pack = decodePack(read('canada-14.v1.json'));
     const spec = specFromPack(pack);
     expect(spec.iterations).toBeGreaterThan(0);
     const cellAt = ([lng, lat]: [number, number]) => {
@@ -139,7 +139,7 @@ describe('shipped presets', () => {
   });
 
   it('packs record edits and the edited flag', () => {
-    const pack = decodePack(read('canada-14.json'));
+    const pack = decodePack(read('canada-14.v1.json'));
     const spec = specFromPack(pack);
     const { finished } = runSplit(spec, data);
     const assignment = Int32Array.from(finished.assignment);

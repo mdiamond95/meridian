@@ -680,3 +680,70 @@ river regions already came from a cache in `data/raw/.cache`.
   `data/raw/.cache/c1w-reaches-*.json.gz` and rebuild, and the new file must hash to the committed
   value. A new Canada1Water release changes the manifest SHA-256, so the key, so the file name: it can
   never be satisfied by a stale cache.
+
+## 2026-09-24 — Phase 5: export, import, interoperability
+
+### Shared packs
+- **Location: a top-level `packs/` folder in this repo,** each pack named `<slug>.<meshVersion>.json`
+  (`alberta-15.v1.json`), listed in `packs/index.json`. The three presets moved there from
+  `app/public/packs/`. The app fetches them by the relative URL `packs/<file>`: a small Vite plugin
+  serves the folder in dev and copies it into the build. Other projects use raw.githubusercontent.com
+  URLs, on `main` or pinned to a tag (docs/interop.md).
+- **The RegionPack v1 contract, its versioning rules and migrations live in `docs/interop.md`.** New
+  rules: a new mesh is a new `meshVersion` whose files sit beside the old ones, which are never
+  deleted; pack names carry the mesh version; consumers check `meshVersion` before drawing.
+- **The interop example draws a pack with the pack and `cells.<meshVersion>.topojson.gz` only:**
+  `topojson.merge` dissolves each region's cells. No per-pack GeoJSON has to be kept in step.
+
+### Export (`app/src/export/`, the Files tab)
+- **Region geometry is dissolved from the hex topology by arcs:** a region's boundary is the arcs its
+  cells use once; on a hex mesh every vertex has zero or two of them, so they chain into simple rings.
+  Holes are found by nesting (a ring inside an odd number of the region's other rings), not by walk
+  order, and rings are wound by the right-hand rule, so geojsonhint passes with no messages.
+- **An arc a region uses twice is interior, and a ring with no area is dropped.** The cell topology
+  stores a few edges as two identical arcs; walked, they made zero-area spikes that geojsonhint rejected.
+- **TopoJSON reuses the cell topology's arcs** (re-indexed, same quantization), so a border between
+  two regions is one arc.
+- **GeoJSON, TopoJSON and KML carry flat headline fields** (`regionId`, `name`, `capital`,
+  `population`, `areaKm2`, GDP with its caveat, …) plus the whole dossier where the format allows it.
+- **KML layout:** styles, then a folder per region (its polygon, and its capital as a pin), then a
+  folder of dividing lines, one placemark per pair of neighbours. The capital pin is the gazetteer
+  place of the capital's name inside the region.
+- **SVG** is drawn in Statistics Canada Lambert (EPSG:3347's parameters on the sphere), with labels at
+  the region's cell nearest its mean centre, a legend with populations, a scale bar true at the map's
+  centre latitude, a date stamp (made, atlas date, mesh, seed) and the Open Government Licence
+  attribution. **PNG** is the SVG drawn onto a canvas at twice its size.
+- **Markdown follows the Region panel:** `dossier/fields.ts` lists the facts in order, and the panel
+  and the Markdown both render that list; a test walks the rendered panel and finds every block in the
+  Markdown in the same order, with the same number of ⟨draft⟩ marks. The panel gained the one fact
+  only the Markdown had (mean distance to the provincial capital).
+
+### Import (`app/src/import/`)
+- **A pack from another mesh is re-fitted or regenerated, the user's choice.** Re-fit gives each cell
+  of this mesh the region of the old mesh's nearest cell centre (within 30 km); it keeps hand edits and
+  template splits, and needs the old mesh, fetched from `data/build/` on GitHub. Regenerating reruns
+  the recipe, which only an unedited pack has.
+- **GeoJSON and KML import by majority overlap,** sampled: a cell's centre and six points 60% of the
+  way to its corners. A cell mostly outside the polygons stays out; otherwise it goes to the polygon
+  holding most samples. KML goes through @tmcw/togeojson, whose GeometryCollections (a MultiGeometry
+  of several polygons) are read as one region.
+- **An imported map can also be a snap layer** (edges whose cells fall on different sides) or **a
+  scope** (the polygons' union as a `polygon` scope). The snap layer is session-only.
+- **A template split has `method: "template"` and no recipe:** its names are kept as chosen names, and
+  it has no share link.
+
+### Save, load and share
+- **The pack library is IndexedDB, and every call returns a value, never throws.** With storage missing
+  or refused, the Files tab says so and offers downloads; the rest of the page is unaffected (unit test
+  with IndexedDB absent or throwing; smoke test with `window.indexedDB` throwing).
+- **Share links only for splits a link can reproduce:** not after hand edits, not for template or
+  re-fitted splits, not with an imported snap layer. The button is disabled with the reason.
+
+### Tests that replace the manual gate
+- KML validates against the vendored OGC KML 2.2 schema (`xmllint-wasm`, offline; the xAL import points
+  at the local copy) and re-parses through @tmcw/togeojson to the original cells, for alberta-15 and
+  canada-26. GeoJSON passes geojsonhint; GeoJSON, TopoJSON and the pack come back as the same cells.
+- Re-fit: a synthetic v2 mesh (1% of cells dropped, 1% added between neighbours, every centre moved by
+  up to 2 km, cells reordered) keeps over 98% of alberta-15's population in the same region.
+- The docs/interop.md snippet runs as written in Playwright, its network served from this checkout,
+  and draws one layer per region with the region's name on hover.
