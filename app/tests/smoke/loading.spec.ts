@@ -20,7 +20,9 @@ test('the first view fetches the atlas and nothing the splitter or other layers 
 
   await page.getByTestId('generate-tab').click();
   await expect(page.getByTestId('generate')).toBeVisible({ timeout: 60_000 });
-  expect(fetched.filter((u) => LAZY.test(u)).length).toBe(5);
+  // Five artefacts. The worker asks for the same five after the page has them (1.0.1), which the
+  // browser's cache (or on Pages the service worker) answers: distinct URLs, not downloads, are five.
+  await expect.poll(() => new Set(fetched.filter((u) => LAZY.test(u))).size).toBe(5);
 });
 
 test('the second open of the splitter reads the decoded data from IndexedDB', async ({ page }) => {

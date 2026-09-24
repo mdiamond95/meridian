@@ -282,3 +282,66 @@ JS heap after a forced GC, and the renderer process's RSS, which includes the so
 ```sh
 npm run build && npm run frame-time -w app   # frame-time.spec.ts and split.spec.ts, one at a time
 ```
+
+## Release 1.0.1: a split lands without blocking the main thread (2026-09-24)
+
+**The target (brief):** no main-thread task over 50 ms when a 30-region split of Canada lands.
+
+**Before (1.0.0):** 768 ms (desktop) and 824 ms (iPad viewport) in one task. Most of it was the
+dossiers, the set analysis and the ring dissolve, all on the main thread; the scope graph added
+300 ms on the first run of a scope.
+
+### What moved, and what was split up
+1. **The worker does everything after the scope** (`src/engine/protocol.ts`, `src/splitter/land.ts`).
+   - It loads its own copy of the splitter data and the cell topology (`load`).
+   - For a run (`land`) it prepares the split from the scope mask, solves it, names and colours the
+     regions, and writes the dossiers, the set analysis and the scores. It also dissolves the rings
+     and hashes the node id.
+   - The main thread computes only the scope mask, which needs the atlas or a parent pack.
+   - Splits made elsewhere (presets, files, trees) are described in the worker too (`describe`).
+2. **The rings cross as four typed arrays and are transferred.** Nested arrays would be about 100,000
+   small arrays for the main thread to deserialize.
+3. **The main thread's remaining work is spread over separate tasks:**
+   - receiving the message;
+   - React's commit;
+   - fitting the map;
+   - building and drawing the regions (decoding the rings, about 3–9 ms, happens here).
+4. **The fit is skipped when the split is already in view at about the zoom a fit would choose.**
+   Moving the map re-projects every path on it in one task, 40–55 ms on the iPad layout. For a split
+   of Canada the map already shows Canada. When the map does have to move, that one task remains.
+5. **The page only reads the IndexedDB cache; the worker writes it.** A put serializes about 17 MB
+   synchronously, and a page-side write had landed in the middle of a run (648 ms).
+
+### Measured (`tests/perf/split.spec.ts`, now asserting < 50 ms)
+Long tasks from the Run click until the regions are drawn. The long-task observer reports tasks of
+50 ms and over; the long-animation-frame observer reports frames over 50 ms with their scripts.
+
+| Run | desktop | iPad viewport |
+|---|---|---|
+| Longest main-thread task, 1.0.0 | 768 ms | 824 ms |
+| **Longest main-thread task, 1.0.1** (four runs each, on the final code) | **none over 50 ms** | **none over 50 ms** |
+| Run to legend | 2.4–3.4 s | 2.5–3.0 s |
+| Slider under the split, step max | 2.3 ms | 13.5 ms |
+
+Profiled on an unminified build, the landing's main-thread work is now:
+- the commit, 20–40 ms;
+- the draw, about 33 ms (ring decode 2.5, polygons 12, adding to the map 19);
+- the fit, 40–55 ms, only when the map has to move.
+
+### Memory: the worker's copy
+- The worker holds its own splitter data and cell topology, so the renderer, which includes the
+  worker, holds more than in 1.0.0:
+  - about 870 MB under iPad emulation once it levels off, measured with GC forced in the page and
+    the worker over 12 runs;
+  - against about 690 MB in 1.0.0.
+- The page's JS heap is lower: 104 MB against 117 MB, because the dossiers are no longer built there.
+- Without forced GC the worker collects lazily and RSS creeps about 9 MB per run. With forced GC it
+  is flat from run 7, so this is not a leak.
+- Sharing the typed arrays between the page and the worker, instead of decoding them twice, is in
+  `docs/backlog.md`.
+
+### Downloads
+The worker's `load` is sent once the page has its own copy, so the worker's requests for the same
+five files are answered from cache, not downloaded again. On Pages the files are served with
+`max-age=600`, and the service worker precaches them; on the local preview they are 304s. The
+loading smoke test counts distinct URLs.

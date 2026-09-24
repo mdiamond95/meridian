@@ -6,6 +6,7 @@ import { AtlasFileSchema } from '../../schema/atlas';
 import { PlacesFileSchema, SnapFileSchema } from '../../schema/places';
 import { TopologySchema } from '../../schema/topojson';
 import { splitterData, type AttrsWire, type MeshWire, type SplitterData } from '../data';
+import { cellTopology, type CellTopology } from '../outline';
 
 const BUILD = new URL('../../../../data/build/', import.meta.url);
 
@@ -34,4 +35,12 @@ export function realAtlas(): LoadedAtlas {
     TopologySchema.parse(readGz('atlas.v1.topojson.gz')),
   );
   return atlasCache;
+}
+
+let topologyCache: CellTopology | null = null;
+
+/** The committed hex topology, for rings and borders in tests. */
+export function realCellTopology(): CellTopology {
+  topologyCache ??= cellTopology(TopologySchema.parse(readGz('cells.v1.topojson.gz')));
+  return topologyCache;
 }

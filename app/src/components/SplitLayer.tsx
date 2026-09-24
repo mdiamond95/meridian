@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef } from 'react';
 import L from 'leaflet';
 import { nearestPlace, paintCell } from '../splitter/controller';
-import { cellLocator, regionRings } from '../splitter/outline';
+import { cellLocator, decodeRings, regionRings, type LatLngRing } from '../splitter/outline';
 import { REGION_FILL_OPACITY } from '../splitter/palette';
 import { useSplitStore } from '../state/splitStore';
 
@@ -36,86 +36,149 @@ export function SplitLayer({ map }: { map: L.Map }) {
     () => (compare && topology ? regionRings(topology, compare.assignment) : null),
     [compare, topology],
   );
-  const rings = useMemo(
-    () => (split && topology ? regionRings(topology, split.assignment) : null),
-    [split, topology],
-  );
+  // Rings the worker dissolved come with the split; a painted or main-thread split is dissolved here.
+  // Decoded on first use, inside the tasks below, not while React renders (release 1.0.1).
+  const ringsOf = useMemo(() => {
+    let cached: Map<number, LatLngRing[]> | null | undefined;
+    return () =>
+      (cached ??= split?.rings
+        ? decodeRings(split.rings)
+        : split && topology
+          ? regionRings(topology, split.assignment)
+          : null);
+  }, [split, topology]);
 
-  // Fit the map to a new split's scope (a new prepared split, not a painted cell).
+  // Fit the map to a new split's scope (a new prepared split, not a painted cell). In its own task,
+  // after the commit that stored the split: changing the view re-projects every path on the map, and
+  // the main thread must not hold a landing split for more than 50 ms at a time (release 1.0.1).
   const fitted = useRef<unknown>(null);
   useEffect(() => {
-    if (!split || !rings || fitted.current === split.prepared) return;
+    if (!split || fitted.current === split.prepared) return;
     fitted.current = split.prepared;
-    const bounds = L.latLngBounds([]);
-    for (const shape of rings.values())
-      for (const ring of shape) for (const point of ring) bounds.extend(point);
-    // Keep the scope clear of the panel (right on wide screens, a sheet below on iPad), as MapView does.
-    const narrow = window.matchMedia('(max-width: 1024px)').matches;
-    const padding: L.FitBoundsOptions = narrow
-      ? { paddingTopLeft: [16, 60], paddingBottomRight: [16, 150] }
-      : { paddingTopLeft: [60, 16], paddingBottomRight: [396, 110] };
-    if (bounds.isValid()) map.fitBounds(bounds, { ...padding, maxZoom: 8 });
-  }, [map, split, rings]);
-
-  // Regions and their names.
-  useEffect(() => {
-    if (!split || !rings || !data) return;
-    if (!map.getPane(PANE)) map.createPane(PANE).style.zIndex = '450';
-    renderer.current ??= L.canvas({ pane: PANE, padding: 0.5 });
-    const group = L.featureGroup();
-    for (const region of split.regions) {
-      const shape = rings.get(region.id);
-      if (!shape) continue;
-      const isSelected = selected === region.id;
-      const polygon = L.polygon(shape, {
-        renderer: renderer.current,
-        pane: PANE,
-        color: '#1f2328',
-        weight: isSelected ? 3 : 1.2,
-        opacity: 0.9,
-        fillColor: split.colours[region.id],
-        fillOpacity: isSelected ? REGION_FILL_OPACITY + 0.18 : REGION_FILL_OPACITY,
-        fillRule: 'evenodd',
-        interactive: tool === 'none',
-      });
-      polygon.bindTooltip(
-        `<strong>${escapeHtml(region.name)}</strong><br>${fmt.format(region.population)} people · ` +
-          `${fmt.format(Math.round(region.areaKm2))} km²` +
-          (region.gdp !== null
-            ? `<br>GDP ≈ $${fmt.format(Math.round(region.gdp))} M (estimate, allocated)`
-            : '') +
-          `<br>compactness ${region.compactness.toFixed(2)}${region.pieces > 1 ? ` · ${region.pieces} pieces` : ''}`,
-        { sticky: true },
-      );
-      polygon.on('click', () => useSplitStore.getState().selectRegion(isSelected ? null : region.id));
-      group.addLayer(polygon);
-
-      const place = data.places
-        .filter((p) => split.assignment[p.cell] === region.id)
-        .reduce<(typeof data.places)[number] | null>(
-          (best, p) => (!best || p.population > best.population ? p : best),
-          null,
-        );
-      if (place) {
-        group.addLayer(
-          L.marker([place.lat, place.lng], {
-            pane: PANE,
-            interactive: false,
-            keyboard: false,
-            icon: L.divIcon({
-              className: 'region-label',
-              html: `<span>${escapeHtml(region.name)}</span>`,
-              iconSize: [0, 0],
-            }),
-          }),
-        );
+    const task = window.setTimeout(function fitSplit() {
+      let south = Infinity;
+      let west = Infinity;
+      let north = -Infinity;
+      let east = -Infinity;
+      const extend = (lat: number, lng: number) => {
+        if (lat < south) south = lat;
+        if (lat > north) north = lat;
+        if (lng < west) west = lng;
+        if (lng > east) east = lng;
+      };
+      // The worker's flat coordinates when there are some: no rings are decoded in this task.
+      if (split.rings) {
+        const { coords } = split.rings;
+        for (let i = 0; i < coords.length; i += 2) extend(coords[i], coords[i + 1]);
+      } else {
+        for (const shape of ringsOf()?.values() ?? [])
+          for (const ring of shape) for (const [lat, lng] of ring) extend(lat, lng);
       }
+      if (!(south <= north)) return;
+      // Keep the scope clear of the panel (right on wide screens, a sheet below on iPad), as MapView does.
+      const narrow = window.matchMedia('(max-width: 1024px)').matches;
+      const padding: L.FitBoundsOptions = narrow
+        ? { paddingTopLeft: [16, 60], paddingBottomRight: [16, 150] }
+        : { paddingTopLeft: [60, 16], paddingBottomRight: [396, 110] };
+      const bounds = L.latLngBounds([south, west], [north, east]);
+      // Moving the map re-projects every path on it in one task (about 40–55 ms on the iPad layout),
+      // so the view only moves when the split is not already in it at about the zoom a fit would pick.
+      const target = Math.min(
+        8,
+        map.getBoundsZoom(
+          bounds,
+          false,
+          L.point(padding.paddingTopLeft as L.PointTuple).add(padding.paddingBottomRight as L.PointTuple),
+        ),
+      );
+      const topLeft = map.containerPointToLatLng(padding.paddingTopLeft as L.PointTuple);
+      const size = map.getSize();
+      const [right, bottom] = padding.paddingBottomRight as L.PointTuple;
+      const bottomRight = map.containerPointToLatLng([size.x - right, size.y - bottom]);
+      const inView = L.latLngBounds(topLeft, bottomRight).contains(bounds);
+      if (inView && Math.abs(map.getZoom() - target) < 0.75) return;
+      map.fitBounds(bounds, { ...padding, maxZoom: 8 });
+    });
+    return () => window.clearTimeout(task);
+  }, [map, split, ringsOf]);
+
+  // Regions and their names, built and drawn in a task of their own after the fit above, so the
+  // paths are projected once, at the new view. The previous drawing stays until this one is on the
+  // map, so a selection or a painted cell never flashes an empty map.
+  const drawn = useRef<L.FeatureGroup | null>(null);
+  useEffect(() => {
+    if (!split || !data) {
+      drawn.current?.remove();
+      drawn.current = null;
+      return;
     }
-    group.addTo(map);
-    return () => {
-      group.remove();
-    };
-  }, [map, split, rings, data, selected, tool]);
+    const task = window.setTimeout(function drawSplit() {
+      const rings = ringsOf();
+      if (!rings) return;
+      if (!map.getPane(PANE)) map.createPane(PANE).style.zIndex = '450';
+      renderer.current ??= L.canvas({ pane: PANE, padding: 0.5 });
+      const group = L.featureGroup();
+      for (const region of split.regions) {
+        const shape = rings.get(region.id);
+        if (!shape) continue;
+        const isSelected = selected === region.id;
+        const polygon = L.polygon(shape, {
+          renderer: renderer.current,
+          pane: PANE,
+          color: '#1f2328',
+          weight: isSelected ? 3 : 1.2,
+          opacity: 0.9,
+          fillColor: split.colours[region.id],
+          fillOpacity: isSelected ? REGION_FILL_OPACITY + 0.18 : REGION_FILL_OPACITY,
+          fillRule: 'evenodd',
+          interactive: tool === 'none',
+        });
+        polygon.bindTooltip(
+          `<strong>${escapeHtml(region.name)}</strong><br>${fmt.format(region.population)} people · ` +
+            `${fmt.format(Math.round(region.areaKm2))} km²` +
+            (region.gdp !== null
+              ? `<br>GDP ≈ $${fmt.format(Math.round(region.gdp))} M (estimate, allocated)`
+              : '') +
+            `<br>compactness ${region.compactness.toFixed(2)}${region.pieces > 1 ? ` · ${region.pieces} pieces` : ''}`,
+          { sticky: true },
+        );
+        polygon.on('click', () => useSplitStore.getState().selectRegion(isSelected ? null : region.id));
+        group.addLayer(polygon);
+
+        const place = data.places
+          .filter((p) => split.assignment[p.cell] === region.id)
+          .reduce<(typeof data.places)[number] | null>(
+            (best, p) => (!best || p.population > best.population ? p : best),
+            null,
+          );
+        if (place) {
+          group.addLayer(
+            L.marker([place.lat, place.lng], {
+              pane: PANE,
+              interactive: false,
+              keyboard: false,
+              icon: L.divIcon({
+                className: 'region-label',
+                html: `<span>${escapeHtml(region.name)}</span>`,
+                iconSize: [0, 0],
+              }),
+            }),
+          );
+        }
+      }
+      group.addTo(map);
+      drawn.current?.remove();
+      drawn.current = group;
+    });
+    return () => window.clearTimeout(task);
+  }, [map, split, ringsOf, data, selected, tool]);
+  useEffect(
+    () => () => {
+      drawn.current?.remove();
+      drawn.current = null;
+    },
+    [map],
+  );
 
   // Pinned places and the group being picked.
   useEffect(() => {

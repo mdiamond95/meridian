@@ -96,4 +96,12 @@ describe('splitter data cache', () => {
       delete (globalThis as { indexedDB?: unknown }).indexedDB;
     }
   }, 60_000);
+
+  it('leaves the cache alone when asked not to write (the page; the worker writes)', async () => {
+    const cache = memoryCache();
+    const { source } = await loadSplitterData(urls, counting().fetchImpl, cache, { write: false });
+    expect(source).toBe('network');
+    await Promise.resolve();
+    expect(cache.entries.size).toBe(0);
+  }, 60_000);
 });

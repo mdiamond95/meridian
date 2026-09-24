@@ -127,13 +127,19 @@ export async function loadSplitterData(
   urls: SplitterUrls,
   fetchImpl: typeof fetch = fetch,
   cache: DecodedCache<SplitterData> | null = sharedCache(),
+  /**
+   * Whether to write the cache after decoding. IndexedDB serializes a put synchronously (about
+   * 17 MB here, hundreds of milliseconds), so the page leaves the writing to the worker, which loads
+   * the same data in parallel (release 1.0.1).
+   */
+  { write = true }: { write?: boolean } = {},
 ): Promise<{ data: SplitterData; source: SplitterDataSource }> {
   const key = splitterCacheKey(urls);
   const cached = await cache?.get(key);
   if (cached) return { data: cached, source: 'cache' };
   const data = await fetchSplitterData(urls, fetchImpl);
   // Written in the background: a refused write only means the next open decodes again.
-  void cache?.put(key, data);
+  if (write) void cache?.put(key, data);
   return { data, source: 'network' };
 }
 

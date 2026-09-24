@@ -1,8 +1,5 @@
 import { resolvedAt } from '../atlas/resolve';
-import { buildDossiers, buildSetAnalysis } from '../dossier/dossier';
-import { regionScores } from '../dossier/score';
 import { SolverClient } from '../engine/client';
-import type { Columns } from '../engine/solver';
 import { useAtlasStore } from '../state/atlasStore';
 import { useSplitStore, type CurrentSplit, type NestNode } from '../state/splitStore';
 import { CELLS_URL, SPLITTER_URLS } from './assets';
@@ -11,14 +8,8 @@ import { actualCanada, compareSplits, type ComparableSplit } from './compare';
 import { buildPack, fitPack, loadLibrary, loadPack, specFromPack } from './pack';
 import { regionColours } from './palette';
 import { cellTopology } from './outline';
-import {
-  finishSplit,
-  nameRegions,
-  prepareSplit,
-  preparedFromAssignment,
-  type PreparedSplit,
-  type SplitSpec,
-} from './split';
+import { manualNamesFor } from './land';
+import { nameRegions, prepareSplit, preparedFromAssignment, scopeOf, type PreparedSplit } from './split';
 import { encodeHash } from './url';
 import { assembleTree, childrenOf, flattenTree, packId, parentOf, pathTo, subtree } from './tree';
 import { useUiStore } from '../state/uiStore';
@@ -59,11 +50,20 @@ export function ensureSplitterData(): Promise<void> {
   if (store.dataStatus === 'ready') return Promise.resolve();
   if (loading) return loading;
   store.set({ dataStatus: 'loading', error: null });
-  loading = Promise.all([loadSplitterData(SPLITTER_URLS), loadCellTopology(CELLS_URL), loadLibrary(BASE)])
+  loading = Promise.all([
+    // Read-only here: the worker writes the cache, off the main thread.
+    loadSplitterData(SPLITTER_URLS, fetch, undefined, { write: false }),
+    loadCellTopology(CELLS_URL),
+    loadLibrary(BASE),
+  ])
     .then(([{ data, source }, topology, library]) => {
       useSplitStore
         .getState()
         .set({ data, dataSource: source, topology: cellTopology(topology), library, dataStatus: 'ready' });
+      // The worker loads its own copy once the page has its own, so its requests are answered by the
+      // browser's cache or the service worker, not downloaded twice (release 1.0.1). It prepares,
+      // solves and describes splits; a run sent before it is ready waits for it.
+      loadWorker();
     })
     .catch((err: unknown) => {
       console.error(err);
@@ -98,11 +98,23 @@ function context() {
   };
 }
 
-/** The columns a run reads, so the worker is not sent all eighty. */
-function neededColumns(spec: SplitSpec, columns: Columns): Columns {
-  const names = new Set(['population', 'gdp_estimate', ...Object.keys(spec.lens)]);
-  if (spec.balance && !['cells', 'area'].includes(spec.balance)) names.add(spec.balance);
-  return Object.fromEntries([...names].filter((n) => columns[n]).map((n) => [n, columns[n]]));
+// Absolute URLs: inside the worker a relative one would resolve against the worker's own script.
+function loadWorker() {
+  const absolute = (url: string) => new URL(url, location.href).href;
+  worker().load(
+    {
+      mesh: absolute(SPLITTER_URLS.mesh),
+      attrs: absolute(SPLITTER_URLS.attrs),
+      places: absolute(SPLITTER_URLS.places),
+      snap: absolute(SPLITTER_URLS.snap),
+    },
+    absolute(CELLS_URL),
+  );
+}
+
+function worker(): SolverClient {
+  client ??= SolverClient.create();
+  return client;
 }
 
 function show(
@@ -121,7 +133,7 @@ function show(
   useSplitStore
     .getState()
     .set({ split, selectedRegion: null, ...placeInTree(split, id ?? nodeIdFor(split)) });
-  if (topology) describeSplit(topology);
+  if (topology) describeSplit();
 }
 
 function makeSplit(
@@ -295,7 +307,7 @@ function loadChildren(root: Pick<RegionPackWire, 'meta' | 'children'>, rootId: s
       prepared,
       assignment,
       { kind: 'file', name: wire.meta.id ?? 'child', refit: null },
-      undefined,
+      new Map(wire.regions.map((r) => [r.id, r.name])),
       wire.meta.scenario ?? null,
     );
     const id = wire.meta.id ?? packId(spec, assignment);
@@ -311,52 +323,35 @@ function loadChildren(root: Pick<RegionPackWire, 'meta' | 'children'>, rootId: s
  * drawn: walking every region's boundary takes a moment on a 26-region Canada, and the map should not
  * wait for prose.
  */
-export function describeSplit(topology = useSplitStore.getState().topology) {
+/**
+ * Write the dossiers, set analysis and scores for the current split, in the worker (release 1.0.1).
+ * The split is shown at once with its solver-stage names; the dossiers' names replace them when they
+ * arrive, unless a newer split has replaced it by then.
+ */
+export function describeSplit() {
   const { split, data } = useSplitStore.getState();
-  if (!split || !data || !topology) return;
-  // Names that were chosen rather than generated: a seeded region's capital, and every carved metro.
-  const manualNames: Record<number, string> = {};
-  const solverRegions = split.regions.length - split.prepared.carved.length;
-  split.prepared.carved.forEach((cma, i) => (manualNames[solverRegions + i] = cma.name));
-  if (split.source.kind === 'template' || split.prepared.spec.method === 'template')
-    split.regions.forEach((r) => (manualNames[r.id] = r.name));
-  if (split.prepared.spec.method === 'seeded') {
-    split.prepared.spec.capitalNames?.forEach((name, i) => {
-      if (i < solverRegions) manualNames[i] = name;
+  if (!split || !data) return;
+  const manualNames = manualNamesFor(split.prepared, split.regions, split.source.kind === 'template');
+  worker()
+    .describe(split.prepared, split.assignment, split.regions, manualNames)
+    .then(({ dossiers, setAnalysis, scores, names }) => {
+      const current = useSplitStore.getState().split;
+      // A newer split, or a painted edit, arrived while this one was being described.
+      if (current !== split) return;
+      useSplitStore.getState().set({
+        split: {
+          ...split,
+          dossiers,
+          setAnalysis,
+          scores,
+          regions: split.regions.map((region, i) => ({ ...region, name: names[i] ?? region.name })),
+        },
+      });
+    })
+    .catch((err: unknown) => {
+      console.error(err);
+      if (useSplitStore.getState().split === split) useSplitStore.getState().set({ error: message(err) });
     });
-  }
-  const input = {
-    data,
-    topo: topology,
-    prepared: split.prepared,
-    assignment: split.assignment,
-    regionCount: split.regions.length,
-    manualNames,
-  };
-  const { dossiers, aggregates, names } = buildDossiers(input);
-  const setAnalysis = buildSetAnalysis({
-    ...input,
-    aggregates,
-    names,
-    pieces: split.regions.map((r) => r.pieces),
-  });
-  const scores = regionScores({
-    data,
-    prepared: split.prepared,
-    assignment: split.assignment,
-    aggregates,
-    dossiers,
-  });
-  if (useSplitStore.getState().split !== split) return; // a newer split arrived while this one was described
-  useSplitStore.getState().set({
-    split: {
-      ...split,
-      dossiers,
-      setAnalysis,
-      scores,
-      regions: split.regions.map((region, i) => ({ ...region, name: dossiers[i]?.name ?? region.name })),
-    },
-  });
 }
 
 function countRegions(assignment: Int32Array) {
@@ -377,25 +372,45 @@ export async function runCurrentSpec(): Promise<void> {
         null
       : store.spec.date;
   const spec = { ...store.spec, date };
-  let prepared: PreparedSplit;
+  // Only the scope is computed here (it may need the atlas or the parent pack); the worker prepares,
+  // solves, names, colours and describes the split, and dissolves its rings (release 1.0.1).
+  const { atlas, packAssignment, importedSnap } = context();
+  let scope: Uint8Array;
   try {
-    prepared = prepareSplit(spec, data, context());
+    scope = scopeOf(spec, data, { atlas, packAssignment });
   } catch (err) {
     store.set({ error: message(err) });
     return;
   }
-  client ??= SolverClient.create();
-  client.init(data.arrays, neededColumns(spec, data.columns));
   store.set({ running: true, progress: null, error: null, spec });
-  const run = client.run(prepared.solveMask, prepared.params, spec.seed, {
-    snapEdges: prepared.snap,
+  const run = worker().land(spec, scope, {
+    importedSnap,
     onProgress: (progress) => useSplitStore.getState().set({ progress }),
   });
   currentRun = run;
   try {
-    const result = await run.result;
-    const finished = finishSplit(prepared, result, data);
-    show(prepared, finished.assignment, { kind: 'run' });
+    const { prepared, landed } = await run.result;
+    // Receiving the message (structured clone) and React's commit go in separate tasks, so neither
+    // holds the main thread long (release 1.0.1; the drawing and the fit have tasks of their own).
+    await new Promise<void>((resolve) =>
+      setTimeout(function commitSplit() {
+        resolve();
+      }),
+    );
+    const split: CurrentSplit = {
+      prepared,
+      assignment: landed.assignment,
+      regions: landed.regions,
+      colours: landed.colours,
+      edits: [],
+      source: { kind: 'run' },
+      dossiers: landed.dossiers,
+      setAnalysis: landed.setAnalysis,
+      scores: landed.scores,
+      scenario: useAtlasStore.getState().scenario?.scenario ?? null,
+      rings: landed.rings,
+    };
+    useSplitStore.getState().set({ split, selectedRegion: null, ...placeInTree(split, landed.nodeId) });
     // A nested split needs its parent's cells, which a link cannot carry.
     if (spec.scope.kind !== 'region') history.replaceState(null, '', encodeHash({ kind: 'split', spec }));
   } catch (err) {
@@ -434,7 +449,12 @@ export async function loadPreset(id: string): Promise<void> {
       const split = useSplitStore.getState().split;
       if (split) useSplitStore.getState().set({ split: { ...split, source: { kind: 'pack', id, fit } } });
     } else {
-      show(prepareSplit(spec, data, context()), pack.assignment, { kind: 'pack', id, fit });
+      show(
+        prepareSplit(spec, data, context()),
+        pack.assignment,
+        { kind: 'pack', id, fit },
+        new Map(pack.regions.map((r) => [r.id, r.name])),
+      );
     }
     history.replaceState(null, '', encodeHash({ kind: 'pack', id }));
   } catch (err) {
@@ -461,6 +481,8 @@ export function paintCell(cell: number) {
       dossiers: null,
       setAnalysis: null,
       scores: null,
+      // The worker's rings are for the old assignment; the map dissolves the painted one itself.
+      rings: undefined,
     },
   });
 }
@@ -666,14 +688,10 @@ function showPack(pack: RegionPack, source: CurrentSplit['source']) {
     prepared = fromCells();
   }
   useSplitStore.getState().replaceSpec(spec);
-  // A template's names were chosen in the map it came from; anything else is named as it was generated.
-  show(
-    prepared,
-    pack.assignment,
-    source,
-    template ? new Map(pack.regions.map((r) => [r.id, r.name])) : undefined,
-    pack.meta.id,
-  );
+  // The pack's names are shown at once. A template's were chosen in the map it came from and stay; any
+  // other pack's are the names its dossiers were written with, and the worker's dossiers confirm them
+  // (1.0.1: describing is asynchronous, so without this the legend would first show solver names).
+  show(prepared, pack.assignment, source, new Map(pack.regions.map((r) => [r.id, r.name])), pack.meta.id);
   const split = useSplitStore.getState().split;
   if (split && pack.meta.edits?.length) {
     useSplitStore.getState().set({ split: { ...split, edits: pack.meta.edits } });
