@@ -156,3 +156,125 @@ about 1 GB. Browser tests therefore run strictly one at a time:
 - Order when checking by hand: `make verify` first, alone; then pytest; then `npm run build` (which
   exits); then `npm run smoke`; then `npm run determinism`. Never the build, the preview server and a
   browser engine at the same time, and never a browser run during `make verify`.
+
+## Phase 7: event crossings, a 30-region split, memory (2026-09-24)
+
+All numbers from `npm run frame-time -w app` after `npm run build`, on the Codespace in headless
+Chromium, with the editor open. "iPad" is the 820×1180 touch viewport; the memory rows use
+Playwright's full iPad Pro 11 descriptor (device scale factor 2, mobile user agent) in Chromium,
+because Safari's heap cannot be read from Playwright. They are Chromium's accounting of the same
+page, not an iPad's own numbers.
+
+### Crossing an event is a visibility swap
+
+**Before:** the Phase 2 numbers above. A step that crossed an event attached the new units' paths
+inside the input handler, so Leaflet projected up to 45,000 vertices (the NWT of 1880 has 880 parts)
+in that frame. Re-measured before any change: worst step 21.4 ms (desktop) and 30.8 ms (iPad) at
+1867, 27.5 and 17.5 ms at 1999.
+
+**After** (`AtlasLayer`):
+- **Lookahead.** The rows of the three event windows either side of the current one stay attached,
+  with `display: none` on their paths. A crossing only flips `display` on paths that are already
+  projected. Rows further away are detached, because hidden paths are still re-projected on every
+  zoom.
+- **Refill.** After each crossing, the far edge is refilled in idle slices, nearest windows first.
+  - Each row is a single path. Splitting the big drawings into one path per part was tried: 880
+    elements for one row made crossings slower (up to 20 ms), and it was reverted.
+  - A slice starts a row only if the row's vertex count, at 2,000 vertices per millisecond (2,750
+    measured here), fits the time left. While the slider moves, the largest drawings wait until it
+    has been still for 150 ms, then go in one at a time.
+  - The idle request has a 250 ms timeout. Chromium once went more than 60 s without declaring an
+    idle period after a pan with a split on the map, and the refill must not wait on that.
+- **Styles** are set when a row is built. A crossing restyles nothing; only a change of selection
+  does.
+
+| Viewport | Date | Step work, median | p95 | **max** | Longest frame |
+|---|---|---|---|---|---|
+| desktop | 1867 | 1.2 ms | 2.6 ms | **3.3 ms** | 41.0 ms |
+| desktop | 1999 | 0.7 ms | 1.5 ms | **1.7 ms** | 21.8 ms |
+| iPad | 1867 | 1.1 ms | 5.6 ms | **7.3 ms** | 33.2 ms |
+| iPad | 1999 | 0.8 ms | 3.1 ms | **5.1 ms** | 23.7 ms |
+
+How it was measured:
+- 24 one-year steps, one per frame (60 years a second), starting from a settled lookahead.
+- The test now asserts the **maximum** step under 16 ms, where before it asserted the median.
+
+**What is still over a frame is not the step.** A Chromium trace of the 1867 run shows the long
+frames are young-generation GC (a 35 ms scavenge). It collects the projected points that the refill
+allocated, while the slider is being dragged at 60 years a second. At a keyboard's repeat rate the
+refill fits between steps.
+
+**Limit:** a jump further than the lookahead (a tick three or more events away, or Home and End)
+still attaches its rows inside the step, as before.
+
+### A 30-region split of Canada
+
+Canada into 30 regions with the Generate panel's defaults, drawn on the map (`tests/perf/split.spec.ts`).
+
+| | desktop | iPad |
+|---|---|---|
+| Run to legend | 2.8 s | 3.0 s |
+| Longest main-thread task during the run | 768 ms | 824 ms |
+| Pan (drag), frame median / max | 16.7 / 50.0 ms | 16.7 / 16.8 ms |
+| Hover over regions, frame max | 16.7 ms | 16.8 ms |
+| Slider under the split: step max | 2.8 ms | 11.1 ms |
+
+**The long task is the dossiers, not the drawing.** Profiled on an unminified build, the 922 ms
+run is:
+- `describeSplit`, 541 ms, most of it `buildDossiers` (434 ms: region aggregates 204 ms, border
+  runs 197 ms);
+- building the scope graph before the run, 300 ms (sea crossings 227 ms);
+- dissolving the rings for the canvas, 162 ms.
+
+The scope graph is now cached by mask (`cachedScopeGraph`), so re-running the same scope with
+another N or seed skips it. The dossiers still run in the same task as the map update, because they
+supply the region names on the map; moving them off the main thread is in `docs/backlog.md`.
+
+### Memory: the whole mesh (38,432 cells) in iPad emulation
+
+JS heap after a forced GC, and the renderer process's RSS, which includes the solver worker:
+
+| Stage | JS heap | DOM nodes | Renderer RSS |
+|---|---|---|---|
+| Atlas loaded, layer cache warm | 84 MB | 433 | 244 MB |
+| Splitter data decoded | 101 MB | 1,258 | 325 MB |
+| Canada into 30 | 117 MB | 1,582 | 533 MB |
+| With dossiers and set analysis | 116 MB | 1,011 | 594 MB |
+| Run 2 | 117 MB | 1,597 | 606 MB |
+| Run 3 | 117 MB | 1,597 | 698 MB |
+| Run 4 | 117 MB | 1,597 | 688 MB |
+| Run 5 | 117 MB | 1,597 | 692 MB |
+| Run 6 | 117 MB | 1,597 | 686 MB |
+
+- **The JS heap is flat run after run,** and the renderer levels off from the third run. The test
+  asserts both: heap within 15% of the first run's, and RSS within 10% between the last two runs.
+- The desktop viewport levels off at about 490 MB. The iPad descriptor's device scale factor of 2
+  quadruples the canvas backing stores.
+- The plan's gate says "memory under control on a 40k-cell Canada split". This is that split, and it
+  is under control in Chromium. The manual iPad pass (plan Phase 7, "You do") is the check in Safari.
+
+### Loading
+
+- **The first view fetches only the atlas** (`atlas.v1.json` and its topology), as a smoke test now
+  asserts. The mesh, attributes, cells, places, snap, contact and Indigenous artefacts wait until
+  the panel or layer that needs them opens. The `data/build/layers/` TopoJSON never ships: the app
+  draws nothing from it. That was already true; the plan's "lazy-load layer TopoJSON" is now tested
+  rather than changed.
+- **Decoded splitter data in IndexedDB,** keyed by the artefacts' fingerprinted URLs. Opening the
+  Generate panel:
+  - from the network: 885 ms (desktop), 899 ms (iPad);
+  - from the cache: 395–465 ms.
+
+  These are on a local server, so the network rows include no latency; over a real connection the
+  cache also saves the 2 MB download. The cell topology (1.4 MB) is still fetched and parsed on
+  each open.
+- **The worker receives the mesh once.** Before, every run structured-cloned the mesh arrays and its
+  columns into the worker. Now the mesh crosses once and each column the first time a run needs it.
+  A template assignment is transferred; the result's assignment already was. The mask and snap edges
+  are cloned, because the prepared split keeps them on the main thread.
+
+### Re-taking these numbers
+
+```sh
+npm run build && npm run frame-time -w app   # frame-time.spec.ts and split.spec.ts, one at a time
+```
