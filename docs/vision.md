@@ -139,7 +139,7 @@ This is what makes it a tool and not another essay.
 - **Divergence mode:** pick a year in the atlas, edit the map, and carry the change forward — the branching-year structure of the Alberta-1500 game. Each later event checks whether it still applies.
 - **Nesting drill-down:** split Canada into 5, then any of those into 4, then any of those into 3 — the fractal-grievance structure the 26-region chat kept finding. Saved as a tree.
 - **Non-geographic regions** (Rotational Canada, the New Canada) as flow or point overlays rather than polygons, so they can coexist with a partition.
-- **Counterfactual presets** from the provincial-defining-events chat: Newfoundland independent, no 1912 extensions, Acadian Maritimes, unified Buffalo province.
+- **Counterfactual presets** from the provincial-defining-events chat: Newfoundland independent, no 1912 extensions, unified Buffalo province. *(1.0.1: Acadian Maritimes is not a scenario but a preset pack, `acadie-2`: the three Maritime provinces split on French mother tongue into Acadie and the Maritimes. The Maritime Union scenario is a separate thing.)*
 - **Score hooks:** expose per-region metrics to an external game (Victoria-style pops) through the region pack.
 
 ## 9. Technical shape

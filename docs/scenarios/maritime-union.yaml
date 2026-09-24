@@ -3,7 +3,7 @@
 # docs/schemas/scenario.schema.json. Events here are merged into the base event list, after the
 # base's own events on the same date; base events whose `requires` this breaks are skipped with a notice.
 format: meridian.scenario
-id: acadian-maritimes
+id: maritime-union
 name: Maritime Union
 fork: 1867-07-01
 premise: >-

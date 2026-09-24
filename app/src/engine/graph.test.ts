@@ -102,3 +102,16 @@ describe('scope graph', () => {
     expect(graphFor(data, { kind: 'province', province: 'AB' }).crossings).toBe(0);
   });
 });
+
+describe('the provinces scope (1.0.1)', () => {
+  it('takes every cell of the listed provinces and no other', async () => {
+    const { realSplitterData } = await import('../splitter/testing/realSplitterData');
+    const data = realSplitterData();
+    const mask = scopeMask(
+      data.arrays,
+      { kind: 'provinces', provinces: ['NS', 'PE'] },
+      { provinces: data.provinces },
+    );
+    data.provinces.forEach((p, i) => expect(mask[i]).toBe(p === 'NS' || p === 'PE' ? 1 : 0));
+  });
+});

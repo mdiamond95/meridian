@@ -1,7 +1,54 @@
 [
   {
     "format": "meridian.scenario",
-    "id": "acadian-maritimes",
+    "id": "buffalo-1905",
+    "name": "Unified Buffalo",
+    "fork": "1905-09-01",
+    "premise": "From 1901 the premier of the North-West Territories, Frederick Haultain, asked Ottawa for one province between Manitoba and British Columbia, and suggested it be called Buffalo. Laurier's government made two instead, Alberta and Saskatchewan, on 1 September 1905. This scenario grants Haultain's request on that day. It keeps the outer boundary the two Acts drew, 49°N to 60°N from British Columbia to Manitoba's line continued north, and removes only the line between them at 110°W, so it draws nothing the base atlas does not. The capital is Regina, the seat of the territorial government since 1883. Everything else happens as it did: Keewatin is folded back into the territories the same day, and the 1912 extensions and every later event apply unchanged.",
+    "events": [
+      {
+        "date": "1905-09-01",
+        "title": "The Province of Buffalo",
+        "note": "One prairie province is made from the North-West Territories in place of two, from 49°N to 60°N and from British Columbia to Manitoba's line continued north. Its capital is Regina.",
+        "sources": [
+          "F. W. G. Haultain's case for a single province, put to Ottawa by the territorial government from 1901 (C. C. Lingard, Territorial Government in Canada: The Autonomy Question in the Old North-West Territories, University of Toronto Press, 1946).",
+          "Alberta Act, S.C. 1905, c. 3, and Saskatchewan Act, S.C. 1905, c. 42, in force 1 September 1905: the outer boundaries kept here, and the 110°W line removed."
+        ],
+        "changes": [
+          {
+            "dissolve": "alberta"
+          },
+          {
+            "dissolve": "saskatchewan"
+          },
+          {
+            "create": "buffalo",
+            "name": "Buffalo",
+            "status": "province",
+            "sovereign": "Canada",
+            "capital": "Regina",
+            "geometry": {
+              "union": [
+                {
+                  "unit": "alberta",
+                  "at": "1905-09-01"
+                },
+                {
+                  "unit": "saskatchewan",
+                  "at": "1905-09-01"
+                }
+              ]
+            },
+            "note": "Counterfactual: Alberta and Saskatchewan as one province, without the fourth meridian between them.",
+            "instrument": "Haultain's single-province proposal (1901–1905), in place of the Alberta Act and the Saskatchewan Act of 1905."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "format": "meridian.scenario",
+    "id": "maritime-union",
     "name": "Maritime Union",
     "fork": "1867-07-01",
     "premise": "In March 1864 Nova Scotia's assembly, on Charles Tupper's motion, called for a conference on uniting the three Maritime colonies, and delegates of Nova Scotia, New Brunswick and Prince Edward Island met at Charlottetown from 1 to 9 September 1864. The delegates from the Province of Canada came to put a wider union, and Maritime union was set aside for Confederation. This scenario lets the conference do what it was called for: the three colonies unite, and enter Confederation as one Maritime Province on 1 July 1867. The atlas dates the union to that day, when the British North America Act made the other provinces, rather than invent a date for a separate act. Prince Edward Island is the largest assumption: it was the least willing of the three, its delegates were almost all against a legislative union, and in the record it stayed out of Confederation until 1873. Here it comes in with the others, so the record's 1873 event, which makes the Island a province, has nothing to act on and is skipped. The name \"Maritime Province\" is the scenario's choice: the only use of \"Acadia\" for such a union found for this scenario is a rhetorical question in the Island's assembly in April 1864, not a proposal. The scenario names no capital either; the same question asked where it would be, and it was never settled. The province is Nova Scotia, New Brunswick and the Island joined, so it draws nothing the base atlas does not. An Acadian province carved out of New Brunswick cannot be drawn here, because the atlas has no line for it.",
@@ -49,53 +96,6 @@
             },
             "note": "Counterfactual: the three Maritime colonies as one province, their boundaries unchanged. The name is the scenario's choice.",
             "instrument": "The Maritime union the Charlottetown Conference was called to discuss (1864), entering Confederation under the British North America Act, 1867, in place of Nova Scotia and New Brunswick, and Prince Edward Island's admission of 1873."
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "format": "meridian.scenario",
-    "id": "buffalo-1905",
-    "name": "Unified Buffalo",
-    "fork": "1905-09-01",
-    "premise": "From 1901 the premier of the North-West Territories, Frederick Haultain, asked Ottawa for one province between Manitoba and British Columbia, and suggested it be called Buffalo. Laurier's government made two instead, Alberta and Saskatchewan, on 1 September 1905. This scenario grants Haultain's request on that day. It keeps the outer boundary the two Acts drew, 49°N to 60°N from British Columbia to Manitoba's line continued north, and removes only the line between them at 110°W, so it draws nothing the base atlas does not. The capital is Regina, the seat of the territorial government since 1883. Everything else happens as it did: Keewatin is folded back into the territories the same day, and the 1912 extensions and every later event apply unchanged.",
-    "events": [
-      {
-        "date": "1905-09-01",
-        "title": "The Province of Buffalo",
-        "note": "One prairie province is made from the North-West Territories in place of two, from 49°N to 60°N and from British Columbia to Manitoba's line continued north. Its capital is Regina.",
-        "sources": [
-          "F. W. G. Haultain's case for a single province, put to Ottawa by the territorial government from 1901 (C. C. Lingard, Territorial Government in Canada: The Autonomy Question in the Old North-West Territories, University of Toronto Press, 1946).",
-          "Alberta Act, S.C. 1905, c. 3, and Saskatchewan Act, S.C. 1905, c. 42, in force 1 September 1905: the outer boundaries kept here, and the 110°W line removed."
-        ],
-        "changes": [
-          {
-            "dissolve": "alberta"
-          },
-          {
-            "dissolve": "saskatchewan"
-          },
-          {
-            "create": "buffalo",
-            "name": "Buffalo",
-            "status": "province",
-            "sovereign": "Canada",
-            "capital": "Regina",
-            "geometry": {
-              "union": [
-                {
-                  "unit": "alberta",
-                  "at": "1905-09-01"
-                },
-                {
-                  "unit": "saskatchewan",
-                  "at": "1905-09-01"
-                }
-              ]
-            },
-            "note": "Counterfactual: Alberta and Saskatchewan as one province, without the fourth meridian between them.",
-            "instrument": "Haultain's single-province proposal (1901–1905), in place of the Alberta Act and the Saskatchewan Act of 1905."
           }
         ]
       }

@@ -37,6 +37,8 @@ A pack is JSON validated by `docs/schemas/regionPack.schema.json` (generated fro
 | `assignment` | `{kind: "id", dtype: "int32", byteOrder: "le", length, data}`: `data` is base64 of `length` little-endian int32s, the region id of each mesh cell, `-1` outside the scope |
 | `meta.id` | the pack's id: a preset's slug, or `split-` and a hash of the recipe and cells |
 | `meta.parentPack`, `meta.parentRegionId` | present on a nested split: the `meta.id` of the pack it splits, and which region (its `scope` is `{kind: "region", pack, region}` with the same values) |
+| `meta.premise` | present on a preset that argues something (1.0.1): why the split is made this way, in prose |
+| `meta.params.nameBy` | present when regions are named by a column (1.0.1): `{column, names}`; regions ranked by the population-weighted mean of `column`, highest first, take `names` in order |
 | `meta.scenario` | present when the split was made in an atlas scenario: the whole scenario (`docs/schemas/scenario.schema.json`), so an atlas scope resolves the same way anywhere |
 | `regions[]` | `id` (the value used in `assignment`), `name`, `capital`, `stats` (`population`, `areaKm2`, `gdpCadMillions`, `cells`, `pieces`, `compactness`, `carved`, and the `score` object below), `dossier` |
 | `regions[].dossier` | the region's dossier (`docs/schemas/regionPack.schema.json#/$defs/RegionDossier`). Templated sentences carry `placeholder: true` and open with ⟨draft⟩ |
@@ -151,6 +153,12 @@ None yet: v1 is the only version. The Phase 6 fields (`meta.id`, `meta.parentPac
 `meta.parentRegionId`, `meta.scenario`, `children`, `stats.score`) are optional additions under rule 1.
 `stats` was a map of numbers and now also holds the `score` object: a consumer that treats every
 `stats` value as a number should skip `score`.
+
+Release 1.0.1 adds, still under rule 1: `meta.premise`, `meta.params.nameBy`, and a scope kind,
+`{kind: "provinces", provinces: [...]}` (several provinces or territories as one scope; acadie-2 is
+the Maritimes). A new scope kind widens a union rather than adding a field: a reader that validates
+`meta.scope` against the 1.0.0 schema rejects such a pack, and should update to
+`docs/schemas/regionPack.schema.json`. A reader that only draws the assignment is unaffected.
 
 ## A pack in a vanilla Leaflet page
 

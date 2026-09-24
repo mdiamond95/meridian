@@ -940,3 +940,19 @@ dialog.licences::backdrop {
   padding-left: 18px;
   font-size: 13px;
 }
+
+/* The several-provinces scope (1.0.1): the codes in a compact grid. */
+.province-picks {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(56px, 1fr));
+  gap: 2px 8px;
+  margin: 6px 0;
+  padding: 6px 8px;
+  border: 1px solid #d0d4da;
+  border-radius: 8px;
+}
+
+.province-picks legend {
+  padding: 0 4px;
+  font-size: 13px;
+}

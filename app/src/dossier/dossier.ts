@@ -265,6 +265,8 @@ function describeScope(prepared: PreparedSplit): string {
       return 'Canada';
     case 'province':
       return scope.province;
+    case 'provinces':
+      return scope.provinces.join(' + ');
     case 'atlasUnit':
       return `${scope.unit} at ${prepared.spec.date ?? 'today'}`;
     case 'atlasSovereign':

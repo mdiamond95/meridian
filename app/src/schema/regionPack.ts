@@ -20,6 +20,13 @@ export const ScopeSchema = z
     z.object({ kind: z.literal('canada') }),
     z.object({ kind: z.literal('province'), province: z.enum(PROVINCE_CODES) }),
     z.object({
+      kind: z.literal('provinces'),
+      provinces: z
+        .array(z.enum(PROVINCE_CODES))
+        .min(1)
+        .describe('Several provinces or territories as one scope, e.g. the three Maritime provinces (1.0.1)'),
+    }),
+    z.object({
       kind: z.literal('atlasUnit'),
       unit: z.string().describe('AtlasUnit id, resolved at meta.date'),
     }),
@@ -79,6 +86,10 @@ export const RegionPackMetaSchema = z
       .optional()
       .describe("Nesting: the id of the pack whose region this pack splits (scope.kind 'region')"),
     parentRegionId: z.int().nonnegative().optional().describe("Nesting: that region's id in the parent pack"),
+    premise: z
+      .string()
+      .optional()
+      .describe("Why the split was made the way it was, in prose: a preset's premise (1.0.1)"),
     scenario: ScenarioSchema.optional().describe(
       'The atlas scenario the split was made in, whole, so atlas scopes resolve the same way anywhere',
     ),

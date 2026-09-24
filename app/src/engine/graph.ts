@@ -88,6 +88,12 @@ export function scopeMask(mesh: MeshArrays, scope: Scope, context: ScopeContext 
       for (let i = 0; i < n; i++) mask[i] = context.provinces[i] === code ? 1 : 0;
       break;
     }
+    case 'provinces': {
+      if (!context.provinces) throw new Error('provinces scope needs the mesh provinces');
+      const codes = new Set<string>(scope.provinces);
+      for (let i = 0; i < n; i++) mask[i] = codes.has(context.provinces[i]) ? 1 : 0;
+      break;
+    }
     case 'atlasUnit': {
       const { atlas, date } = context;
       if (!atlas || !date) throw new Error('atlasUnit scope needs the atlas and a date');

@@ -51,3 +51,18 @@ test('a pack link loads the preset, and painting a cell marks the split edited',
   await handle.click();
   await expect(page.getByTestId('split-result')).toContainText('edited');
 });
+
+test('acadie-2 loads with its names, and its scope shows as several provinces (1.0.1)', async ({ page }) => {
+  await page.goto('./#pack=acadie-2');
+  const legend = page.getByTestId('split-legend');
+  await expect(legend.locator('li')).toHaveCount(2, { timeout: 60_000 });
+  await expect(legend).toContainText('Acadie');
+  await expect(legend).toContainText('Maritimes');
+  await expect(page.getByTestId('scope-select')).toHaveValue('provinces');
+  const picker = page.getByTestId('provinces-picker');
+  for (const code of ['NB', 'NS', 'PE']) await expect(picker.getByLabel(code)).toBeChecked();
+  await expect(picker.getByLabel('QC')).not.toBeChecked();
+  // The dossiers, written in the worker, keep the names the recipe gives.
+  await page.getByTestId('dossier-tab').click();
+  await expect(page.getByTestId('panel')).toContainText('Acadie', { timeout: 60_000 });
+});

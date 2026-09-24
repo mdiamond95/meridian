@@ -50,6 +50,12 @@ export interface SplitSpec {
   snap: string[];
   weights: Weights;
   iterations: number;
+  /**
+   * Names by a column (1.0.1): regions ranked by the population-weighted mean of `column`, highest
+   * first, take `names` in order. acadie-2 names its more francophone region Acadie this way, and the
+   * rule travels with the recipe, so a pack, a share link and a rerun all name it the same.
+   */
+  nameBy?: { column: string; names: string[] };
 }
 
 export function defaultSpec(): SplitSpec {
@@ -117,12 +123,33 @@ function pinCells(groups: string[][], data: SplitterData): number[][] {
 }
 
 export function prepareSplit(spec: SplitSpec, data: SplitterData, context: ScopeContext = {}): PreparedSplit {
-  const scope = scopeMask(data.arrays, spec.scope, {
+  return prepareFromScope(spec, scopeOf(spec, data, context), data, context.importedSnap);
+}
+
+/**
+ * The cells in a spec's scope. This part needs the atlas (atlas scopes) or a parent pack (nested
+ * splits), which only the main thread has; everything after it runs in the worker (prepareFromScope).
+ */
+export function scopeOf(
+  spec: SplitSpec,
+  data: Pick<SplitterData, 'arrays' | 'provinces'>,
+  context: ScopeContext = {},
+) {
+  return scopeMask(data.arrays, spec.scope, {
     provinces: data.provinces,
     atlas: context.atlas,
     date: spec.date ?? undefined,
     assignment: context.packAssignment,
   });
+}
+
+/** Everything prepareSplit does once the scope is known: carving, graphs, pins, parameters, snapping. */
+export function prepareFromScope(
+  spec: SplitSpec,
+  scope: Uint8Array,
+  data: SplitterData,
+  importedSnap?: ScopeContext['importedSnap'],
+): PreparedSplit {
   const solveMask = Uint8Array.from(scope);
   const carved: Cma[] = [];
   if (spec.carveCmas.enabled) {
@@ -169,7 +196,7 @@ export function prepareSplit(spec: SplitSpec, data: SplitterData, context: Scope
     solveGraph,
     carved,
     params,
-    snap: snapEdges(solveGraph, spec.snap, data, context.importedSnap),
+    snap: snapEdges(solveGraph, spec.snap, data, importedSnap),
   };
 }
 
@@ -221,6 +248,36 @@ export function finishSplit(
     for (const c of cma.cells) assignment[c] = k + i;
   });
   return { assignment, regions: nameRegions(prepared, assignment, k + prepared.carved.length, data) };
+}
+
+/** The names a spec's `nameBy` rule gives, by region id; empty without a rule. */
+export function ruleNames(
+  spec: Pick<SplitSpec, 'nameBy'>,
+  data: Pick<SplitterData, 'columns'>,
+  assignment: Int32Array,
+  k: number,
+): Record<number, string> {
+  const rule = spec.nameBy;
+  const column = rule && data.columns[rule.column];
+  if (!rule || !column) return {};
+  const population = data.columns.population;
+  const weight = new Float64Array(k);
+  const sum = new Float64Array(k);
+  for (let cell = 0; cell < assignment.length; cell++) {
+    const r = assignment[cell];
+    if (r < 0 || r >= k) continue;
+    const w = population ? population[cell] : 1;
+    weight[r] += w;
+    sum[r] += w * column[cell];
+  }
+  const ranked = Array.from({ length: k }, (_, r) => r).sort(
+    (a, b) => sum[b] / (weight[b] || 1) - sum[a] / (weight[a] || 1) || a - b,
+  );
+  const out: Record<number, string> = {};
+  ranked.forEach((r, i) => {
+    if (rule.names[i]) out[r] = rule.names[i];
+  });
+  return out;
 }
 
 /** Stats and names for any assignment over the prepared scope (after painting, too). */
@@ -282,6 +339,7 @@ export function nameRegions(
       best.set(r, { name: `${largest.name} (${k})` });
     }
   }
+  const ruled = ruleNames(prepared.spec, data, assignment, solverRegions);
   return stats.map((region) => {
     const carved = region.id >= solverRegions;
     const place = best.get(region.id);
@@ -290,7 +348,7 @@ export function nameRegions(
       !carved && prepared.spec.method === 'seeded' ? prepared.spec.capitalNames?.[region.id] : undefined;
     const name = carved
       ? prepared.carved[region.id - solverRegions].name
-      : (capital ?? place?.name ?? `Region ${region.id + 1}`);
+      : (ruled[region.id] ?? capital ?? place?.name ?? `Region ${region.id + 1}`);
     return { ...region, name, capital: capital ?? place?.name ?? null, carved };
   });
 }
