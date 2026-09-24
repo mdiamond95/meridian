@@ -30,6 +30,7 @@ export function LayersMenu() {
   const toggleCommunities = useAtlasStore((s) => s.toggleCommunities);
   const overlays = useUiStore((s) => s.overlays);
   const toggleOverlay = useUiStore((s) => s.toggleOverlay);
+  const setLicencesOpen = useUiStore((s) => s.setLicencesOpen);
 
   return (
     <nav className="layers" data-open={open} data-testid="layers" aria-label="Layers">
@@ -116,6 +117,9 @@ export function LayersMenu() {
             ))}
           </select>
         </fieldset>
+        <button className="link-button" data-testid="licences-button" onClick={() => setLicencesOpen(true)}>
+          Licences and sources
+        </button>
       </div>
     </nav>
   );

@@ -128,7 +128,8 @@ test.describe('memory, iPad emulation', () => {
   // Playwright's iPad Pro 11 descriptor (viewport, device scale factor, touch, mobile user agent) in
   // Chromium: Safari's own heap cannot be read from Playwright, so this is Chromium's accounting of
   // the same page at the same size. The Codespace check is a trend, not an iPad's number.
-  const { defaultBrowserType: _ignored, ...ipad } = devices['iPad Pro 11'];
+  const ipad = { ...devices['iPad Pro 11'] } as Partial<(typeof devices)[string]>;
+  delete ipad.defaultBrowserType;
   test.use(ipad);
 
   async function sample(cdp: CDPSession) {

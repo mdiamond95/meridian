@@ -20,7 +20,9 @@
     "rules": "tsx scripts/build-rules.ts",
     "rules:check": "tsx scripts/build-rules.ts --check",
     "scenarios": "tsx scripts/build-scenarios.ts",
-    "scenarios:check": "tsx scripts/build-scenarios.ts --check"
+    "scenarios:check": "tsx scripts/build-scenarios.ts --check",
+    "licences": "tsx scripts/build-licences.ts",
+    "licences:check": "tsx scripts/build-licences.ts --check"
   },
   "dependencies": {
     "@tmcw/togeojson": "^7.1.2",
