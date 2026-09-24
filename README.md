@@ -25,6 +25,8 @@ visit.
     from capitals, or chance.
   - Pin cities together or apart, and snap borders to rivers, watersheds, treaties or ridings.
   - Paint cells by hand afterwards: the judgement is yours.
+  - Presets to start from: Alberta in 15, Canada in 26 and in 14, the Dominion of 1867 in five, and
+    Acadie and the Maritimes, the three Maritime provinces split on French mother tongue.
 - **Dossiers.** Every region gets:
   - a name, a capital, its population and area, and an estimated GDP;
   - its industries, and its borders described in words;

@@ -151,4 +151,34 @@ describe('shipped presets', () => {
     expect(edited.meta.edited).toBe(true);
     expect(decodeColumn(edited.assignment)[cell]).toBe(1);
   }, 60_000);
+
+  it('acadie-2 (1.0.1): the Maritimes as one scope, split on French into Acadie and the Maritimes', () => {
+    const pack = decodePack(read('acadie-2.v1.json'));
+    expect(pack.meta.scope).toEqual({ kind: 'provinces', provinces: ['NB', 'NS', 'PE'] });
+    expect(pack.meta.premise).toMatch(/^Acadie is a people before it is a place/);
+    // Every cell of the three provinces is in the split, and no other cell is.
+    const inScope = data.provinces.map((p) => ['NB', 'NS', 'PE'].includes(p));
+    expect([...pack.assignment].every((r, i) => r >= 0 === inScope[i])).toBe(true);
+    // Acadie is the region with the higher share of French mother tongue, each region in one piece.
+    const french = data.columns.french_share;
+    const population = data.columns.population;
+    const share = [0, 1].map((r) => {
+      let people = 0;
+      let francophone = 0;
+      pack.assignment.forEach((a, i) => {
+        if (a !== r) return;
+        people += population[i];
+        francophone += population[i] * french[i];
+      });
+      return francophone / people;
+    });
+    const acadie = pack.regions.find((r) => r.name === 'Acadie');
+    const maritimes = pack.regions.find((r) => r.name === 'Maritimes');
+    if (!acadie || !maritimes) throw new Error('acadie-2 must name one region Acadie and one Maritimes');
+    expect(share[acadie.id]).toBeGreaterThan(0.5);
+    expect(share[maritimes.id]).toBeLessThan(0.1);
+    expect(pack.regions.every((r) => r.stats.pieces === 1)).toBe(true);
+    // The recipe carries the naming rule, so a rerun or a share link names the regions the same way.
+    expect(specFromPack(pack).nameBy).toEqual({ column: 'french_share', names: ['Acadie', 'Maritimes'] });
+  });
 });

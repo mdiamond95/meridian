@@ -229,3 +229,67 @@ export function cellLocator(mesh: MeshArrays) {
     return best;
   };
 }
+
+/**
+ * Region rings flattened into typed arrays, so the worker can transfer them to the main thread
+ * without copying (release 1.0.1): cloning a Canada split's rings as nested arrays is some 100,000
+ * small arrays to deserialize on the main thread.
+ */
+export interface EncodedRings {
+  /** region id of each entry */
+  regions: Int32Array;
+  /** rings of entry i are ringStart[i]..ringStart[i + 1] */
+  ringStart: Int32Array;
+  /** points of ring j are pointStart[j]..pointStart[j + 1] */
+  pointStart: Int32Array;
+  /** [lat, lng] per point */
+  coords: Float64Array;
+}
+
+export function encodeRings(rings: Map<number, LatLngRing[]>): EncodedRings {
+  const entries = [...rings];
+  const ringCount = entries.reduce((n, [, shape]) => n + shape.length, 0);
+  const pointCount = entries.reduce((n, [, shape]) => n + shape.reduce((m, ring) => m + ring.length, 0), 0);
+  const out: EncodedRings = {
+    regions: new Int32Array(entries.length),
+    ringStart: new Int32Array(entries.length + 1),
+    pointStart: new Int32Array(ringCount + 1),
+    coords: new Float64Array(pointCount * 2),
+  };
+  let ring = 0;
+  let point = 0;
+  entries.forEach(([region, shape], i) => {
+    out.regions[i] = region;
+    out.ringStart[i] = ring;
+    for (const r of shape) {
+      out.pointStart[ring++] = point;
+      for (const [lat, lng] of r) {
+        out.coords[2 * point] = lat;
+        out.coords[2 * point + 1] = lng;
+        point++;
+      }
+    }
+  });
+  out.ringStart[entries.length] = ring;
+  out.pointStart[ringCount] = point;
+  return out;
+}
+
+export function decodeRings(encoded: EncodedRings): Map<number, LatLngRing[]> {
+  const out = new Map<number, LatLngRing[]>();
+  const { regions, ringStart, pointStart, coords } = encoded;
+  for (let i = 0; i < regions.length; i++) {
+    const shape: LatLngRing[] = [];
+    for (let j = ringStart[i]; j < ringStart[i + 1]; j++) {
+      const ring: LatLngRing = new Array(pointStart[j + 1] - pointStart[j]);
+      for (let p = pointStart[j], k = 0; p < pointStart[j + 1]; p++, k++)
+        ring[k] = [coords[2 * p], coords[2 * p + 1]];
+      shape.push(ring);
+    }
+    out.set(regions[i], shape);
+  }
+  return out;
+}
+
+export const ringBuffers = (r: EncodedRings): ArrayBuffer[] =>
+  [r.regions, r.ringStart, r.pointStart, r.coords].map((a) => a.buffer as ArrayBuffer);

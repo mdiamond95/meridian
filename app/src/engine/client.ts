@@ -1,24 +1,26 @@
-import type { MeshArrays } from './graph';
+import type { SplitterUrls } from '../splitter/data';
+import type { Described, Landed } from '../splitter/land';
+import type { NamedRegion, PreparedSplit, SplitSpec } from '../splitter/split';
 import type { WorkerRequest, WorkerResponse } from './protocol';
-import type { Columns, Params, Progress, SolveResult } from './solver';
+import type { Progress } from './solver';
 
-/** Main-thread handle on the solver worker: one worker, runs identified by id, each cancellable. */
-export interface SolveRun {
+/** Main-thread handle on the splitter worker: one worker, requests identified by id, runs cancellable. */
+export interface LandRun {
   id: number;
-  result: Promise<SolveResult>;
+  result: Promise<{ prepared: PreparedSplit; landed: Landed }>;
   cancel(): void;
+}
+
+interface Pending {
+  resolve: (value: never) => void;
+  reject: (error: Error) => void;
+  onProgress?: (p: Progress) => void;
 }
 
 export class SolverClient {
   private nextId = 1;
-  private readonly pending = new Map<
-    number,
-    { resolve: (r: SolveResult) => void; reject: (e: Error) => void; onProgress?: (p: Progress) => void }
-  >();
-
-  /** What the worker already holds, so each array crosses the thread boundary once. */
-  private sentMesh: MeshArrays | null = null;
-  private readonly sentColumns = new Map<string, Columns[string]>();
+  private readonly pending = new Map<number, Pending>();
+  private loadedFrom: string | null = null;
 
   constructor(private readonly worker: Pick<Worker, 'postMessage' | 'addEventListener' | 'terminate'>) {
     worker.addEventListener('message', (event) => this.receive((event as MessageEvent<WorkerResponse>).data));
@@ -28,48 +30,57 @@ export class SolverClient {
     return new SolverClient(new Worker(new URL('./worker.ts', import.meta.url), { type: 'module' }));
   }
 
-  /**
-   * Give the worker the mesh and the columns a run needs. Only what it does not hold yet is sent: the
-   * mesh once, and each column the first time it is needed (the main thread keeps its copies, so these
-   * are structured-cloned, not transferred).
-   */
-  init(mesh: MeshArrays, columns: Columns) {
-    const fresh = this.sentMesh !== mesh;
-    if (fresh) {
-      this.sentMesh = mesh;
-      this.sentColumns.clear();
-    }
-    const missing = Object.fromEntries(
-      Object.entries(columns).filter(([name, column]) => this.sentColumns.get(name) !== column),
-    );
-    if (!fresh && Object.keys(missing).length === 0) return;
-    for (const [name, column] of Object.entries(missing)) this.sentColumns.set(name, column);
-    this.post(fresh ? { type: 'init', mesh, columns: missing } : { type: 'init', columns: missing });
+  /** Have the worker load its own copy of the splitter data and the cell topology (once per URLs). */
+  load(urls: SplitterUrls, cells: string) {
+    const key = JSON.stringify([urls, cells]);
+    if (this.loadedFrom === key) return;
+    this.loadedFrom = key;
+    this.post({ type: 'load', urls, cells });
   }
 
-  run(
-    mask: Uint8Array,
-    params: Params,
-    seed: number,
-    options: { template?: Int32Array; snapEdges?: Uint8Array; onProgress?: (p: Progress) => void } = {},
-  ): SolveRun {
+  /** Prepare, solve and describe a split in the worker, from its spec and the scope mask. */
+  land(
+    spec: SplitSpec,
+    scope: Uint8Array,
+    options: { importedSnap?: ReadonlySet<number>; onProgress?: (p: Progress) => void } = {},
+  ): LandRun {
     const id = this.nextId++;
-    const result = new Promise<SolveResult>((resolve, reject) =>
-      this.pending.set(id, { resolve, reject, onProgress: options.onProgress }),
-    );
-    // The template is an assignment made for this run alone, so its buffer is transferred, not copied.
-    // The mask and snap edges stay with the prepared split on the main thread, so they are cloned.
-    this.post(
-      { type: 'run', id, mask, params, seed, template: options.template, snapEdges: options.snapEdges },
-      options.template ? [options.template.buffer] : [],
-    );
+    const result = this.expect<{ prepared: PreparedSplit; landed: Landed }>(id, options.onProgress);
+    // The mask is made for this request alone, so its buffer is transferred rather than copied.
+    this.post({ type: 'land', id, spec, scope, importedSnap: options.importedSnap }, [scope.buffer]);
     return { id, result, cancel: () => this.post({ type: 'cancel', id }) };
+  }
+
+  /** Dossiers, set analysis and scores for a split made on the main thread (a preset, a file). */
+  describe(
+    prepared: PreparedSplit,
+    assignment: Int32Array,
+    regions: Pick<NamedRegion, 'id' | 'name' | 'pieces'>[],
+    manualNames: Record<number, string>,
+  ): Promise<Described> {
+    const id = this.nextId++;
+    const result = this.expect<Described>(id);
+    this.post({
+      type: 'describe',
+      id,
+      prepared,
+      assignment,
+      regions: regions.map(({ id, name, pieces }) => ({ id, name, pieces })),
+      manualNames,
+    });
+    return result;
   }
 
   terminate() {
     this.worker.terminate();
-    for (const { reject } of this.pending.values()) reject(new Error('solver terminated'));
+    for (const { reject } of this.pending.values()) reject(new Error('splitter worker terminated'));
     this.pending.clear();
+  }
+
+  private expect<T>(id: number, onProgress?: (p: Progress) => void): Promise<T> {
+    return new Promise<T>((resolve, reject) =>
+      this.pending.set(id, { resolve: resolve as (value: never) => void, reject, onProgress }),
+    );
   }
 
   private post(message: WorkerRequest, transfer: Transferable[] = []) {
@@ -84,7 +95,9 @@ export class SolverClient {
       return;
     }
     this.pending.delete(message.id);
-    if (message.type === 'done') entry.resolve(message.result);
+    if (message.type === 'landed')
+      entry.resolve({ prepared: message.prepared, landed: message.landed } as never);
+    else if (message.type === 'described') entry.resolve(message.described as never);
     else entry.reject(new Error(message.message));
   }
 }

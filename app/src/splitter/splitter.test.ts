@@ -248,3 +248,24 @@ describe('scope graph cache (docs/perf.md)', () => {
     expect(cachedScopeGraph(data.arrays, other)).not.toBe(first);
   });
 });
+
+describe('naming by a column (nameBy, 1.0.1)', () => {
+  it('ranks regions by the population-weighted mean, highest first, and names them in order', async () => {
+    const { ruleNames } = await import('./split');
+    const data = {
+      columns: {
+        population: new Float32Array([100, 100, 10, 1000]),
+        french_share: new Float32Array([0.9, 0.7, 0.1, 0.05]),
+      },
+    };
+    const assignment = new Int32Array([1, 1, 0, 0]);
+    expect(
+      ruleNames({ nameBy: { column: 'french_share', names: ['Acadie', 'Maritimes'] } }, data, assignment, 2),
+    ).toEqual({
+      1: 'Acadie',
+      0: 'Maritimes',
+    });
+    expect(ruleNames({}, data, assignment, 2)).toEqual({});
+    expect(ruleNames({ nameBy: { column: 'missing', names: ['A'] } }, data, assignment, 2)).toEqual({});
+  });
+});

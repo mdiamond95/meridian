@@ -991,3 +991,81 @@ The brief (Mark) takes Phase 7 as the plan writes it, with six additions:
   - It says "built for an iPad", not "works on an iPad", until the manual pass is done.
 - **The CHANGELOG has one entry per release tag.** There is no v0.1: v0.2-atlas is the first tag,
   and covers Phases 0–2.
+
+## 2026-09-24 — Release 1.0.1
+
+The brief (Mark):
+1. Dossiers and set analysis in the worker, with the main thread never blocked for more than 50 ms
+   when a 30-region Canada split lands.
+2. A preset pack `acadie-2`.
+3. The 1.1 headline in the backlog.
+4. Mark's iPad findings: **none**, so there was nothing to fix.
+5. Release as v1.0.1.
+
+### The worker lands the split
+- **The worker holds its own splitter data and cell topology.**
+  - It loads them from the same URLs, through the same IndexedDB cache, and only writes the cache.
+  - It does not receive them from the page: structured-cloning about 17 MB of `SplitterData`
+    would be a main-thread task of its own.
+  - The page sends `load` once its own copy is ready, so the worker's requests are cache hits.
+- **Everything after the scope runs in the worker** (`land`): prepare, solve, finish, name, colour,
+  dossiers, set analysis, scores, rings and node id.
+  - The page computes only the scope mask, because atlas and region scopes need the atlas or a
+    parent pack, which only the page has.
+  - `prepareSplit` is now `scopeOf` + `prepareFromScope`.
+  - The old `init`/`run` messages are gone. The mesh never crosses the thread boundary; this
+    replaces the 1.0.0 "mesh once, columns as needed" step.
+- **Splits made on the page are described in the worker** (`describe`): presets, files, trees and
+  re-fits. Naming and preparing stay on the page for these paths.
+  - The pack's names are shown at once. Before, describing was synchronous; now the worker's names
+    arrive a moment later, and without this the legend would first show solver names. A smoke test
+    caught it.
+- **One description function** (`land.describe`) is used by the worker, by the preset builder and by
+  the tests. The worker's result is tested field by field against the pre-1.0.1 single-thread path.
+- **The landing is spread across tasks:** the message, the commit (after a yield), the fit, and the
+  draw.
+  - Rings cross as transferred typed arrays.
+  - The fit is skipped when the split is already in view at about the zoom a fit would choose,
+    because moving the map re-projects every path in one task.
+  - When a painted edit invalidates the worker's rings, the map dissolves the rings itself, as
+    before.
+- **Not done:** painting a cell still recomputes the regions' stats and rings on the page, and a
+  preset of all Canada still builds its scope graph on the page when it loads. Neither is the
+  landing of a run. Memory is higher by the worker's copy (`docs/perf.md`); sharing the arrays is in
+  the backlog.
+
+### acadie-2
+- **A new scope kind, `provinces`,** for several provinces or territories as one scope. It is added to
+  the RegionPack `Scope` union and documented in `docs/interop.md`, Migrations. It widens a union
+  rather than adding a field, so a strict 1.0.0 reader rejects such a pack; a reader that only draws
+  the assignment is unaffected. The Generate panel gains "Several provinces or territories", with a
+  checklist.
+- **The recipe, as briefed:**
+  - Scope NB + NS + PE, method `lens` (bisection), N = 2, lens `french_share`, hard contiguity, with
+    refinement (the method's default).
+  - **Two choices the brief left open:**
+    - The lens weight in the refinement cost is 1. The default weight is 0, and with it refinement
+      ignores French and returns New Brunswick against Nova Scotia and PEI: 30% French against 3%.
+    - There is no balance target. A population balance pulls the line toward equal halves, and the
+      question is language, not size.
+  - The result is the same at lens weights 1 and 5: Acadie is 282,549 people, 66% French mother
+    tongue, in one piece.
+- **Names come from the recipe:** `spec.nameBy = {column: 'french_share', names: ['Acadie',
+  'Maritimes']}`. Regions are ranked by the population-weighted mean of the column, and the rule
+  applies wherever regions are named: the page's provisional names, the worker's dossiers, a share
+  link, a rerun. Names given by the rule count as generated; carved metros and capitals still win.
+- **The premise is in the pack** (`meta.premise`, optional). It says what the line measures (mother
+  tongue, as the 2021 census counted it) and what it cannot catch: the Acadian communities of Nova
+  Scotia and most of PEI's Évangéline region. It was checked against the pack: one Évangéline cell,
+  at Wellington, joins Acadie across the Northumberland Strait by a mesh sea crossing, and the
+  premise says so.
+- **"Acadian Maritimes" leaves the scenario lists and points at the preset,** in `docs/vision.md` §8
+  and `docs/plan.md`. The Maritime Union scenario stays, as a scenario in its own right; its id and
+  file are renamed from `acadian-maritimes` to `maritime-union`, so no scenario claims the name.
+  Packs that carry it in `meta.scenario` hold the whole scenario, so they still load.
+  - **Decision for Mark:** if the brief meant to delete Maritime Union as well, it is one file and
+    its tests.
+
+### 1.1 headline
+"Scenario overlays may use the same boundary primitives as base events" heads `docs/backlog.md`, with
+"No 1912 extensions to today" as its first test case. It replaces the narrower `minus` entry.

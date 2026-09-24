@@ -1,88 +1,66 @@
 // @vitest-environment node
 import { describe, expect, it } from 'vitest';
+import { defaultSpec } from '../splitter/split';
 import { SolverClient } from './client';
-import type { MeshArrays } from './graph';
-import { scopeMask } from './graph';
-import { createSolverHost, type WorkerRequest, type WorkerResponse } from './protocol';
-import { defaultParams } from './solver';
-import { realData } from './testing/realData';
+import type { WorkerRequest, WorkerResponse } from './protocol';
 
 /** A stand-in worker that records what the client posts and what it would transfer. */
 function fakeWorker() {
   const posted: { message: WorkerRequest; transfer: Transferable[] }[] = [];
+  let listener: ((event: MessageEvent<WorkerResponse>) => void) | null = null;
   return {
     posted,
+    reply: (message: WorkerResponse) => listener?.({ data: message } as MessageEvent<WorkerResponse>),
     worker: {
       postMessage: (message: WorkerRequest, transfer: Transferable[] = []) =>
         posted.push({ message, transfer }),
-      addEventListener: () => {},
+      addEventListener: (_: string, l: (event: MessageEvent<WorkerResponse>) => void) => (listener = l),
       terminate: () => {},
     } as unknown as Worker,
   };
 }
 
-const mesh = (): MeshArrays => ({
-  offsets: new Int32Array([0, 1, 2]),
-  targets: new Int32Array([1, 0]),
-  centroids: new Float64Array(4),
-  areas: new Float64Array(2),
-});
+const urls = { mesh: 'm.gz', attrs: 'a.gz', places: 'p.gz', snap: 's.gz' };
 
-describe('solver client: what crosses to the worker (plan Phase 7 §1)', () => {
-  it('sends the mesh once and each column the first time a run needs it', () => {
+describe('splitter client (release 1.0.1)', () => {
+  it('asks the worker to load its own data once per set of artefacts', () => {
     const { worker, posted } = fakeWorker();
     const client = new SolverClient(worker);
-    const m = mesh();
-    const population = new Float32Array(2);
-    const gdp = new Float32Array(2);
-    client.init(m, { population });
-    client.init(m, { population });
-    client.init(m, { population, gdp });
-    expect(posted.map((p) => p.message)).toEqual([
-      { type: 'init', mesh: m, columns: { population } },
-      { type: 'init', columns: { gdp } },
-    ]);
-    // A new mesh (another version) starts over.
-    const other = mesh();
-    client.init(other, { population });
-    expect(posted[2].message).toEqual({ type: 'init', mesh: other, columns: { population } });
+    client.load(urls, 'cells.gz');
+    client.load(urls, 'cells.gz');
+    expect(posted.map((p) => p.message)).toEqual([{ type: 'load', urls, cells: 'cells.gz' }]);
+    client.load({ ...urls, attrs: 'a2.gz' }, 'cells.gz');
+    expect(posted).toHaveLength(2);
   });
 
-  it('transfers a template assignment instead of copying it, and clones the mask', () => {
-    const { worker, posted } = fakeWorker();
+  it('sends a spec and a transferred scope mask, never the mesh, and routes the reply', async () => {
+    const { worker, posted, reply } = fakeWorker();
     const client = new SolverClient(worker);
-    const template = new Int32Array(8);
-    const mask = new Uint8Array(8);
-    client.run(mask, defaultParams(2, 'balanced'), 1, { template });
-    expect(posted[0].transfer).toEqual([template.buffer]);
-    client.run(mask, defaultParams(2, 'balanced'), 1);
-    expect(posted[1].transfer).toEqual([]);
+    const scope = new Uint8Array(8);
+    const progress: number[] = [];
+    const run = client.land(defaultSpec(), scope, { onProgress: (p) => progress.push(p.iteration) });
+    expect(posted[0].message.type).toBe('land');
+    expect(posted[0].transfer).toEqual([scope.buffer]);
+    reply({ type: 'progress', id: run.id, progress: { iteration: 5, iterations: 10, cost: 1, best: 1 } });
+    reply({ type: 'landed', id: run.id, prepared: {} as never, landed: { colours: ['#000'] } as never });
+    await expect(run.result).resolves.toMatchObject({ landed: { colours: ['#000'] } });
+    expect(progress).toEqual([5]);
+    run.cancel();
+    expect(posted.at(-1)?.message).toEqual({ type: 'cancel', id: run.id });
   });
-});
 
-describe('solver host: columns arrive in parts', () => {
-  const data = realData();
-  const mask = scopeMask(data.mesh, { kind: 'province', province: 'PE' }, { provinces: data.provinces });
-
-  it('runs on columns sent after the mesh, and transfers the assignment back', () => {
-    const messages: { message: WorkerResponse; transfer?: Transferable[] }[] = [];
-    const queue: (() => void)[] = [];
-    const h = createSolverHost(
-      (message, transfer) => messages.push({ message, transfer }),
-      (task) => queue.push(task),
+  it('describes with only what the worker needs of each region, and rejects on error', async () => {
+    const { worker, posted, reply } = fakeWorker();
+    const client = new SolverClient(worker);
+    const described = client.describe(
+      {} as never,
+      new Int32Array(2),
+      [{ id: 0, name: 'A', pieces: 1, population: 9 } as never],
+      {},
     );
-    h.handle({ type: 'init', mesh: data.mesh, columns: {} });
-    h.handle({ type: 'init', columns: { population: data.columns.population } });
-    h.handle({
-      type: 'run',
-      id: 1,
-      mask,
-      params: { ...defaultParams(2, 'balanced'), iterations: 2_000 },
-      seed: 1,
-    });
-    for (let i = 0; i < 10_000 && queue.length; i++) queue.shift()?.();
-    const last = messages[messages.length - 1];
-    expect(last.message.type).toBe('done');
-    if (last.message.type === 'done') expect(last.transfer).toEqual([last.message.result.assignment.buffer]);
+    const message = posted[0].message;
+    expect(message.type === 'describe' && message.regions).toEqual([{ id: 0, name: 'A', pieces: 1 }]);
+    reply({ type: 'error', id: 1, message: 'no' });
+    await expect(described).rejects.toThrow('no');
   });
 });

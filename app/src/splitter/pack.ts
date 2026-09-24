@@ -43,6 +43,8 @@ export interface PackExtras {
   id?: string;
   /** the atlas scenario the split was made in */
   scenario?: Scenario | null;
+  /** a preset's premise, in prose (1.0.1) */
+  premise?: string;
 }
 
 export function buildPack(
@@ -69,6 +71,7 @@ export function buildPack(
       ...(edits.length ? { edited: true, edits } : {}),
       id: extras.id ?? packId(spec, assignment),
       ...(parent ? { parentPack: parent.id, parentRegionId: parent.regionId } : {}),
+      ...(extras.premise ? { premise: extras.premise } : {}),
       ...(scenario ? { scenario } : {}),
     },
     assignment: encodeColumn(assignment, { kind: 'id' }),

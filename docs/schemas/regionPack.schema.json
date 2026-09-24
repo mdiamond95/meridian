@@ -155,6 +155,10 @@
           "minimum": 0,
           "maximum": 9007199254740991
         },
+        "premise": {
+          "description": "Why the split was made the way it was, in prose: a preset's premise (1.0.1)",
+          "type": "string"
+        },
         "scenario": {
           "description": "The atlas scenario the split was made in, whole, so atlas scopes resolve the same way anywhere",
           "$ref": "#/$defs/Scenario"
@@ -215,6 +219,43 @@
           "required": [
             "kind",
             "province"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "provinces"
+            },
+            "provinces": {
+              "minItems": 1,
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "NL",
+                  "PE",
+                  "NS",
+                  "NB",
+                  "QC",
+                  "ON",
+                  "MB",
+                  "SK",
+                  "AB",
+                  "BC",
+                  "YT",
+                  "NT",
+                  "NU"
+                ]
+              },
+              "description": "Several provinces or territories as one scope, e.g. the three Maritime provinces (1.0.1)"
+            }
+          },
+          "required": [
+            "kind",
+            "provinces"
           ],
           "additionalProperties": false
         },

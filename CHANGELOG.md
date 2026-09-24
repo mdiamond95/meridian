@@ -3,6 +3,20 @@
 One entry per release tag. Each phase was merged to `main` after `pre-phase<N>` was tagged. The
 detail is in `docs/log/` (what happened in each session) and `docs/decisions.md` (why).
 
+## v1.0.1 — 2026-09-24
+
+- **A split lands without freezing the page.** Naming, dossiers, set analysis, scores and region
+  outlines are now made in the background worker, which holds its own copy of the data. A 30-region
+  split of Canada used to hold the page for about 800 ms; now no task on the page reaches 50 ms.
+  The map also no longer re-fits when the split is already in view.
+- **New preset: Acadie and the Maritimes** (`acadie-2`). Nova Scotia, New Brunswick and Prince
+  Edward Island are split in two on French mother tongue, and the pack explains what the line means
+  and what it misses. It is what "Acadian Maritimes" in the vision meant. The Maritime Union
+  scenario stays, renamed `maritime-union`.
+- **New scope:** several provinces or territories at once.
+- **Next:** the 1.1 headline is scenarios that can use the same boundary primitives as the historical
+  record, starting with No 1912 extensions held to today (`docs/backlog.md`).
+
 ## v1.0.0 — 2026-09-24 · Hardening and 1.0 (Phase 7)
 
 ### Performance

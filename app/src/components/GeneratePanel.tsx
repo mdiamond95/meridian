@@ -304,6 +304,7 @@ function ScopePicker() {
   const choose = (kind: ScopeKind) => {
     if (kind === 'canada') setSpec({ scope: { kind } });
     if (kind === 'province') setSpec({ scope: { kind, province: 'AB' } });
+    if (kind === 'provinces') setSpec({ scope: { kind, provinces: ['NB', 'NS', 'PE'] } });
     if (kind === 'atlasUnit' && units.length) setSpec({ scope: { kind, unit: units[0].id } });
     if (kind === 'atlasSovereign')
       setSpec({ scope: { kind, sovereign: sovereigns.includes('Canada') ? 'Canada' : sovereigns[0] } });
@@ -326,6 +327,7 @@ function ScopePicker() {
         >
           <option value="canada">Canada</option>
           <option value="province">A province or territory</option>
+          <option value="provinces">Several provinces or territories</option>
           <option value="atlasUnit">An atlas unit at the current date</option>
           <option value="atlasSovereign">A country in the atlas at the current date</option>
           <option value="region" disabled={!split}>
@@ -347,6 +349,32 @@ function ScopePicker() {
             </option>
           ))}
         </select>
+      )}
+      {scope.kind === 'provinces' && (
+        <fieldset className="province-picks" data-testid="provinces-picker">
+          <legend>Provinces and territories in the scope</legend>
+          {PROVINCE_CODES.map((code) => (
+            <label key={code}>
+              <input
+                type="checkbox"
+                checked={scope.provinces.includes(code)}
+                // At least one stays ticked: an empty scope has nothing to split.
+                disabled={scope.provinces.length === 1 && scope.provinces[0] === code}
+                onChange={(e) =>
+                  setSpec({
+                    scope: {
+                      kind: 'provinces',
+                      provinces: e.target.checked
+                        ? PROVINCE_CODES.filter((c) => c === code || scope.provinces.includes(c))
+                        : scope.provinces.filter((c) => c !== code),
+                    },
+                  })
+                }
+              />
+              {code}
+            </label>
+          ))}
+        </fieldset>
       )}
       {scope.kind === 'atlasUnit' && (
         <select

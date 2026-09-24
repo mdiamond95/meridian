@@ -19,27 +19,53 @@ function stats(values: number[]) {
 }
 const ms = (v: number) => `${v.toFixed(1)} ms`;
 
-/** Run Canada into `n` regions from the Generate panel; resolves with the longest main-thread task. */
+/**
+ * Run Canada into `n` regions from the Generate panel. Resolves with the longest main-thread task
+ * from the click until the regions are drawn (long tasks are 50 ms and over), and the longest single
+ * script run inside a long animation frame, which also sees work under 50 ms.
+ */
 async function runCanada(page: Page, n: number) {
   await page.getByTestId('generate-tab').click();
   await expect(page.getByTestId('generate')).toBeVisible({ timeout: 60_000 });
   await page.getByTestId('scope-select').selectOption('canada');
   await page.getByTestId('n-input').fill(String(n));
   await page.evaluate(() => {
-    const w = window as unknown as { __longest: number; __observer?: PerformanceObserver };
+    const w = window as unknown as {
+      __longest: number;
+      __script: number;
+      __observers?: PerformanceObserver[];
+    };
     w.__longest = 0;
-    w.__observer?.disconnect();
-    w.__observer = new PerformanceObserver((list) => {
-      for (const e of list.getEntries()) w.__longest = Math.max(w.__longest, e.duration);
+    w.__script = 0;
+    w.__observers?.forEach((o) => o.disconnect());
+    const tasks = new PerformanceObserver((list) => {
+      for (const e of list.getEntries())
+        if (e.startTime >= w.__from) w.__longest = Math.max(w.__longest, e.duration);
     });
-    w.__observer.observe({ type: 'longtask' });
+    tasks.observe({ type: 'longtask' });
+    const frames = new PerformanceObserver((list) => {
+      for (const e of list.getEntries() as unknown as {
+        scripts: { duration: number; startTime: number }[];
+      }[])
+        for (const script of e.scripts)
+          if (script.startTime >= w.__from) w.__script = Math.max(w.__script, script.duration);
+    });
+    frames.observe({ type: 'long-animation-frame' });
+    w.__observers = [tasks, frames];
   });
   const started = Date.now();
+  await page.evaluate(() => ((window as unknown as { __from: number }).__from = performance.now()));
   await page.getByTestId('run-button').click();
   await expect(page.getByTestId('split-legend').locator('li')).toHaveCount(n, { timeout: 240_000 });
   const elapsed = Date.now() - started;
-  const longest = await page.evaluate(() => (window as unknown as { __longest: number }).__longest);
-  return { elapsed, longest };
+  // The regions are drawn in tasks after the legend: wait for their labels, then a moment more.
+  await expect(page.locator('.region-label')).toHaveCount(n, { timeout: 30_000 });
+  await page.waitForTimeout(500);
+  const { longest, script } = await page.evaluate(() => {
+    const w = window as unknown as { __longest: number; __script: number };
+    return { longest: w.__longest, script: w.__script };
+  });
+  return { elapsed, longest, script };
 }
 
 async function sliderSteps(page: Page, from: number) {
@@ -114,7 +140,8 @@ test('frame times with a 30-region Canada split on the map', async ({ page }, te
   const steps = stats(await sliderSteps(page, 1855));
 
   const lines = [
-    `${testInfo.project.name} Canada into 30: ${run.elapsed} ms to the legend, longest main-thread task ${ms(run.longest)}`,
+    `${testInfo.project.name} Canada into 30: ${run.elapsed} ms to the legend; longest main-thread task ` +
+      `${run.longest ? ms(run.longest) : 'none over 50 ms'}; longest script in a long frame ${ms(run.script)}`,
     `${testInfo.project.name} pan: frame median ${ms(stats(pan).median)}, p95 ${ms(stats(pan).p95)}, max ${ms(stats(pan).max)}`,
     `${testInfo.project.name} hover: frame median ${ms(stats(hover).median)}, p95 ${ms(stats(hover).p95)}, max ${ms(stats(hover).max)}`,
     `${testInfo.project.name} slider under the split: work median ${ms(steps.median)}, p95 ${ms(steps.p95)}, max ${ms(steps.max)}`,
@@ -122,6 +149,8 @@ test('frame times with a 30-region Canada split on the map', async ({ page }, te
   console.log(lines.join('\n'));
   await testInfo.attach('split-frame-time', { body: lines.join('\n'), contentType: 'text/plain' });
   expect(steps.max, 'slowest slider step under the split').toBeLessThan(16);
+  // Release 1.0.1: the split lands without holding the main thread for 50 ms at a time.
+  expect(run.longest, 'longest main-thread task while a 30-region Canada split lands').toBeLessThan(50);
 });
 
 test.describe('memory, iPad emulation', () => {

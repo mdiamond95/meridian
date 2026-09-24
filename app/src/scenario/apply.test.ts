@@ -58,8 +58,8 @@ describe('replay', () => {
 
   it('every shipped scenario parses, has a premise paragraph and cites every event', () => {
     expect(SCENARIOS.map((s) => s.id)).toEqual([
-      'acadian-maritimes',
       'buffalo-1905',
+      'maritime-union',
       'newfoundland-independent-1949',
       'no-1912-extensions',
     ]);
@@ -216,7 +216,7 @@ describe('No 1912 extensions', () => {
 });
 
 describe('Maritime Union', () => {
-  const result = applyScenario(base, scenario('acadian-maritimes'));
+  const result = applyScenario(base, scenario('maritime-union'));
   const units = (date: string) => resolveUnits(result.loaded.atlas, date);
   const MARITIMES = ['nova_scotia', 'new_brunswick', 'prince_edward_island'];
 

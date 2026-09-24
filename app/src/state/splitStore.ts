@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import type { Progress } from '../engine/solver';
 import type { SplitterData, SplitterDataSource } from '../splitter/data';
-import type { CellTopology } from '../splitter/outline';
+import type { CellTopology, EncodedRings } from '../splitter/outline';
 import type { RegionDossier, SetAnalysis } from '../schema/dossier';
 import type { Difference } from '../splitter/compare';
 import type { RegionPack, RegionScore } from '../schema/regionPack';
@@ -30,6 +30,11 @@ export interface CurrentSplit {
   scores: RegionScore[] | null;
   /** the atlas scenario that was active when the split was made; saved in its pack */
   scenario: Scenario | null;
+  /**
+   * The regions' rings, dissolved in the worker for exactly this assignment (release 1.0.1). Absent
+   * when the split was made on the main thread or painted since; the map then dissolves them itself.
+   */
+  rings?: EncodedRings;
 }
 
 /** One split in a nesting tree (plan Phase 6 §2): its id is its pack's meta.id. */
