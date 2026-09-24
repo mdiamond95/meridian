@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import type { Progress } from '../engine/solver';
-import type { SplitterData } from '../splitter/data';
+import type { SplitterData, SplitterDataSource } from '../splitter/data';
 import type { CellTopology } from '../splitter/outline';
 import type { RegionDossier, SetAnalysis } from '../schema/dossier';
 import type { Difference } from '../splitter/compare';
@@ -69,6 +69,8 @@ export interface Comparison {
 
 interface SplitState {
   dataStatus: 'idle' | 'loading' | 'ready' | 'error';
+  /** Whether the decoded mesh and attributes came from the IndexedDB cache or the network. */
+  dataSource: SplitterDataSource | null;
   data: SplitterData | null;
   topology: CellTopology | null;
   library: PackLibrary | null;
@@ -105,6 +107,7 @@ interface SplitState {
 
 export const useSplitStore = create<SplitState>()((set) => ({
   dataStatus: 'idle',
+  dataSource: null,
   data: null,
   topology: null,
   library: null,

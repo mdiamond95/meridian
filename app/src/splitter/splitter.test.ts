@@ -232,3 +232,19 @@ describe('outlines and colours', () => {
     expect(regionColours(graph, Int32Array.from([0, 1, 2]), 3)).toEqual(colours);
   });
 });
+
+describe('scope graph cache (docs/perf.md)', () => {
+  it('returns the same graph for the same mask, and a new one for another mask', async () => {
+    const { cachedScopeGraph } = await import('./split');
+    const { buildScopeGraph } = await import('../engine/graph');
+    const data = realSplitterData();
+    const mask = new Uint8Array(data.cellIds.length);
+    data.provinces.forEach((p, i) => (mask[i] = p === 'PE' ? 1 : 0));
+    const first = cachedScopeGraph(data.arrays, mask);
+    expect(cachedScopeGraph(data.arrays, Uint8Array.from(mask))).toBe(first);
+    expect(first).toEqual(buildScopeGraph(data.arrays, mask));
+    const other = Uint8Array.from(mask);
+    other[mask.indexOf(1)] = 0;
+    expect(cachedScopeGraph(data.arrays, other)).not.toBe(first);
+  });
+});

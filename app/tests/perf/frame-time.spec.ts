@@ -1,7 +1,8 @@
 import { expect, test } from '@playwright/test';
 
 /**
- * Slider frame time at the two dates the Phase 2 gate names: 1867 and 1999.
+ * Slider frame time at the two dates the Phase 2 gate names: 1867 and 1999. Phase 7's target is
+ * stricter: every one-year step under 16 ms, including the steps that cross an event.
  *
  * What is measured: the main-thread work one slider step costs — from dispatching the range
  * input's `input` event (React flushes discrete input synchronously) to the moment the handler
@@ -18,6 +19,7 @@ const STEPS = 24;
 interface Sample {
   work: number[];
   paint: number[];
+  gaps: number[];
 }
 
 function median(values: number[]): number {
@@ -38,6 +40,20 @@ test('slider frame time at 1867 and 1999', async ({ page }, testInfo) => {
   // loading, and a user who drags the slider before that is over pays the build cost once per row.
   await expect(page.getByTestId('map')).toHaveAttribute('data-atlas-warm', 'true');
 
+  // Start each run on its first year and let the lookahead settle there, as it would while a user
+  // reads the map before dragging: the run then steps one year at a time, crossing real events.
+  const settleAt = async (year: number) => {
+    const map = page.getByTestId('map');
+    await page.evaluate((year) => {
+      const slider = document.querySelector<HTMLInputElement>('#timeline-slider');
+      const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set;
+      if (!slider) throw new Error('no timeline slider');
+      setter?.call(slider, String(year));
+      slider.dispatchEvent(new Event('input', { bubbles: true }));
+    }, year);
+    await expect(map).toHaveAttribute('data-atlas-lookahead', /.+/);
+  };
+
   const measure = async (centre: number): Promise<Sample> =>
     page.evaluate(
       async ({ centre, steps }) => {
@@ -46,8 +62,9 @@ test('slider frame time at 1867 and 1999', async ({ page }, testInfo) => {
         const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set;
         const work: number[] = [];
         const paint: number[] = [];
+        const frames: number[] = [];
         // Drag across the years either side of the date, so the run crosses real events.
-        for (let i = 0; i < steps; i += 1) {
+        for (let i = 1; i <= steps; i += 1) {
           const year = centre - Math.floor(steps / 2) + i;
           setter?.call(slider, String(year));
           const started = performance.now();
@@ -57,8 +74,12 @@ test('slider frame time at 1867 and 1999', async ({ page }, testInfo) => {
             requestAnimationFrame(() => resolve(performance.now())),
           );
           paint.push(painted - started);
+          frames.push(painted);
         }
-        return { work, paint };
+        // One step per frame, so the gap between successive frames is what a user sees: it covers
+        // the step, the paint, and any idle slice (the lookahead re-filling) that ran in between.
+        const gaps = frames.slice(1).map((t, i) => t - frames[i]);
+        return { work, paint, gaps };
       },
       { centre, steps: STEPS },
     );
@@ -66,6 +87,7 @@ test('slider frame time at 1867 and 1999', async ({ page }, testInfo) => {
   const lines: string[] = [];
   const rows = [];
   for (const year of [1867, 1999]) {
+    await settleAt(year - Math.floor(STEPS / 2));
     const sample = await measure(year);
     const row = {
       year,
@@ -73,23 +95,22 @@ test('slider frame time at 1867 and 1999', async ({ page }, testInfo) => {
       workP95: percentile(sample.work, 95),
       workMax: Math.max(...sample.work),
       paintMedian: median(sample.paint),
+      gapMax: Math.max(...sample.gaps),
     };
     rows.push(row);
     lines.push(
       `${testInfo.project.name} ${year}: work median ${row.workMedian.toFixed(1)} ms, ` +
         `p95 ${row.workP95.toFixed(1)} ms, max ${row.workMax.toFixed(1)} ms; ` +
-        `to next frame ${row.paintMedian.toFixed(1)} ms`,
+        `to next frame ${row.paintMedian.toFixed(1)} ms; longest frame ${row.gapMax.toFixed(1)} ms`,
     );
   }
   // Report every number before asserting, so a failure still shows what both dates cost.
   console.log(lines.join('\n'));
   await testInfo.attach('frame-time', { body: lines.join('\n'), contentType: 'text/plain' });
   for (const row of rows) {
-    // The gate: the typical slider step's work fits in one 60 Hz frame, comfortably.
     expect(row.workMedian, `median at ${row.year}`).toBeLessThan(16);
-    // The tail is the steps that cross an event, where the map really does change: Leaflet has to
-    // project and attach the new units' paths. Those cost one frame, and this guards a regression
-    // rather than pretending they are free. See docs/perf.md for measured numbers.
-    expect(row.workP95, `p95 at ${row.year}`).toBeLessThan(25);
+    // The steps that cross an event swap which pre-attached paths are shown (AtlasLayer's
+    // lookahead), so they fit the frame too: every step, not a percentile. See docs/perf.md.
+    expect(row.workMax, `slowest step at ${row.year}`).toBeLessThan(16);
   }
 });

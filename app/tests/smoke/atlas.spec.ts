@@ -6,7 +6,9 @@ test('atlas loads and resolves the timeline to units', async ({ page }, testInfo
   await page.goto('./');
 
   // 1867 on load: the four original provinces and the lands around them.
-  const units = page.locator('.leaflet-overlay-pane path');
+  // Shown paths only: the neighbouring event windows' units are kept on the map with display: none
+  // (AtlasLayer's lookahead, docs/perf.md).
+  const units = page.locator('.leaflet-overlay-pane path:not([style*="display: none"])');
   await expect(units.first()).toBeAttached();
   await expect(page.getByTestId('timeline-year')).toHaveText('1867');
   await expect(page.getByTestId('timeline-event')).toContainText('Confederation');
@@ -37,7 +39,9 @@ test('atlas loads and resolves the timeline to units', async ({ page }, testInfo
 
 test('clicking a unit opens its details', async ({ page }) => {
   await page.goto('./');
-  const unit = page.locator('.leaflet-overlay-pane path.leaflet-interactive').first();
+  const unit = page
+    .locator('.leaflet-overlay-pane path.leaflet-interactive:not([style*="display: none"])')
+    .first();
   await expect(unit).toBeAttached();
   // A multipolygon's bounding-box centre can be open water, so dispatch the click on the path itself.
   await unit.dispatchEvent('click');
