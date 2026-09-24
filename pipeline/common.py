@@ -13,6 +13,7 @@ import hashlib
 import io
 import json
 import os
+from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
@@ -77,3 +78,39 @@ def raw_file(source_id: str) -> Path:
     if not path.exists():
         raise FileNotFoundError(f"{path} missing; run make download")
     return path
+
+
+# Intermediates read from multi-GB raw archives (the Canada1Water zips) are cached in data/raw/.cache
+# and their SHA-256 committed here, so a build or `make verify` can run with those archives deleted:
+# a cached file must match its committed hash, and one rebuilt from raw must match it too.
+INTERMEDIATES = ROOT / "pipeline" / "intermediates.sha256"
+
+
+def read_intermediate_hashes() -> dict[str, str]:
+    if not INTERMEDIATES.exists():
+        return {}
+    lines = INTERMEDIATES.read_text(encoding="utf-8").splitlines()
+    return {name: digest for digest, name in (line.split("  ", 1) for line in lines if line)}
+
+
+def cached_intermediate(name: str, produce: Callable[[], bytes]) -> bytes:
+    """The bytes of data/raw/.cache/<name>, from the cache or from `produce()` (which reads raw),
+    checked against pipeline/intermediates.sha256. A name with no committed hash yet is recorded
+    there, to be committed with the build."""
+    path = RAW / ".cache" / name
+    recorded = read_intermediate_hashes().get(name)
+    if path.exists():
+        data = path.read_bytes()
+        if recorded is not None and hashlib.sha256(data).hexdigest() != recorded:
+            raise ValueError(f"{path} does not match {INTERMEDIATES.name}; delete it and rebuild from raw")
+    else:
+        data = produce()
+        if recorded is not None and hashlib.sha256(data).hexdigest() != recorded:
+            raise ValueError(f"{name} rebuilt from raw does not match {INTERMEDIATES.name}")
+        write_bytes(path, data)
+    if recorded is None:
+        hashes = {**read_intermediate_hashes(), name: hashlib.sha256(data).hexdigest()}
+        text = "".join(f"{d}  {n}\n" for n, d in sorted(hashes.items()))
+        INTERMEDIATES.write_text(text, encoding="utf-8")
+        print(f"recorded {name} in {INTERMEDIATES.name}; commit it", flush=True)
+    return data

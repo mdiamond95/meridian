@@ -89,3 +89,38 @@ def test_gdp_allocation_reconciles_each_province():
 
 def test_haversine_edmonton_to_calgary():
     assert 275 < attrs.haversine_km(53.5461, -113.4938, 51.0447, -114.0719) < 285
+
+
+def test_cached_intermediate_records_reuses_and_checks_its_hash(tmp_path, monkeypatch):
+    """An intermediate from raw is recorded once, then read from the cache without raw; a cache or a
+    rebuild that differs from the committed hash is refused (docs/decisions.md, 2026-09-24)."""
+    import pytest
+
+    import common
+
+    monkeypatch.setattr(common, "RAW", tmp_path / "raw")
+    monkeypatch.setattr(common, "INTERMEDIATES", tmp_path / "intermediates.sha256")
+    calls = []
+
+    def produce(payload=b"reaches"):
+        calls.append(payload)
+        return payload
+
+    assert common.cached_intermediate("x.json", produce) == b"reaches"
+    recorded = common.read_intermediate_hashes()
+    assert list(recorded) == ["x.json"]
+
+    # Cached: raw is not read again (the zips may be gone).
+    assert common.cached_intermediate("x.json", lambda: pytest.fail("raw read")) == b"reaches"
+    assert calls == [b"reaches"]
+
+    # A tampered cache is refused.
+    (tmp_path / "raw" / ".cache" / "x.json").write_bytes(b"other")
+    with pytest.raises(ValueError, match="does not match"):
+        common.cached_intermediate("x.json", produce)
+
+    # A rebuild from raw that disagrees with the committed hash is refused, and not cached.
+    (tmp_path / "raw" / ".cache" / "x.json").unlink()
+    with pytest.raises(ValueError, match="rebuilt from raw"):
+        common.cached_intermediate("x.json", lambda: b"changed")
+    assert not (tmp_path / "raw" / ".cache" / "x.json").exists()

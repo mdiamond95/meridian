@@ -19,7 +19,7 @@ import geopandas as gpd
 import shapely
 
 from atlas.primitives import partition, polygonal
-from common import RAW, WGS84, load_manifest, raw_file, write_bytes
+from common import RAW, WGS84, cached_intermediate, load_manifest, raw_file, write_bytes
 from geo import read_vector, zip_dataset
 from mesh import ATLAS_POL_DIV
 
@@ -145,7 +145,8 @@ class Sources:
         """Reach name → Canada1Water flow lines with that name, from the regions requested.
 
         Extracting a regional GeoPackage takes minutes, so the selected reaches are cached in
-        data/raw/.cache, keyed by the zip's recorded SHA-256 and the names read.
+        data/raw/.cache, keyed by the zip's recorded SHA-256 and the names read, and checked
+        against pipeline/intermediates.sha256 so the zips can be deleted between builds.
         """
         out: dict[str, list[shapely.Geometry]] = {}
         manifest = load_manifest()
@@ -155,12 +156,12 @@ class Sources:
             names = sorted(set(self.rivers[region]))
             source = f"nrcan_c1w_strahler_{region}"
             key = hashlib.sha256(json.dumps([manifest[source]["sha256"], names]).encode()).hexdigest()[:16]
-            cache = RAW / ".cache" / f"atlas-rivers-{region}-{key}.json"
-            if cache.exists():
-                cached = json.loads(cache.read_text(encoding="utf-8"))
-            else:
-                cached = self._read_reaches(source, names)
-                write_bytes(cache, json.dumps(cached).encode("utf-8"))
+            cached = json.loads(
+                cached_intermediate(
+                    f"atlas-rivers-{region}-{key}.json",
+                    lambda: json.dumps(self._read_reaches(source, names)).encode("utf-8"),  # noqa: B023
+                )
+            )
             for name in names:
                 out.setdefault(name, []).extend(shapely.from_wkb([bytes.fromhex(h) for h in cached[name]]))
             log(f"rivers {region}: {', '.join(f'{n} ({len(cached[n])})' for n in names)}")
