@@ -1,0 +1,334 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "#/$defs/Scenario",
+  "$defs": {
+    "Scenario": {
+      "type": "object",
+      "properties": {
+        "format": {
+          "type": "string",
+          "const": "meridian.scenario"
+        },
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9-]+$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "fork": {
+          "description": "Where the scenario leaves the base atlas; its first event is on or after it",
+          "$ref": "#/$defs/IsoDate"
+        },
+        "premise": {
+          "type": "string",
+          "minLength": 1,
+          "description": "One paragraph"
+        },
+        "events": {
+          "minItems": 1,
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ScenarioEvent"
+          },
+          "description": "Sorted by date ascending"
+        }
+      },
+      "required": [
+        "format",
+        "id",
+        "name",
+        "fork",
+        "premise",
+        "events"
+      ],
+      "additionalProperties": false,
+      "title": "Meridian Scenario"
+    },
+    "IsoDate": {
+      "type": "string",
+      "format": "date",
+      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+    },
+    "ScenarioEvent": {
+      "type": "object",
+      "properties": {
+        "date": {
+          "$ref": "#/$defs/IsoDate"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "note": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sources": {
+          "minItems": 1,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": "Citations, as for base events"
+        },
+        "requires": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/AtlasRequirement"
+          }
+        },
+        "changes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ScenarioChange"
+          }
+        }
+      },
+      "required": [
+        "date",
+        "title",
+        "note",
+        "sources",
+        "changes"
+      ],
+      "additionalProperties": false
+    },
+    "AtlasRequirement": {
+      "type": "object",
+      "properties": {
+        "unit": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$",
+          "description": "Stable snake_case id, e.g. \"ruperts_land\""
+        },
+        "exists": {
+          "description": "Default true: the unit exists",
+          "type": "boolean"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "colony",
+            "dominion",
+            "province",
+            "territory",
+            "district",
+            "hbc_charter",
+            "unorganized",
+            "foreign",
+            "disputed"
+          ]
+        },
+        "sovereign": {
+          "type": "string",
+          "minLength": 1
+        },
+        "because": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Why the event depends on it, with the instrument"
+        }
+      },
+      "required": [
+        "unit",
+        "because"
+      ],
+      "additionalProperties": false
+    },
+    "ScenarioChange": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "create": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_]*$"
+            },
+            "name": {
+              "type": "string",
+              "minLength": 1
+            },
+            "status": {
+              "type": "string",
+              "enum": [
+                "colony",
+                "dominion",
+                "province",
+                "territory",
+                "district",
+                "hbc_charter",
+                "unorganized",
+                "foreign",
+                "disputed"
+              ]
+            },
+            "sovereign": {
+              "type": "string",
+              "minLength": 1
+            },
+            "capital": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "geometry": {
+              "$ref": "#/$defs/__schema0"
+            },
+            "note": {
+              "type": "string"
+            },
+            "confidence": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "instrument": {
+              "description": "What the counterfactual rests on: the proposal, bill or vote",
+              "type": "string"
+            },
+            "rationale": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "create"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "alter": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_]*$"
+            },
+            "name": {
+              "type": "string",
+              "minLength": 1
+            },
+            "status": {
+              "type": "string",
+              "enum": [
+                "colony",
+                "dominion",
+                "province",
+                "territory",
+                "district",
+                "hbc_charter",
+                "unorganized",
+                "foreign",
+                "disputed"
+              ]
+            },
+            "sovereign": {
+              "type": "string",
+              "minLength": 1
+            },
+            "capital": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "geometry": {
+              "$ref": "#/$defs/__schema0"
+            },
+            "note": {
+              "type": "string"
+            },
+            "confidence": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "instrument": {
+              "description": "What the counterfactual rests on: the proposal, bill or vote",
+              "type": "string"
+            },
+            "rationale": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "alter"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "rename": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_]*$"
+            },
+            "name": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "rename",
+            "name"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "dissolve": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_]*$"
+            }
+          },
+          "required": [
+            "dissolve"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "__schema0": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "unit": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_]*$",
+              "description": "A base atlas unit"
+            },
+            "at": {
+              "description": "The date whose row of that unit is used",
+              "$ref": "#/$defs/IsoDate"
+            }
+          },
+          "required": [
+            "unit",
+            "at"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "union": {
+              "minItems": 2,
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/__schema0"
+              }
+            }
+          },
+          "required": [
+            "union"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    }
+  }
+}

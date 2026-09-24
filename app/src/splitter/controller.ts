@@ -1,9 +1,10 @@
 import { resolvedAt } from '../atlas/resolve';
 import { buildDossiers, buildSetAnalysis } from '../dossier/dossier';
+import { regionScores } from '../dossier/score';
 import { SolverClient } from '../engine/client';
 import type { Columns } from '../engine/solver';
 import { useAtlasStore } from '../state/atlasStore';
-import { useSplitStore, type CurrentSplit } from '../state/splitStore';
+import { useSplitStore, type CurrentSplit, type NestNode } from '../state/splitStore';
 import { CELLS_URL, SPLITTER_URLS } from './assets';
 import { loadCellTopology, loadSplitterData } from './data';
 import { actualCanada, compareSplits, type ComparableSplit } from './compare';
@@ -19,6 +20,11 @@ import {
   type SplitSpec,
 } from './split';
 import { encodeHash } from './url';
+import { assembleTree, childrenOf, flattenTree, packId, parentOf, pathTo, subtree } from './tree';
+import { useUiStore } from '../state/uiStore';
+import type { RegionPackWire } from '../schema/regionPack';
+import type { Scenario } from '../schema/scenario';
+import { decodeColumn } from '../schema/columns';
 import { maybeGunzip } from '../data/loadMesh';
 import { exportInput } from '../export/build';
 import { exportFile, saveFile, type ExportFormat } from '../export/download';
@@ -65,6 +71,21 @@ export function ensureSplitterData(): Promise<void> {
   return loading;
 }
 
+/** Resolves once the atlas has loaded (or failed): atlas scopes cannot be resolved before. */
+function atlasReady(): Promise<void> {
+  const ready = (s: { status: string }) => s.status === 'ready' || s.status === 'error';
+  if (ready(useAtlasStore.getState())) return Promise.resolve();
+  return new Promise((resolve) => {
+    const stop = useAtlasStore.subscribe((s) => {
+      if (!ready(s)) return;
+      stop();
+      resolve();
+    });
+  });
+}
+
+const needsAtlas = (scope: { kind: string }) => scope.kind === 'atlasUnit' || scope.kind === 'atlasSovereign';
+
 function context() {
   const { data: atlas } = useAtlasStore.getState();
   const { regionSource, importedSnap } = useSplitStore.getState();
@@ -88,14 +109,33 @@ function show(
   source: CurrentSplit['source'],
   /** names chosen elsewhere (an imported map's), by region id */
   names?: Map<number, string>,
+  /** the node id, when the pack carries one */
+  id?: string,
 ) {
   const { data, topology } = useSplitStore.getState();
   if (!data) return;
+  const split = makeSplit(prepared, assignment, source, names);
+  if (!split) return;
+  useSplitStore
+    .getState()
+    .set({ split, selectedRegion: null, ...placeInTree(split, id ?? nodeIdFor(split)) });
+  if (topology) describeSplit(topology);
+}
+
+function makeSplit(
+  prepared: PreparedSplit,
+  assignment: Int32Array,
+  source: CurrentSplit['source'],
+  names?: Map<number, string>,
+  scenario: Scenario | null = useAtlasStore.getState().scenario?.scenario ?? null,
+): CurrentSplit | null {
+  const { data } = useSplitStore.getState();
+  if (!data) return null;
   const regions = nameRegions(prepared, assignment, countRegions(assignment), data).map((r) => ({
     ...r,
     name: names?.get(r.id) ?? r.name,
   }));
-  const split: CurrentSplit = {
+  return {
     prepared,
     assignment,
     regions,
@@ -104,9 +144,164 @@ function show(
     source,
     dossiers: null,
     setAnalysis: null,
+    scores: null,
+    scenario,
   };
-  useSplitStore.getState().set({ split, selectedRegion: null });
-  if (topology) describeSplit(topology);
+}
+
+// --- Nesting (plan Phase 6 §2) ----------------------------------------------------------------------
+
+function nodeIdFor(split: CurrentSplit): string {
+  return split.source.kind === 'pack' ? split.source.id : packId(split.prepared.spec, split.assignment);
+}
+
+/**
+ * Where a new split goes in the nesting tree. A split whose scope is a region of a node in the tree is
+ * that node's child for that region (replacing any earlier child there, and everything under it);
+ * anything else starts a new tree.
+ */
+function placeInTree(split: CurrentSplit, id: string): { nest: Record<string, NestNode>; nodeId: string } {
+  const { nest, nodeId, split: current } = useSplitStore.getState();
+  const parent = parentOf(split.prepared.spec);
+  if (!parent || !nest[parent.id]) return { nest: { [id]: { id, parent: null, split } }, nodeId: id };
+  const synced =
+    nodeId && nest[nodeId] && current ? { ...nest, [nodeId]: { ...nest[nodeId], split: current } } : nest;
+  const replaced = new Set(
+    childrenOf(synced, parent.id)
+      .filter((c) => c.parent?.regionId === parent.regionId)
+      .flatMap((old) => subtree(synced, old.id)),
+  );
+  const next = Object.fromEntries(Object.entries(synced).filter(([key]) => !replaced.has(key)));
+  next[id] = { id, parent, split };
+  return { nest: next, nodeId: id };
+}
+
+/** The current split saved back into its node, so the tree holds what is on screen. */
+function syncedNest(): Record<string, NestNode> {
+  const { nest, nodeId, split } = useSplitStore.getState();
+  if (!nodeId || !nest[nodeId] || !split) return nest;
+  return { ...nest, [nodeId]: { ...nest[nodeId], split } };
+}
+
+/** Breadcrumb: the path from the root to the current split, each with its label. */
+export function nestPath(): { id: string; label: string }[] {
+  const { nest, nodeId } = useSplitStore.getState();
+  if (!nodeId) return [];
+  return pathTo(nest, nodeId).map((node) => ({ id: node.id, label: nodeLabel(nest, node) }));
+}
+
+export function nodeLabel(nest: Record<string, NestNode>, node: NestNode): string {
+  const n = node.split.regions.length;
+  if (!node.parent) return `${title(node.split)}`;
+  const parent = nest[node.parent.id];
+  const region = parent?.split.regions.find((r) => r.id === node.parent?.regionId);
+  return `${region?.name ?? `Region ${(node.parent.regionId ?? 0) + 1}`} in ${n}`;
+}
+
+/** Move to another split of the tree: its regions on the map, its spec in the panel. */
+export function goToNode(id: string) {
+  const nest = syncedNest();
+  const node = nest[id];
+  if (!node) return;
+  const parent = node.parent ? nest[node.parent.id] : undefined;
+  useSplitStore.getState().set({
+    nest,
+    nodeId: id,
+    split: node.split,
+    spec: node.split.prepared.spec,
+    regionSource: parent?.split.assignment ?? null,
+    selectedRegion: null,
+    compare: null,
+  });
+  if (!node.split.dossiers) describeSplit();
+}
+
+/** Split one region of the current split into `n`: the next level of the tree. */
+export async function splitRegion(regionId: number, n: number): Promise<void> {
+  const { split, nodeId, spec } = useSplitStore.getState();
+  if (!split || !nodeId) return;
+  useSplitStore.getState().set({ nest: syncedNest(), regionSource: split.assignment });
+  useSplitStore.getState().replaceSpec({
+    ...spec,
+    scope: { kind: 'region', pack: nodeId, region: regionId },
+    n,
+    method: spec.method === 'template' || spec.method === 'seeded' ? 'balanced' : spec.method,
+    capitalPoints: undefined,
+    capitalNames: undefined,
+    carveCmas: { ...spec.carveCmas, enabled: false },
+    together: [],
+    apart: [],
+  });
+  useUiStore.getState().setPanelTab('generate');
+  await runCurrentSpec();
+}
+
+/** The whole tree as one JSON: the root pack with its children nested (null without a tree). */
+export function currentTree(): RegionPackWire | null {
+  const { nodeId, data } = useSplitStore.getState();
+  if (!nodeId || !data) return null;
+  const nest = syncedNest();
+  const root = pathTo(nest, nodeId)[0];
+  return assembleTree(nest, root.id, (node) => packFor(node.split, node.id));
+}
+
+function packFor(split: CurrentSplit, id: string): RegionPackWire {
+  const { data } = useSplitStore.getState();
+  if (!data) throw new Error('no data');
+  return buildPack(split.prepared.spec, split.assignment, split.regions, data.meshVersion, {
+    edits: split.edits,
+    dossiers: split.dossiers ?? undefined,
+    setAnalysis: split.setAnalysis ?? undefined,
+    scores: split.scores ?? undefined,
+    scenario: split.scenario,
+    id,
+  });
+}
+
+export function downloadTree() {
+  const tree = currentTree();
+  if (!tree) return;
+  const name = `meridian-tree-${tree.meta.id ?? 'split'}.json`;
+  saveFile(new File([JSON.stringify(tree)], name, { type: 'application/json' }), name);
+}
+
+/** A tree pack's descendants as nodes under its root (the root itself is shown by showPack). */
+function loadChildren(root: Pick<RegionPackWire, 'meta' | 'children'>, rootId: string) {
+  const { data } = useSplitStore.getState();
+  if (!data || !root.children?.length) return;
+  const nest = { ...useSplitStore.getState().nest };
+  const assignments = new Map<string, Int32Array>([[rootId, nest[rootId].split.assignment]]);
+  for (const wire of (root.children ?? []).flatMap(flattenTree)) {
+    const spec = specFromPack(wire);
+    const assignment = decodeColumn(wire.assignment) as Int32Array;
+    const parent =
+      wire.meta.parentPack !== undefined && wire.meta.parentRegionId !== undefined
+        ? {
+            id: wire.meta.parentPack === root.meta.id ? rootId : wire.meta.parentPack,
+            regionId: wire.meta.parentRegionId,
+          }
+        : null;
+    const parentAssignment = parent && assignments.get(parent.id);
+    if (!parent || !parentAssignment) continue;
+    let prepared: PreparedSplit;
+    try {
+      prepared = prepareSplit(spec, data, { ...context(), packAssignment: parentAssignment });
+    } catch {
+      prepared = preparedFromAssignment({ ...spec, n: wire.regions.length }, assignment, data);
+    }
+    const split = makeSplit(
+      prepared,
+      assignment,
+      { kind: 'file', name: wire.meta.id ?? 'child', refit: null },
+      undefined,
+      wire.meta.scenario ?? null,
+    );
+    const id = wire.meta.id ?? packId(spec, assignment);
+    if (!split) continue;
+    nest[id] = { id, parent, split: { ...split, edits: wire.meta.edits ?? [] } };
+    assignments.set(id, assignment);
+  }
+  useSplitStore.getState().set({ nest });
 }
 
 /**
@@ -143,12 +338,20 @@ export function describeSplit(topology = useSplitStore.getState().topology) {
     names,
     pieces: split.regions.map((r) => r.pieces),
   });
+  const scores = regionScores({
+    data,
+    prepared: split.prepared,
+    assignment: split.assignment,
+    aggregates,
+    dossiers,
+  });
   if (useSplitStore.getState().split !== split) return; // a newer split arrived while this one was described
   useSplitStore.getState().set({
     split: {
       ...split,
       dossiers,
       setAnalysis,
+      scores,
       regions: split.regions.map((region, i) => ({ ...region, name: dossiers[i]?.name ?? region.name })),
     },
   });
@@ -162,11 +365,12 @@ function countRegions(assignment: Int32Array) {
 
 export async function runCurrentSpec(): Promise<void> {
   await ensureSplitterData();
+  if (needsAtlas(useSplitStore.getState().spec.scope)) await atlasReady();
   const store = useSplitStore.getState();
   const { data } = store;
   if (!data || store.running) return;
   const date =
-    store.spec.scope.kind === 'atlasUnit'
+    store.spec.scope.kind === 'atlasUnit' || store.spec.scope.kind === 'atlasSovereign'
       ? resolvedAt(useAtlasStore.getState().data?.atlas ?? { events: [] }, useAtlasStore.getState().date) ||
         null
       : store.spec.date;
@@ -190,7 +394,8 @@ export async function runCurrentSpec(): Promise<void> {
     const result = await run.result;
     const finished = finishSplit(prepared, result, data);
     show(prepared, finished.assignment, { kind: 'run' });
-    history.replaceState(null, '', encodeHash({ kind: 'split', spec }));
+    // A nested split needs its parent's cells, which a link cannot carry.
+    if (spec.scope.kind !== 'region') history.replaceState(null, '', encodeHash({ kind: 'split', spec }));
   } catch (err) {
     useSplitStore.getState().set({ error: message(err) });
   } finally {
@@ -218,6 +423,8 @@ export async function loadPreset(id: string): Promise<void> {
       useSplitStore.getState().set({ error: `${entry.name}: ${fit.reason}` });
       return;
     }
+    if (needsAtlas(pack.meta.scope) || pack.meta.scenario) await atlasReady();
+    atlasFor(pack);
     const spec = specFromPack(pack);
     useSplitStore.getState().replaceSpec(spec);
     if (fit.kind === 'regenerate') {
@@ -251,18 +458,15 @@ export function paintCell(cell: number) {
       // The dossiers describe the split as it was; the panel rebuilds them on demand.
       dossiers: null,
       setAnalysis: null,
+      scores: null,
     },
   });
 }
 
 export function currentPack() {
-  const { split, data } = useSplitStore.getState();
+  const { split, data, nodeId } = useSplitStore.getState();
   if (!split || !data) return null;
-  return buildPack(split.prepared.spec, split.assignment, split.regions, data.meshVersion, {
-    edits: split.edits,
-    dossiers: split.dossiers ?? undefined,
-    setAnalysis: split.setAnalysis ?? undefined,
-  });
+  return packFor(split, nodeId ?? nodeIdFor(split));
 }
 
 export function downloadPack() {
@@ -367,6 +571,11 @@ export function shareability(split: CurrentSplit | null): { ok: true } | { ok: f
     return { ok: false, reason: 'Made from an imported map, which a link cannot carry: download the pack.' };
   if (split.source.kind === 'file' && split.source.refit)
     return { ok: false, reason: 'Re-fitted from another mesh version: download the pack.' };
+  if (split.prepared.spec.scope.kind === 'region')
+    return {
+      ok: false,
+      reason: 'A nested split needs its parent, which a link cannot carry: download the tree.',
+    };
   if (split.prepared.spec.snap.includes(IMPORTED_SNAP))
     return { ok: false, reason: 'Snaps to an imported layer, which a link cannot carry: download the pack.' };
   return { ok: true };
@@ -418,10 +627,28 @@ export async function exportCurrent(format: ExportFormat): Promise<void> {
   }
 }
 
+/**
+ * A pack made in a scenario brings its scenario back (plan Phase 6 §1); a pack whose scope is read from
+ * the atlas and names no scenario was made on the record, so the record comes back.
+ */
+function atlasFor(pack: Pick<RegionPack, 'meta'>) {
+  const atlas = useAtlasStore.getState();
+  const kind = pack.meta.scope.kind;
+  const wanted = pack.meta.scenario ?? null;
+  if (!wanted && kind !== 'atlasUnit' && kind !== 'atlasSovereign') return;
+  if ((atlas.scenario?.scenario.id ?? null) === (wanted?.id ?? null)) return;
+  try {
+    atlas.setScenario(wanted);
+  } catch (err) {
+    useSplitStore.getState().set({ error: `scenario ${wanted?.id}: ${message(err)}` });
+  }
+}
+
 /** Show a decoded pack made on this mesh: its own recipe when it has one, its cells as they are. */
 function showPack(pack: RegionPack, source: CurrentSplit['source']) {
   const { data } = useSplitStore.getState();
   if (!data) return;
+  atlasFor(pack);
   const spec = specFromPack(pack);
   const template = pack.meta.method === 'template';
   const fromCells = () => preparedFromAssignment({ ...spec, n: pack.regions.length }, pack.assignment, data);
@@ -443,10 +670,19 @@ function showPack(pack: RegionPack, source: CurrentSplit['source']) {
     pack.assignment,
     source,
     template ? new Map(pack.regions.map((r) => [r.id, r.name])) : undefined,
+    pack.meta.id,
   );
   const split = useSplitStore.getState().split;
   if (split && pack.meta.edits?.length) {
     useSplitStore.getState().set({ split: { ...split, edits: pack.meta.edits } });
+  }
+  const { nodeId } = useSplitStore.getState();
+  if (pack.children?.length && nodeId) {
+    loadChildren(pack, nodeId);
+    const count = Object.keys(useSplitStore.getState().nest).length;
+    useSplitStore
+      .getState()
+      .set({ notice: `A tree of ${count} splits: use the breadcrumb to move through it.` });
   }
 }
 
@@ -457,6 +693,8 @@ export async function importPack(json: unknown, name: string): Promise<void> {
   if (!data) return;
   try {
     const check = checkPack(json, data.meshVersion);
+    if (check.kind !== 'other-mesh' && (needsAtlas(check.pack.meta.scope) || check.pack.meta.scenario))
+      await atlasReady();
     if (check.kind === 'other-mesh') {
       useSplitStore
         .getState()

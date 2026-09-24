@@ -6,7 +6,9 @@ import type { AtlasUnit } from '../schema/atlas';
 import { activeTruthLayers, useAtlasStore } from '../state/atlasStore';
 import { useUiStore } from '../state/uiStore';
 
-const rowKey = (u: AtlasUnit) => `${u.id}@${u.validFrom}`;
+// The drawing and the claim tooltip are baked into a cached layer, so they are part of its key: a
+// scenario's row can share a base row's id and date and still be drawn differently.
+const rowKey = (u: AtlasUnit) => `${u.id}@${u.validFrom}@${u.geometryRef}@${u.sovereign}@${u.name}`;
 
 /** How long one cache-warming slice may hold the main thread. */
 const SLICE_MS = 8;

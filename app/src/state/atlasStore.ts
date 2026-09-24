@@ -3,7 +3,9 @@ import type { LoadedAtlas } from '../atlas/loadAtlas';
 import type { LoadedContact } from '../atlas/loadContact';
 import type { LoadedIndigenous } from '../atlas/loadIndigenous';
 import { resolveUnits } from '../atlas/resolve';
+import { applyScenario, type ScenarioAtlas } from '../scenario/apply';
 import { TRUTH_LAYERS, type TruthLayer } from '../schema/atlas';
+import type { Scenario } from '../schema/scenario';
 
 /** Atlas view state: the date on the timeline, visible truth layers, and the selected unit. */
 
@@ -24,7 +26,14 @@ export function startYear(start: StartOption): number {
 interface AtlasState {
   status: AtlasStatus;
   error: string | null;
+  /** The atlas the map shows: the base, or the active scenario's replay of it. */
   data: LoadedAtlas | null;
+  /** The base atlas as built by the pipeline; the diff compares `data` with it. */
+  base: LoadedAtlas | null;
+  /** The active scenario (plan Phase 6 §1), or null for the base atlas. */
+  scenario: ScenarioAtlas | null;
+  /** Draw the base atlas's units the scenario changes, as dashed outlines. */
+  baseOutlines: boolean;
   /** ISO date the map resolves to. */
   date: string;
   visible: boolean;
@@ -49,6 +58,9 @@ interface AtlasState {
   selected: string | null;
   setLoading: () => void;
   setLoaded: (data: LoadedAtlas) => void;
+  /** Activate a scenario (or null for the base). Throws when the scenario cannot apply. */
+  setScenario: (scenario: Scenario | null) => void;
+  toggleBaseOutlines: () => void;
   setError: (message: string) => void;
   setDate: (date: string) => void;
   setVisible: (visible: boolean) => void;
@@ -71,6 +83,9 @@ export const initialAtlasState = {
   status: 'idle' as AtlasStatus,
   error: null,
   data: null,
+  base: null,
+  scenario: null,
+  baseOutlines: true,
   date: INITIAL_DATE,
   visible: true,
   truth: { dejure: true, defacto: false, disputed: false },
@@ -93,7 +108,21 @@ export function activeTruthLayers(truth: Record<TruthLayer, boolean>): TruthLaye
 export const useAtlasStore = create<AtlasState>()((set) => ({
   ...initialAtlasState,
   setLoading: () => set({ status: 'loading', error: null }),
-  setLoaded: (data) => set({ status: 'ready', data, error: null }),
+  setLoaded: (base) =>
+    set((s) => {
+      const scenario = s.scenario ? applyScenario(base, s.scenario.scenario) : null;
+      return { status: 'ready', base, scenario, data: scenario?.loaded ?? base, error: null };
+    }),
+  setScenario: (chosen) =>
+    set((s) => {
+      if (!s.base) return {};
+      const scenario = chosen ? applyScenario(s.base, chosen) : null;
+      const data = scenario?.loaded ?? s.base;
+      const exists =
+        s.selected && resolveUnits(data.atlas, s.date, TRUTH_LAYERS).some((u) => u.id === s.selected);
+      return { scenario, data, selected: exists ? s.selected : null };
+    }),
+  toggleBaseOutlines: () => set((s) => ({ baseOutlines: !s.baseOutlines })),
   setError: (message) => set({ status: 'error', error: message }),
   // Keep the selection while the unit exists (Manitoba stays selected as it grows); drop it once
   // the unit is dissolved or not yet created at the new date.

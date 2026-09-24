@@ -71,4 +71,18 @@ export const PRESETS: Preset[] = [
       capitalNames: CAPITALS.map((c) => c.name),
     },
   },
+  {
+    id: 'dominion-1867-5',
+    name: 'The Dominion of 1867 in 5',
+    description:
+      "Canada as it stood on 1 July 1867 — Ontario, Quebec, Nova Scotia and New Brunswick — taken from the atlas as one scope and balanced by population into five regions. The House of Cards entry point in docs/interop.md: it is the pack meridian.getScores reads there. Numbers are today's (2021 census) over 1867's land.",
+    spec: {
+      ...base,
+      scope: { kind: 'atlasSovereign', sovereign: 'Canada' },
+      date: '1867-07-01',
+      method: 'balanced',
+      n: 5,
+      seed: 1867,
+    },
+  },
 ];

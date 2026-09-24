@@ -43,6 +43,8 @@ jobs:
         run: npm run schemas:check -w app
       - name: Federalism rules up to date
         run: npm run rules:check -w app
+      - name: Scenarios up to date
+        run: npm run scenarios:check -w app
       - name: Build
         run: npm run build
       - name: Install Playwright Chromium

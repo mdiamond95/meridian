@@ -1,4 +1,5 @@
 import { TRUTH_LABELS } from '../atlas/style';
+import { OVERLAYS } from '../overlays/overlays';
 import { TRUTH_LAYERS } from '../schema/atlas';
 import { START_OPTIONS, useAtlasStore, type StartOption } from '../state/atlasStore';
 import { useUiStore } from '../state/uiStore';
@@ -27,6 +28,8 @@ export function LayersMenu() {
   const toggleFamilies = useAtlasStore((s) => s.toggleFamilies);
   const communitiesVisible = useAtlasStore((s) => s.communitiesVisible);
   const toggleCommunities = useAtlasStore((s) => s.toggleCommunities);
+  const overlays = useUiStore((s) => s.overlays);
+  const toggleOverlay = useUiStore((s) => s.toggleOverlay);
 
   return (
     <nav className="layers" data-open={open} data-testid="layers" aria-label="Layers">
@@ -66,6 +69,25 @@ export function LayersMenu() {
             <input type="checkbox" checked={communitiesVisible} onChange={toggleCommunities} />
             Community names
           </label>
+        </fieldset>
+        <fieldset className="layer-group" data-testid="overlay-group">
+          <legend>Overlays</legend>
+          {OVERLAYS.map((overlay) => (
+            <label key={overlay.id} title={`${overlay.legend} Source: ${overlay.source}.`}>
+              <input
+                type="checkbox"
+                checked={!!overlays[overlay.id]}
+                data-testid={`overlay-${overlay.id}`}
+                onChange={() => toggleOverlay(overlay.id)}
+              />
+              {overlay.label}
+            </label>
+          ))}
+          {OVERLAYS.filter((o) => overlays[o.id]).map((o) => (
+            <p key={o.id} className="hint indent">
+              {o.legend}
+            </p>
+          ))}
         </fieldset>
         <fieldset className="layer-group">
           <legend>Before the atlas</legend>

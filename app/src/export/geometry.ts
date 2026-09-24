@@ -161,19 +161,23 @@ function wind(ring: Position[], ccw: boolean): Position[] {
   return signedArea(ring) > 0 === ccw ? ring : ring.slice().reverse();
 }
 
+/** Closed rings that share no edges, as one MultiPolygon: holes found by nesting, wound by the right-hand rule. */
+export function ringsToMultiPolygon(rings: Position[][]): MultiPolygon {
+  const { parent, outer } = nest(rings);
+  const polygons = new Map<number, Position[][]>();
+  rings.forEach((ring, i) => {
+    if (outer[i]) polygons.set(i, [wind(ring, true)]);
+  });
+  rings.forEach((ring, i) => {
+    if (!outer[i]) polygons.get(parent[i])?.push(wind(ring, false));
+  });
+  return { type: 'MultiPolygon', coordinates: [...polygons.values()] };
+}
+
 export function regionMultiPolygons(topo: CellTopology, assignment: Int32Array): Map<number, MultiPolygon> {
   const out = new Map<number, MultiPolygon>();
   for (const [r, arcRings] of regionArcRings(topo, assignment)) {
-    const rings = arcRings.map((ring) => ringPositions(topo, ring));
-    const { parent, outer } = nest(rings);
-    const polygons = new Map<number, Position[][]>();
-    rings.forEach((ring, i) => {
-      if (outer[i]) polygons.set(i, [wind(ring, true)]);
-    });
-    rings.forEach((ring, i) => {
-      if (!outer[i]) polygons.get(parent[i])?.push(wind(ring, false));
-    });
-    out.set(r, { type: 'MultiPolygon', coordinates: [...polygons.values()] });
+    out.set(r, ringsToMultiPolygon(arcRings.map((ring) => ringPositions(topo, ring))));
   }
   return out;
 }

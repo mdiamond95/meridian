@@ -99,6 +99,23 @@ export function scopeMask(mesh: MeshArrays, scope: Scope, context: ScopeContext 
       fillByGeometry(mesh, geometry, mask);
       break;
     }
+    case 'atlasSovereign': {
+      // Every de jure unit under that sovereign on the date: "Canada in 1867" is the four provinces.
+      const { atlas, date } = context;
+      if (!atlas || !date) throw new Error('atlasSovereign scope needs the atlas and a date');
+      const units = resolveUnits(atlas.atlas, date, ['dejure']).filter(
+        (u) => u.sovereign === scope.sovereign,
+      );
+      if (!units.length) throw new Error(`no atlas unit under ${scope.sovereign} on ${date}`);
+      const part = new Uint8Array(n);
+      for (const unit of units) {
+        const geometry = atlas.geometries.get(unit.geometryRef);
+        if (!geometry) continue;
+        fillByGeometry(mesh, geometry, part);
+        for (let i = 0; i < n; i++) mask[i] |= part[i];
+      }
+      break;
+    }
     case 'region': {
       if (!context.assignment) throw new Error('region scope needs the pack assignment');
       for (let i = 0; i < n; i++) mask[i] = context.assignment[i] === scope.region ? 1 : 0;

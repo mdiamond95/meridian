@@ -747,3 +747,95 @@ river regions already came from a cache in `data/raw/.cache`.
   up to 2 km, cells reordered) keeps over 98% of alberta-15's population in the same region.
 - The docs/interop.md snippet runs as written in Playwright, its network served from this checkout,
   and draws one layer per region with the region's name on hover.
+
+## 2026-09-24 — Phase 6: scenarios and game hooks
+
+Decisions from the brief (Mark): scenario overlays are YAML applied after the base event list, base
+events carry `requires:` and are skipped with a visible notice when unmet, a scenario is saved in the
+pack, the UI has a scenario badge and a diff against the base at any date; nesting stores parentPack
+and parentRegionId and exports the tree as one JSON; one non-geographic overlay ships (immigrant-share
+halos over CMAs) and the rotational-workforce flows wait in `docs/backlog.md`; the presets are
+Newfoundland independent 1949 and Buffalo 1905; and the score object and `meridian.getScores` are
+defined in `docs/interop.md`, with a House of Cards worked example.
+
+### Divergence mode (`app/src/scenario/apply.ts`)
+- **A scenario replays the event list; it does not patch the resolved map.** Base and scenario events
+  are merged by date, the scenario's after the base's on the same date ("applied after the base event
+  list"). The result is an atlas of the same shape, so the map, the timeline, the unit panel and the
+  Generate panel's atlas scopes run on it unchanged; the store keeps the base beside it for the diff.
+- **Every unit row is explained by an event change** (checked: 148 of 148 rows start and end on one),
+  which is what makes a replay possible. Replaying the base with a scenario that does nothing gives the
+  base's rows exactly, in the same order; the test asserts it.
+- **Preconditions are explicit and implicit.** Explicit: a base event's `requires` (unit, and its
+  `exists`, `status` or `sovereign`, with `because`). Implicit: an alter, rename or dissolve needs its
+  unit to exist, a create needs it not to. A base event that fails either is skipped whole, and the
+  notice gives each reason and each `because`. A scenario event that fails is an error: the scenario is
+  broken, not the history.
+- **A base change is applied as a delta:** the fields that differ between the base's rows either side
+  of it. A later base event that only redraws a boundary keeps the scenario's status and sovereign.
+- **`requires` lives in `pipeline/atlas/events.yaml` and passes through the build into `atlas.v1.json`**
+  (optional `AtlasEvent.requires`; the atlas stays v1). The build fails if the base does not meet one of
+  its own preconditions. Two events carry one: 1949 (Newfoundland joins) requires Newfoundland under
+  Britain, which it was under Commission of Government; 2001 (the renaming) requires it under Canada,
+  since only a Canadian amendment could rename a Canadian province. `atlas.v1.topojson.gz` is unchanged;
+  `atlas.v1.json` is `0edd7ad7…`.
+- **A new status, `dominion`,** for a self-governing unit outside Canada. The base atlas does not use it:
+  it keeps Newfoundland as `colony` throughout, as decided in Sitting A.
+- **Scenario geometry comes only from the base's drawings:** a base unit as it stood on a date, or a union
+  of several with their shared arcs dissolved (`topologyTools(...).merge`, the TopoJSON merge), so a
+  scenario never draws a line of its own. Buffalo is Alberta and Saskatchewan of 1905 without 110°W.
+- **"Resolves cleanly"** (`checkScenario`): every row has a drawing, no unit has two rows at once, and at
+  every event date and today the de jure units cover the same area as the base's within 0.5%.
+- **Buffalo does not skip the 1905 event; it undoes part of it on the same day.** The base creates Alberta
+  and Saskatchewan, re-annexes Keewatin and dissolves the districts; the scenario, applied after, dissolves
+  the two provinces and creates Buffalo. A row that starts and ends on one date never existed, so neither
+  province appears, and Keewatin's and the districts' changes still happen. Skipping the base event would
+  have lost them.
+- **Newfoundland's change is dated to the referendum,** 22 July 1948, not to a transition the atlas has no
+  instrument for; the premise says so. A later date would have to precede 31 March 1949 anyway, for the
+  1949 precondition to fail.
+- **Scenarios are YAML in `docs/scenarios/`,** compiled by `npm run scenarios` into
+  `app/src/scenario/scenarios.json` and checked in CI (`scenarios:check`), as the federalism rules are.
+  Each event cites its sources; the schema is `docs/schemas/scenario.schema.json`.
+- **UI:** a Scenario tab (choose, premise, "resolves cleanly", the diff on the timeline's date, skipped
+  events with their reasons, the scenario's events with sources); a badge over the map with the number of
+  skipped events and a way back to the record; the scenario's ticks on the timeline in its colour; a
+  "skipped in this scenario" notice in the Details tab where the record would have had the event; and the
+  record's removed or redrawn units outlined dashed on the map (on by default, a checkbox in the tab).
+- **A pack made in a scenario carries the whole scenario** (`meta.scenario`), captured when the split was
+  made; loading the pack restores it. A pack whose scope is read from the atlas and that names no scenario
+  brings the record back.
+
+### Nesting (`app/src/splitter/tree.ts`)
+- **The parent is the scope.** A nested split's scope is `{kind: 'region', pack, region}`, and its pack
+  records the same pair as `meta.parentPack` and `meta.parentRegionId`. Packs gained `meta.id`: a preset's
+  slug, or `split-` and an FNV-1a hash of the recipe and the cells.
+- **One region has at most one child split;** splitting it again replaces the child and everything under
+  it. Anything that is not a region of a split in the tree starts a new tree.
+- **The tree is one JSON: the root pack with `children`,** recursively (optional, so a v1 reader sees the
+  root pack). Importing it restores every node; the Files tab downloads it; a breadcrumb over the Generate,
+  Region, Set and Files tabs moves up the path and down to children already made. "Split this region"
+  is in the Region tab.
+
+### Overlays (`app/src/overlays/`)
+- **An overlay is a definition with a pure `build` from the splitter's data,** of kind `point` or `flow`,
+  drawn in its own pane above the atlas and the split. It reads no assignment, so it cannot claim cells.
+- **Immigrant-share halos:** one circle per CMA (40) at its population-weighted centre, area proportional
+  to population, colour a five-step single-hue ramp of the population-weighted `immigrant_share`, with the
+  number in the tooltip. Switched on in the layers menu's new Overlays group, with its legend.
+- The `flow` kind has its renderer and no data: the rotational-workforce table is in `docs/backlog.md`.
+
+### Scores (`app/src/dossier/score.ts`, `docs/interop.md`)
+- **`regions[].stats.score`:** population, gdp, resource_index, cohesion, exposure, each defined in one
+  line in `docs/interop.md`. `stats` was a record of numbers and now also allows the `score` object; this is
+  an optional addition, not a version bump, and the Migrations note says so.
+- **Cohesion is 1 − 4 × the mean lens variance,** each lens column scaled to 0–1 over the scope, so it
+  spans 0–1 (a 0–1 value varies by at most ¼). A split with no lens is scored on the Economic preset's
+  columns. **Exposure is the dossier's dependency score** (the largest industry's labour-force share).
+  **resource_index** is the NAICS 11 + 21 labour-force share.
+- **A new scope, `atlasSovereign`:** every de jure unit under a sovereign on the pack's date, so "Canada
+  in 1867" is one scope. The Generate panel offers it as "A country in the atlas at the current date".
+- **The House of Cards entry point is a fourth preset, `dominion-1867-5`,** made by `npm run presets` from
+  the recipe in `docs/interop.md`; a Vitest runs the page's `getScores` helper as written on it and checks
+  the printed table. The four presets are regenerated for `meta.id` and `stats.score`; assignments are
+  unchanged.

@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { BYTE_ORDER, IdColumnSchema, IsoDateSchema } from './columns';
 import { RegionDossierSchema, SetAnalysisSchema } from './dossier';
 import { H3CellIdSchema, PROVINCE_CODES } from './mesh';
+import { ScenarioSchema } from './scenario';
 
 /**
  * RegionPack v1 — a split of the mesh into regions, plus how it was made and what it
@@ -21,6 +22,13 @@ export const ScopeSchema = z
     z.object({
       kind: z.literal('atlasUnit'),
       unit: z.string().describe('AtlasUnit id, resolved at meta.date'),
+    }),
+    z.object({
+      kind: z.literal('atlasSovereign'),
+      sovereign: z
+        .string()
+        .min(1)
+        .describe('Every de jure atlas unit under this sovereign at meta.date, e.g. "Canada" in 1867'),
     }),
     z.object({
       kind: z.literal('region'),
@@ -61,22 +69,76 @@ export const RegionPackMetaSchema = z
       )
       .optional()
       .describe('Manual edits in the order they were made'),
+    id: z
+      .string()
+      .regex(/^[a-z0-9-]+$/)
+      .optional()
+      .describe("The pack's id: a preset's slug, or a hash of the recipe and assignment"),
+    parentPack: z
+      .string()
+      .optional()
+      .describe("Nesting: the id of the pack whose region this pack splits (scope.kind 'region')"),
+    parentRegionId: z.int().nonnegative().optional().describe("Nesting: that region's id in the parent pack"),
+    scenario: ScenarioSchema.optional().describe(
+      'The atlas scenario the split was made in, whole, so atlas scopes resolve the same way anywhere',
+    ),
   })
   .meta({ id: 'RegionPackMeta' });
+
+/**
+ * Game-facing scores (plan Phase 6 §5), one object per region. Definitions in docs/interop.md; all
+ * are measured from the 2021 mesh attributes, whatever the pack's atlas date.
+ */
+export const RegionScoreSchema = z
+  .strictObject({
+    population: z.number().nonnegative().describe('People, 2021 census'),
+    gdp: z
+      .number()
+      .nonnegative()
+      .describe('GDP allocated to the region, CAD millions (an allocation: see gdpCaveat)'),
+    resource_index: z
+      .number()
+      .min(0)
+      .max(1)
+      .describe(
+        'Share of the labour force in agriculture, forestry, fishing, hunting, mining, quarrying, oil and gas',
+      ),
+    cohesion: z.number().min(0).max(1).describe('1 − the population-weighted lens variance, scaled to 0–1'),
+    exposure: z
+      .number()
+      .min(0)
+      .max(1)
+      .describe("The dependency score: the largest industry's labour-force share"),
+  })
+  .meta({ id: 'RegionScore' });
 
 export const RegionSchema = z
   .object({
     id: z.int().nonnegative().describe('Value used for this region in assignment'),
     name: z.string(),
     capital: z.string().nullable(),
-    stats: z.record(z.string(), z.number()),
+    stats: z
+      .object({ score: RegionScoreSchema.optional() })
+      .catchall(z.number())
+      .describe('Numbers by name, plus the game-facing `score` object'),
     dossier: z
       .union([RegionDossierSchema, z.strictObject({})])
       .describe("The region's dossier, or {} before Phase 4 filled it"),
   })
   .meta({ id: 'Region' });
 
-export const RegionPackSchema = z
+/** A pack, and the packs nested under its regions. */
+export interface RegionPackTree {
+  format: 'meridian.regionPack';
+  version: 1;
+  meta: z.infer<typeof RegionPackMetaSchema>;
+  assignment: z.infer<typeof IdColumnSchema>;
+  regions: z.infer<typeof RegionSchema>[];
+  setAnalysis: z.infer<typeof SetAnalysisSchema> | Record<string, never>;
+  children?: RegionPackTree[];
+}
+
+export const RegionPackSchema: z.ZodType<RegionPackTree> = z
   .object({
     format: z.literal('meridian.regionPack'),
     version: z.literal(1),
@@ -88,6 +150,12 @@ export const RegionPackSchema = z
     setAnalysis: z
       .union([SetAnalysisSchema, z.strictObject({})])
       .describe('The set analysis, or {} before Phase 4 filled it'),
+    children: z
+      .array(z.lazy(() => RegionPackSchema))
+      .optional()
+      .describe(
+        "Nesting: packs splitting this pack's regions, each with meta.parentPack and meta.parentRegionId; a tree exports as its root",
+      ),
   })
   .superRefine((pack, ctx) => {
     const seen = new Set<number>();
@@ -104,7 +172,8 @@ export const RegionPackSchema = z
   })
   .meta({ id: 'RegionPack', title: 'Meridian RegionPack v1' });
 
-export type RegionPackWire = z.infer<typeof RegionPackSchema>;
+export type RegionScore = z.infer<typeof RegionScoreSchema>;
+export type RegionPackWire = RegionPackTree;
 export type RegionPackMeta = z.infer<typeof RegionPackMetaSchema>;
 export type Region = z.infer<typeof RegionSchema>;
 export type Scope = z.infer<typeof ScopeSchema>;

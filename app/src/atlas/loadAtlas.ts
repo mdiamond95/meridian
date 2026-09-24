@@ -13,6 +13,8 @@ export interface LoadedAtlas {
   atlas: AtlasFile;
   /** geometryRef → GeoJSON geometry; shared by every unit row with that ref. */
   geometries: Map<string, Polygon | MultiPolygon>;
+  /** The topology itself, so scenarios can merge drawings (src/scenario/apply.ts). */
+  topology?: Topology;
 }
 
 async function fetchJson(url: string, fetchImpl: typeof fetch): Promise<unknown> {
@@ -27,7 +29,7 @@ export function decodeAtlas(atlas: AtlasFile, topology: Topology): LoadedAtlas {
   for (const { geometryRef } of [...atlas.units, ...(atlas.references ?? [])]) {
     if (!geometries.has(geometryRef)) geometries.set(geometryRef, decode(geometryRef));
   }
-  return { atlas, geometries };
+  return { atlas, geometries, topology };
 }
 
 export async function loadAtlas(

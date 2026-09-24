@@ -1,0 +1,76 @@
+[
+  {
+    "format": "meridian.scenario",
+    "id": "buffalo-1905",
+    "name": "Unified Buffalo",
+    "fork": "1905-09-01",
+    "premise": "From 1901 the premier of the North-West Territories, Frederick Haultain, asked Ottawa for one province between Manitoba and British Columbia, and suggested it be called Buffalo. Laurier's government made two instead, Alberta and Saskatchewan, on 1 September 1905. This scenario grants Haultain's request on that day. It keeps the outer boundary the two Acts drew, 49°N to 60°N from British Columbia to Manitoba's line continued north, and removes only the line between them at 110°W, so it draws nothing the base atlas does not. The capital is Regina, the seat of the territorial government since 1883. Everything else happens as it did: Keewatin is folded back into the territories the same day, and the 1912 extensions and every later event apply unchanged.",
+    "events": [
+      {
+        "date": "1905-09-01",
+        "title": "The Province of Buffalo",
+        "note": "One prairie province is made from the North-West Territories in place of two, from 49°N to 60°N and from British Columbia to Manitoba's line continued north. Its capital is Regina.",
+        "sources": [
+          "F. W. G. Haultain's case for a single province, put to Ottawa by the territorial government from 1901 (C. C. Lingard, Territorial Government in Canada: The Autonomy Question in the Old North-West Territories, University of Toronto Press, 1946).",
+          "Alberta Act, S.C. 1905, c. 3, and Saskatchewan Act, S.C. 1905, c. 42, in force 1 September 1905: the outer boundaries kept here, and the 110°W line removed."
+        ],
+        "changes": [
+          {
+            "dissolve": "alberta"
+          },
+          {
+            "dissolve": "saskatchewan"
+          },
+          {
+            "create": "buffalo",
+            "name": "Buffalo",
+            "status": "province",
+            "sovereign": "Canada",
+            "capital": "Regina",
+            "geometry": {
+              "union": [
+                {
+                  "unit": "alberta",
+                  "at": "1905-09-01"
+                },
+                {
+                  "unit": "saskatchewan",
+                  "at": "1905-09-01"
+                }
+              ]
+            },
+            "note": "Counterfactual: Alberta and Saskatchewan as one province, without the fourth meridian between them.",
+            "instrument": "Haultain's single-province proposal (1901–1905), in place of the Alberta Act and the Saskatchewan Act of 1905."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "format": "meridian.scenario",
+    "id": "newfoundland-independent-1949",
+    "name": "Newfoundland independent",
+    "fork": "1948-07-22",
+    "premise": "Newfoundland had been governed by a British-appointed Commission since 1934, when the Dominion gave up responsible government in a debt crisis. In the second referendum of 22 July 1948, Confederation with Canada beat a return to responsible government by 52.3% to 47.7%, about 7,000 votes. This scenario gives the other ballot the majority: Britain restores the Dominion of Newfoundland, which does not join Canada. The atlas records the decision on the day of the vote rather than the months of transition after it. Newfoundland keeps the boundaries of 1927, Labrador included; the 1949 accession and the 2001 renaming, both acts that assume a Canadian province, do not happen, and Canada today has nine provinces.",
+    "events": [
+      {
+        "date": "1948-07-22",
+        "title": "Responsible government restored",
+        "note": "The second referendum returns a majority for responsible government, and Britain restores the Dominion of Newfoundland, self-governing and outside Canada. Its boundaries are those of 1927.",
+        "sources": [
+          "Newfoundland referendum, second ballot, 22 July 1948: Confederation with Canada 78,323 votes, Responsible Government as it existed in 1933 71,334 (the official count). The scenario reverses the result.",
+          "Newfoundland Act 1933 (24 & 25 Geo. V c. 2, UK), which suspended the constitution and provided for responsible government to be restored once Newfoundland was self-supporting and its people asked for it; the 1948 ballot offered that restoration as one of its two choices."
+        ],
+        "changes": [
+          {
+            "alter": "newfoundland",
+            "status": "dominion",
+            "sovereign": "Newfoundland",
+            "note": "Counterfactual: a self-governing dominion from the 1948 vote; in the base atlas Newfoundland joins Canada on 31 March 1949.",
+            "instrument": "The 1948 referendum's second choice, \"Responsible Government as it existed in 1933\", which would have ended Commission of Government under the Newfoundland Act 1933."
+          }
+        ]
+      }
+    ]
+  }
+]

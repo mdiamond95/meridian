@@ -1039,6 +1039,13 @@
    "date": "1949-03-31",
    "title": "Newfoundland joins",
    "note": "Newfoundland becomes Canada's tenth province after two referendums. Its boundaries, Labrador included, are those of 1927.",
+   "requires": [
+    {
+     "unit": "newfoundland",
+     "sovereign": "Britain",
+     "because": "Newfoundland joined from Commission of Government, under which Britain had governed it since 1934 (Newfoundland Act 1933, 24 & 25 Geo. V c. 2, UK); the Terms of Union were negotiated by delegations the Commission appointed and given effect by the British North America Act, 1949 (12, 13 & 14 Geo. VI c. 22, UK). A self-governing Newfoundland would have had to seek union through its own legislature."
+    }
+   ],
    "changes": [
     {
      "unit": "newfoundland",
@@ -1115,6 +1122,13 @@
    "date": "2001-12-06",
    "title": "Newfoundland and Labrador",
    "note": "A constitutional amendment renames the province Newfoundland and Labrador. Its boundaries are unchanged.",
+   "requires": [
+    {
+     "unit": "newfoundland",
+     "sovereign": "Canada",
+     "because": "The name was changed by the Constitution Amendment, 2001 (Newfoundland and Labrador), a Canadian amendment to the Terms of Union, which reaches only a province of Canada."
+    }
+   ],
    "changes": [
     {
      "unit": "newfoundland",

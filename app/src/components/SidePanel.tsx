@@ -7,6 +7,8 @@ import { ComparePanel } from './ComparePanel';
 import { DossierPanel } from './DossierPanel';
 import { FilesPanel } from './FilesPanel';
 import { GeneratePanel } from './GeneratePanel';
+import { NestBreadcrumb } from './NestBreadcrumb';
+import { ScenarioPanel } from './ScenarioPanel';
 import { SetPanel } from './SetPanel';
 
 /** Right-hand panel on wide screens; a bottom sheet on iPad and phones. */
@@ -27,6 +29,7 @@ export function SidePanel() {
           {(
             [
               ['details', 'Details'],
+              ['scenario', 'Scenario'],
               ['generate', 'Generate'],
               ['dossier', 'Region'],
               ['set', 'Set'],
@@ -46,6 +49,8 @@ export function SidePanel() {
           ))}
         </div>
         {tab === 'details' && <PanelContent />}
+        {['generate', 'dossier', 'set', 'files'].includes(tab) && <NestBreadcrumb />}
+        {tab === 'scenario' && <ScenarioPanel />}
         {tab === 'generate' && <GeneratePanel />}
         {tab === 'dossier' && <DossierPanel />}
         {tab === 'set' && <SetPanel />}
@@ -61,6 +66,7 @@ function PanelContent() {
   const date = useAtlasStore((s) => s.date);
   const selected = useAtlasStore((s) => s.selected);
   const select = useAtlasStore((s) => s.select);
+  const scenario = useAtlasStore((s) => s.scenario);
 
   if (!data) return <p className="placeholder">Nothing selected.</p>;
 
@@ -116,6 +122,11 @@ function PanelContent() {
 
   const event = currentEvent(data.atlas, date);
   if (!event) return <p className="placeholder">Before the first event.</p>;
+  // Base events the scenario skipped since this event: said here, where the record would have shown them.
+  const next = data.atlas.events.find((e) => e.date > event.date)?.date ?? '9999-12-31';
+  const skipped = (scenario?.skipped ?? []).filter(
+    (s) => s.date >= event.date && s.date < next && s.date <= date,
+  );
   return (
     <article className="event" data-testid="event-panel">
       <p className="eyebrow">
@@ -124,6 +135,12 @@ function PanelContent() {
       </p>
       <h2>{event.title}</h2>
       <p className="note">{event.note}</p>
+      {skipped.map((s) => (
+        <p className="pending" key={s.title} data-testid="skipped-notice">
+          <strong>Skipped in this scenario:</strong> {s.title} ({formatDate(s.date)}). It{' '}
+          {s.reasons.join('; it ')}.
+        </p>
+      ))}
       <p className="placeholder">Tap a unit for its details.</p>
     </article>
   );

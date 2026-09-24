@@ -267,6 +267,8 @@ function describeScope(prepared: PreparedSplit): string {
       return scope.province;
     case 'atlasUnit':
       return `${scope.unit} at ${prepared.spec.date ?? 'today'}`;
+    case 'atlasSovereign':
+      return `${scope.sovereign} at ${prepared.spec.date ?? 'today'}`;
     case 'region':
       return `region ${scope.region} of ${scope.pack}`;
     case 'polygon':

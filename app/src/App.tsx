@@ -4,6 +4,7 @@ import { loadAtlas } from './atlas/loadAtlas';
 import { LayersMenu } from './components/LayersMenu';
 import { MapView } from './components/MapView';
 import { PreContactBase } from './components/PreContactBase';
+import { ScenarioBadge } from './components/ScenarioBadge';
 import { SidePanel } from './components/SidePanel';
 import { Timeline } from './components/Timeline';
 import { loadPreset, runCurrentSpec } from './splitter/controller';
@@ -53,6 +54,7 @@ export function App() {
       <MapView />
       <LayersMenu />
       <PreContactBase />
+      <ScenarioBadge />
       <SidePanel />
       <Timeline />
     </div>

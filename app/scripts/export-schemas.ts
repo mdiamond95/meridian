@@ -15,6 +15,7 @@ import { IndigenousFileSchema } from '../src/schema/indigenous';
 import { MeshFileSchema } from '../src/schema/mesh';
 import { PlacesFileSchema, SnapFileSchema } from '../src/schema/places';
 import { RegionPackSchema } from '../src/schema/regionPack';
+import { ScenarioSchema } from '../src/schema/scenario';
 import { TopologySchema } from '../src/schema/topojson';
 
 const outDir = resolve(dirname(fileURLToPath(import.meta.url)), '../../docs/schemas');
@@ -29,6 +30,7 @@ const contracts = {
   'places.schema.json': PlacesFileSchema,
   'snap.schema.json': SnapFileSchema,
   'regionPack.schema.json': RegionPackSchema,
+  'scenario.schema.json': ScenarioSchema,
   'topojson.schema.json': TopologySchema,
 };
 

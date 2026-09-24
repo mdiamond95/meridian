@@ -4,7 +4,9 @@ import type { SplitterData } from '../splitter/data';
 import type { CellTopology } from '../splitter/outline';
 import type { RegionDossier, SetAnalysis } from '../schema/dossier';
 import type { Difference } from '../splitter/compare';
-import type { RegionPack } from '../schema/regionPack';
+import type { RegionPack, RegionScore } from '../schema/regionPack';
+import type { Scenario } from '../schema/scenario';
+import type { TreeNode } from '../splitter/tree';
 import type { Edit, Fit, PackLibrary } from '../splitter/pack';
 import { defaultSpec, type NamedRegion, type PreparedSplit, type SplitSpec } from '../splitter/split';
 
@@ -24,6 +26,15 @@ export interface CurrentSplit {
   /** filled once the split is described (Phase 4); null while it is being rebuilt */
   dossiers: RegionDossier[] | null;
   setAnalysis: SetAnalysis | null;
+  /** game-facing scores (Phase 6), filled with the dossiers */
+  scores: RegionScore[] | null;
+  /** the atlas scenario that was active when the split was made; saved in its pack */
+  scenario: Scenario | null;
+}
+
+/** One split in a nesting tree (plan Phase 6 §2): its id is its pack's meta.id. */
+export interface NestNode extends TreeNode {
+  split: CurrentSplit;
 }
 
 export type SplitSource =
@@ -79,6 +90,12 @@ interface SplitState {
   pendingImport: PendingImport | null;
   /** a passing message from import, export or the library */
   notice: string | null;
+  /**
+   * The nesting tree the current split belongs to, by node id. The current split is `nest[nodeId]`;
+   * its snapshot there is refreshed whenever the user moves to another node or exports the tree.
+   */
+  nest: Record<string, NestNode>;
+  nodeId: string | null;
   setSpec: (patch: Partial<SplitSpec>) => void;
   replaceSpec: (spec: SplitSpec) => void;
   setTool: (tool: MapTool) => void;
@@ -105,6 +122,8 @@ export const useSplitStore = create<SplitState>()((set) => ({
   importedSnap: null,
   pendingImport: null,
   notice: null,
+  nest: {},
+  nodeId: null,
   setSpec: (patch) => set((s) => ({ spec: { ...s.spec, ...patch } })),
   replaceSpec: (spec) => set({ spec }),
   setTool: (tool) =>
