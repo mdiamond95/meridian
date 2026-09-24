@@ -57,7 +57,12 @@ describe('replay', () => {
   });
 
   it('every shipped scenario parses, has a premise paragraph and cites every event', () => {
-    expect(SCENARIOS.map((s) => s.id)).toEqual(['buffalo-1905', 'newfoundland-independent-1949']);
+    expect(SCENARIOS.map((s) => s.id)).toEqual([
+      'acadian-maritimes',
+      'buffalo-1905',
+      'newfoundland-independent-1949',
+      'no-1912-extensions',
+    ]);
     for (const s of SCENARIOS) {
       expect(s.premise.length).toBeGreaterThan(200);
       for (const event of s.events) expect(event.sources.length).toBeGreaterThan(0);
@@ -150,6 +155,117 @@ describe('Unified Buffalo (the Phase 6 gate)', () => {
       'added:buffalo',
       'removed:alberta',
       'removed:saskatchewan',
+    ]);
+  });
+});
+
+describe('No 1912 extensions', () => {
+  const result = applyScenario(base, scenario('no-1912-extensions'));
+  const units = (date: string) => resolveUnits(result.loaded.atlas, date);
+  const ref = (date: string, id: string) => unitAt(units(date), id)?.geometryRef;
+  const baseRef = (date: string, id: string) => unitAt(resolveUnits(atlas, date), id)?.geometryRef;
+
+  it('keeps the three provinces at their pre-1912 lines, and the land in the districts', () => {
+    for (const date of ['1912-05-15', '1919-12-31', '1920-01-01']) {
+      for (const id of ['manitoba', 'ontario', 'quebec', 'district_of_keewatin', 'district_of_ungava'])
+        expect(ref(date, id)).toBe(baseRef('1912-05-14', id));
+    }
+    for (const date of ['1927-03-01', '1998-12-31']) {
+      expect(ref(date, 'manitoba')).toBe('manitoba_1881');
+      expect(ref(date, 'ontario')).toBe('ontario_1889');
+      expect(ref(date, 'district_of_keewatin')).toBe('district_of_keewatin_1905');
+    }
+    expect(unitAt(units('1950-01-01'), 'district_of_ungava')).toMatchObject({ status: 'district' });
+  });
+
+  it('keeps the districts at their earlier lines through the 1920 revision', () => {
+    const later = units('1950-01-01');
+    expect(unitAt(later, 'district_of_mackenzie')?.geometryRef).toBe('district_of_mackenzie_1901');
+    expect(unitAt(later, 'district_of_franklin')?.geometryRef).toBe('district_of_franklin_1897');
+    expect(unitAt(later, 'district_of_ungava')?.geometryRef).toBe('district_of_ungava_1912');
+  });
+
+  it('rejoins the record where the atlas has no drawing: Quebec in 1927, Manitoba and Ontario in 1999', () => {
+    expect(ref('1927-03-01', 'quebec')).toBe('quebec_1927');
+    expect(ref('1927-02-28', 'quebec')).toBe('quebec_1898');
+    for (const id of ['manitoba', 'ontario', 'quebec', 'newfoundland'])
+      expect(ref(TODAY, id)).toBe(baseRef(TODAY, id));
+    expect(unitAt(units('1999-04-01'), 'district_of_ungava')).toBeUndefined();
+    expect(unitAt(units(TODAY), 'nunavut')).toBeDefined();
+    expect(diffAtDate(base, result.loaded, TODAY)).toEqual([]);
+  });
+
+  it('applies every later base event, and resolves cleanly', () => {
+    expect(result.skipped).toEqual([]);
+    const applied = new Set(result.loaded.atlas.events.map((e) => `${e.date}|${e.title}`));
+    for (const e of atlas.events) expect(applied.has(`${e.date}|${e.title}`)).toBe(true);
+    expect(checkScenario(base, result, TODAY)).toEqual({ ok: true, problems: [] });
+  });
+
+  it('diffs against the base: the three provinces and the districts between 1912 and 1927', () => {
+    const diff = diffAtDate(base, result.loaded, '1913-01-01');
+    expect(diff.map((d) => `${d.kind}:${d.id}`)).toEqual([
+      'changed:district_of_keewatin',
+      'changed:district_of_ungava',
+      'changed:manitoba',
+      'changed:ontario',
+      'changed:quebec',
+    ]);
+    expect(diff.every((d) => d.kind === 'changed' && d.fields.includes('boundary'))).toBe(true);
+  });
+});
+
+describe('Maritime Union', () => {
+  const result = applyScenario(base, scenario('acadian-maritimes'));
+  const units = (date: string) => resolveUnits(result.loaded.atlas, date);
+  const MARITIMES = ['nova_scotia', 'new_brunswick', 'prince_edward_island'];
+
+  it('shows one Maritime province from 1867, and no Nova Scotia, New Brunswick or Island', () => {
+    for (const date of ['1867-07-01', '1873-07-01', TODAY]) {
+      const here = units(date);
+      expect(unitAt(here, 'maritime_province')).toMatchObject({
+        name: 'Maritime Province',
+        status: 'province',
+        sovereign: 'Canada',
+      });
+      for (const id of MARITIMES) expect(unitAt(here, id)).toBeUndefined();
+    }
+    expect(unitAt(units('1867-06-30'), 'maritime_province')).toBeUndefined();
+    expect(unitAt(units('1867-06-30'), 'prince_edward_island')).toMatchObject({ status: 'colony' });
+  });
+
+  it('skips the 1873 admission of the Island, which is already in, and says why', () => {
+    expect(result.skipped.map((s) => `${s.date}|${s.title}`)).toEqual([
+      '1873-07-01|Prince Edward Island joins',
+    ]);
+    expect(result.skipped[0].reasons).toEqual([
+      'acts on prince_edward_island, which does not exist in this scenario',
+    ]);
+    // Every other base event applies.
+    const applied = new Set(result.loaded.atlas.events.map((e) => e.date));
+    for (const e of atlas.events) if (e.date !== '1873-07-01') expect(applied.has(e.date)).toBe(true);
+    expect(checkScenario(base, result, TODAY)).toEqual({ ok: true, problems: [] });
+  });
+
+  it('is exactly the three drawings joined, the Chignecto border dissolved', () => {
+    const row = unitAt(units(TODAY), 'maritime_province');
+    const geometry = row && result.loaded.geometries.get(row.geometryRef);
+    if (!geometry) throw new Error('no merged drawing');
+    const parts = MARITIMES.map((id) => {
+      const g = base.geometries.get(unitAt(resolveUnits(atlas, TODAY), id)?.geometryRef ?? '');
+      if (!g) throw new Error(id);
+      return sphericalAreaKm2(g);
+    });
+    expect(sphericalAreaKm2(geometry) / parts.reduce((a, b) => a + b, 0)).toBeCloseTo(1, 4);
+  });
+
+  it('diffs against the base: the Maritime province added, the three removed', () => {
+    expect(diffAtDate(base, result.loaded, '1867-06-30')).toEqual([]);
+    expect(diffAtDate(base, result.loaded, '1880-01-01').map((d) => `${d.kind}:${d.id}`)).toEqual([
+      'added:maritime_province',
+      'removed:new_brunswick',
+      'removed:nova_scotia',
+      'removed:prince_edward_island',
     ]);
   });
 });

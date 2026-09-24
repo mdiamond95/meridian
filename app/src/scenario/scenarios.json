@@ -1,6 +1,61 @@
 [
   {
     "format": "meridian.scenario",
+    "id": "acadian-maritimes",
+    "name": "Maritime Union",
+    "fork": "1867-07-01",
+    "premise": "In March 1864 Nova Scotia's assembly, on Charles Tupper's motion, called for a conference on uniting the three Maritime colonies, and delegates of Nova Scotia, New Brunswick and Prince Edward Island met at Charlottetown from 1 to 9 September 1864. The delegates from the Province of Canada came to put a wider union, and Maritime union was set aside for Confederation. This scenario lets the conference do what it was called for: the three colonies unite, and enter Confederation as one Maritime Province on 1 July 1867. The atlas dates the union to that day, when the British North America Act made the other provinces, rather than invent a date for a separate act. Prince Edward Island is the largest assumption: it was the least willing of the three, its delegates were almost all against a legislative union, and in the record it stayed out of Confederation until 1873. Here it comes in with the others, so the record's 1873 event, which makes the Island a province, has nothing to act on and is skipped. The name \"Maritime Province\" is the scenario's choice: the only use of \"Acadia\" for such a union found for this scenario is a rhetorical question in the Island's assembly in April 1864, not a proposal. The scenario names no capital either; the same question asked where it would be, and it was never settled. The province is Nova Scotia, New Brunswick and the Island joined, so it draws nothing the base atlas does not. An Acadian province carved out of New Brunswick cannot be drawn here, because the atlas has no line for it.",
+    "events": [
+      {
+        "date": "1867-07-01",
+        "title": "The Maritime Province",
+        "note": "Nova Scotia, New Brunswick and Prince Edward Island enter Confederation as one province, with the colonies' boundaries as its own. Cape Breton is part of it through Nova Scotia.",
+        "sources": [
+          "The Charlottetown Conference, 1–9 September 1864, called to discuss the union of the three Maritime colonies (Dictionary of Canadian Biography, \"The Charlottetown and Quebec Conferences (1864)\"); Nova Scotia's resolution for a Maritime union conference, moved by Charles Tupper and carried on 28 March 1864 (Phillip Buckner, \"Tupper, Sir Charles\", Dictionary of Canadian Biography, vol. 14).",
+          "Francis W. P. Bolger, \"The Charlottetown Conference and its Significance in Canadian History\", CCHA Report 27 (1960), 11–23: Prince Edward Island \"the least enthusiastic of all the Provinces\", its delegates \"almost without exception hostile to the original proposal of a Legislative Union\", and J. H. Gray's question in the Island's assembly in April 1864, \"Is Charlottetown or Summerside to be the capital of Cabotia or Acadia, or whatever the country may be called?\"",
+          "British North America Act, 1867, 30 & 31 Vict. c. 3, ss. 5 and 7 (the four provinces, and Nova Scotia and New Brunswick within their existing limits) and s. 146 (the admission of Prince Edward Island): here one province in place of three."
+        ],
+        "changes": [
+          {
+            "dissolve": "nova_scotia"
+          },
+          {
+            "dissolve": "new_brunswick"
+          },
+          {
+            "dissolve": "prince_edward_island"
+          },
+          {
+            "create": "maritime_province",
+            "name": "Maritime Province",
+            "status": "province",
+            "sovereign": "Canada",
+            "capital": null,
+            "geometry": {
+              "union": [
+                {
+                  "unit": "nova_scotia",
+                  "at": "1867-07-01"
+                },
+                {
+                  "unit": "new_brunswick",
+                  "at": "1867-07-01"
+                },
+                {
+                  "unit": "prince_edward_island",
+                  "at": "1867-07-01"
+                }
+              ]
+            },
+            "note": "Counterfactual: the three Maritime colonies as one province, their boundaries unchanged. The name is the scenario's choice.",
+            "instrument": "The Maritime union the Charlottetown Conference was called to discuss (1864), entering Confederation under the British North America Act, 1867, in place of Nova Scotia and New Brunswick, and Prince Edward Island's admission of 1873."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "format": "meridian.scenario",
     "id": "buffalo-1905",
     "name": "Unified Buffalo",
     "fork": "1905-09-01",
@@ -68,6 +123,191 @@
             "sovereign": "Newfoundland",
             "note": "Counterfactual: a self-governing dominion from the 1948 vote; in the base atlas Newfoundland joins Canada on 31 March 1949.",
             "instrument": "The 1948 referendum's second choice, \"Responsible Government as it existed in 1933\", which would have ended Commission of Government under the Newfoundland Act 1933."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "format": "meridian.scenario",
+    "id": "no-1912-extensions",
+    "name": "No 1912 extensions",
+    "fork": "1912-05-15",
+    "premise": "Manitoba, Ontario and Quebec asked for years to be extended north to Hudson Bay. The talks stalled under Laurier over money, public lands and the schools question, and Borden's government passed the three Boundaries Extension Acts in 1912: they received royal assent on 1 April and took effect on 15 May. In this scenario the Acts do not pass. The three provinces keep the lines they had before 1912, and the land stays in the Northwest Territories: the south of the District of Keewatin and the mainland of the District of Ungava. The atlas can hold this only as long as its own drawings allow, and it says where they run out. On 1 January 1920 an order of 1918 redrew the districts for the extended provinces and abolished Ungava; the atlas has no drawing of what such an order would have said about this map, so the districts keep their earlier lines. On 1 March 1927 the Privy Council's Labrador line cuts across both the Quebec of 1898 and Ungava, and the atlas has neither of them less Labrador, so from that date Quebec is drawn as in the record, the northern mainland included, and Ungava keeps only its islands. On 1 April 1999 the Nunavut Act took the land north of 60°N; the rest would have stayed in the Northwest Territories, but the atlas has no drawing of Keewatin's southern part on its own, so from that date Manitoba and Ontario are drawn with their modern boundaries too. The dates in 1927 and 1999 are limits of the atlas, not claims about when the provinces would have grown.",
+    "events": [
+      {
+        "date": "1912-05-15",
+        "title": "The Boundaries Extension Acts fail",
+        "note": "Manitoba, Ontario and Quebec are not extended. Keewatin keeps the land between Manitoba, Ontario and Hudson Bay, and Ungava keeps the mainland north of Quebec's 1898 line.",
+        "sources": [
+          "Manitoba Boundaries Extension Act, 1912, 2 Geo. V c. 32; Ontario Boundaries Extension Act, 1912, 2 Geo. V c. 40; Quebec Boundaries Extension Act, 1912, 2 Geo. V c. 45: royal assent 1 April 1912, in force 15 May 1912. The scenario reverses all three.",
+          "Jim Mochoruk, \"Manitoba Expands Northward\", Manitoba History 68 (Spring 2012): the negotiations from 1905, stalled under Laurier over subsidies, public lands, the schools question and Ontario's interest in a Hudson Bay port, and settled after Borden's election in 1911."
+        ],
+        "changes": [
+          {
+            "alter": "manitoba",
+            "geometry": {
+              "unit": "manitoba",
+              "at": "1912-05-14"
+            },
+            "note": "Counterfactual: Manitoba is not extended to 60°N and Hudson Bay.",
+            "instrument": "The 1881 boundary, in place of the Manitoba Boundaries Extension Act, 1912 (2 Geo. V c. 32)."
+          },
+          {
+            "alter": "ontario",
+            "geometry": {
+              "unit": "ontario",
+              "at": "1912-05-14"
+            },
+            "note": "Counterfactual: Ontario is not extended to Hudson Bay.",
+            "instrument": "The 1889 boundary on the Albany River, in place of the Ontario Boundaries Extension Act, 1912 (2 Geo. V c. 40)."
+          },
+          {
+            "alter": "quebec",
+            "geometry": {
+              "unit": "quebec",
+              "at": "1912-05-14"
+            },
+            "note": "Counterfactual: Quebec is not extended to Hudson Strait.",
+            "instrument": "The Quebec Boundary Extension Act, 1898, in place of the Quebec Boundaries Extension Act, 1912 (2 Geo. V c. 45)."
+          },
+          {
+            "alter": "district_of_keewatin",
+            "geometry": {
+              "unit": "district_of_keewatin",
+              "at": "1912-05-14"
+            },
+            "note": "Counterfactual: Keewatin keeps the land north of Manitoba and Ontario that the 1912 Acts gave them.",
+            "instrument": "Order in Council P.C. 1897-3388 (18 December 1897), with the land re-annexed in 1905; no extension Act takes its southern part."
+          },
+          {
+            "alter": "district_of_ungava",
+            "geometry": {
+              "unit": "district_of_ungava",
+              "at": "1912-05-14"
+            },
+            "note": "Counterfactual: Ungava keeps its mainland north of Quebec.",
+            "confidence": 1,
+            "instrument": "Order in Council P.C. 1897-3388 (18 December 1897), description \"UNGAVA\", less Quebec's 1898 extension; no extension Act takes its mainland.",
+            "rationale": "The district as it stood before 1912, mainland and islands."
+          }
+        ]
+      },
+      {
+        "date": "1920-01-01",
+        "title": "The districts keep their lines",
+        "note": "The order of 1918 that comes into force today was written for the extended provinces: it bounds Keewatin by Manitoba's new line and ends Ungava, whose mainland Quebec had taken. With no extensions, the scenario keeps Mackenzie, Keewatin, Franklin and Ungava as they were.",
+        "sources": [
+          "Order in Council of 16 March 1918, in force 1 January 1920, dividing the rest of the Northwest Territories into the provisional districts of Mackenzie, Keewatin and Franklin and cancelling P.C. 1897-3388 (the base atlas's 1920 event). The scenario does not apply it.",
+          "Quebec Boundaries Extension Act, 1912, 2 Geo. V c. 45, which left Ungava only its islands; in this scenario the Act did not pass."
+        ],
+        "changes": [
+          {
+            "alter": "district_of_mackenzie",
+            "geometry": {
+              "unit": "district_of_mackenzie",
+              "at": "1919-12-31"
+            },
+            "note": "Counterfactual: kept at its pre-1920 lines, because the atlas cannot draw the 1918 order's districts around the unextended provinces.",
+            "instrument": "The 1901 line, east to 100°W; the order of 1918 is not applied."
+          },
+          {
+            "alter": "district_of_keewatin",
+            "geometry": {
+              "unit": "district_of_keewatin",
+              "at": "1912-05-14"
+            },
+            "note": "Counterfactual: still reaching south to Manitoba's 1881 line and Ontario's Albany River boundary.",
+            "instrument": "Order in Council P.C. 1897-3388 (18 December 1897), with the land re-annexed in 1905; the order of 1918 is not applied."
+          },
+          {
+            "alter": "district_of_franklin",
+            "geometry": {
+              "unit": "district_of_franklin",
+              "at": "1919-12-31"
+            },
+            "note": "Counterfactual: kept at its pre-1920 lines, with the other districts.",
+            "instrument": "Order in Council P.C. 1897-3388 (18 December 1897); the order of 1918 is not applied."
+          },
+          {
+            "create": "district_of_ungava",
+            "name": "District of Ungava",
+            "status": "district",
+            "sovereign": "Canada",
+            "capital": null,
+            "geometry": {
+              "unit": "district_of_ungava",
+              "at": "1912-05-14"
+            },
+            "note": "Counterfactual: Ungava continues, mainland and islands, as it stood before 1912.",
+            "instrument": "Order in Council P.C. 1897-3388 (18 December 1897), description \"UNGAVA\", less Quebec's 1898 extension; not cancelled in this scenario."
+          }
+        ]
+      },
+      {
+        "date": "1927-03-01",
+        "title": "Labrador, and Quebec as in the record",
+        "note": "The Privy Council gives Newfoundland the Atlantic watershed of Labrador, which cuts across both Quebec's 1898 extension and Ungava. The atlas has neither less Labrador, so from here Quebec is drawn as in the record, the mainland north of its 1898 line included, and Ungava keeps only its islands. This is a limit of the atlas, not a claim that Quebec would have been extended in 1927.",
+        "sources": [
+          "Report of the Judicial Committee of the Privy Council on the boundary between Canada and Newfoundland in the Labrador Peninsula, 1 March 1927 (the base atlas's 1927 event): the line applies in this scenario too.",
+          "Quebec Boundary Extension Act, 1898, 61 Vict. c. 3, whose line ran down the Hamilton River, inside the Atlantic watershed that the Privy Council gave to Newfoundland."
+        ],
+        "changes": [
+          {
+            "alter": "quebec",
+            "note": "From 1927 the scenario's Quebec is the record's. Without the 1912 Act, the land north of the 1898 line would have stayed in Ungava.",
+            "instrument": "None for the northern mainland: drawn as in the record from 1927 because the atlas has no drawing of the 1898 Quebec less Labrador."
+          },
+          {
+            "alter": "district_of_ungava",
+            "geometry": {
+              "unit": "district_of_ungava",
+              "at": "1919-12-31"
+            },
+            "note": "The islands of Ungava, as the base atlas draws them between 1912 and 1920.",
+            "instrument": "Order in Council P.C. 1897-3388 (18 December 1897), description \"UNGAVA\"; not cancelled in this scenario."
+          },
+          {
+            "alter": "district_of_franklin",
+            "geometry": {
+              "unit": "district_of_franklin",
+              "at": "1919-12-31"
+            },
+            "note": "Counterfactual: kept at its pre-1920 lines, with the other districts.",
+            "confidence": 1,
+            "instrument": "Order in Council P.C. 1897-3388 (18 December 1897); the order of 1918 is not applied.",
+            "rationale": "Kept at its 1897 lines; the few coastal islets (about 20 km²) that the record moves to Quebec in 1927 are drawn in both."
+          }
+        ]
+      },
+      {
+        "date": "1999-04-01",
+        "title": "Manitoba and Ontario as in the record",
+        "note": "Nunavut takes the land north of 60°N and the islands of Hudson, James and Ungava Bays, the old districts end, and Ungava's islands go to Nunavut. The land south of 60°N that Keewatin kept would have stayed in the Northwest Territories, but the atlas has no drawing of it on its own, so from here Manitoba and Ontario are drawn with their modern boundaries. This is a limit of the atlas, not a claim that they would have been extended in 1999.",
+        "sources": [
+          "Nunavut Act, S.C. 1993, c. 28, s. 3, in force 1 April 1999: Nunavut is the part of Canada north of 60°N and east of the Schedule I line not within Quebec or Newfoundland, and the islands in Hudson Bay, James Bay and Ungava Bay not within Manitoba, Ontario or Quebec."
+        ],
+        "changes": [
+          {
+            "dissolve": "district_of_ungava"
+          },
+          {
+            "alter": "manitoba",
+            "geometry": {
+              "unit": "manitoba",
+              "at": "1999-04-01"
+            },
+            "note": "From 1999 the scenario's Manitoba is the record's. Without the 1912 Act, the land north of the 1881 line would have stayed in the Northwest Territories.",
+            "instrument": "None: drawn as in the record from 1999 because the atlas has no drawing of Keewatin's southern part on its own."
+          },
+          {
+            "alter": "ontario",
+            "geometry": {
+              "unit": "ontario",
+              "at": "1999-04-01"
+            },
+            "note": "From 1999 the scenario's Ontario is the record's. Without the 1912 Act, the land north of the Albany River would have stayed in the Northwest Territories.",
+            "instrument": "None: drawn as in the record from 1999 because the atlas has no drawing of Keewatin's southern part on its own."
           }
         ]
       }
