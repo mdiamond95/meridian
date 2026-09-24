@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 
 /** Shell chrome state only. Data and split state get their own stores in later phases. */
-export type PanelTab = 'details' | 'generate' | 'dossier' | 'set' | 'compare';
+export type PanelTab = 'details' | 'generate' | 'dossier' | 'set' | 'compare' | 'files';
 
 interface UiState {
   panelOpen: boolean;

@@ -86,7 +86,10 @@ export const PackLibrarySchema = z.strictObject({
       id: z.string().regex(/^[a-z0-9-]+$/),
       name: z.string().min(1),
       description: z.string().min(1),
-      file: z.string().regex(/^[a-z0-9-]+\.json$/),
+      file: z
+        .string()
+        .regex(/^[a-z0-9-]+\.v\d+\.json$/)
+        .describe('<id>.<meshVersion>.json, in the top-level packs/ folder'),
     }),
   ),
 });

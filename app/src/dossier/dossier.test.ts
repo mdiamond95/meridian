@@ -32,7 +32,7 @@ const topo = cellTopology(
   ),
 );
 const pack = (id: string) =>
-  decodePack(JSON.parse(readFileSync(new URL(`../../public/packs/${id}.json`, import.meta.url), 'utf8')));
+  decodePack(JSON.parse(readFileSync(new URL(`../../../packs/${id}.v1.json`, import.meta.url), 'utf8')));
 
 function built(id: string) {
   const loaded = pack(id);
