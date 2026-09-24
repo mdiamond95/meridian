@@ -38,6 +38,13 @@
             }
           ],
           "description": "The set analysis, or {} before Phase 4 filled it"
+        },
+        "children": {
+          "description": "Nesting: packs splitting this pack's regions, each with meta.parentPack and meta.parentRegionId; a tree exports as its root",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/RegionPack"
+          }
         }
       },
       "required": [
@@ -132,6 +139,25 @@
             ],
             "additionalProperties": false
           }
+        },
+        "id": {
+          "description": "The pack's id: a preset's slug, or a hash of the recipe and assignment",
+          "type": "string",
+          "pattern": "^[a-z0-9-]+$"
+        },
+        "parentPack": {
+          "description": "Nesting: the id of the pack whose region this pack splits (scope.kind 'region')",
+          "type": "string"
+        },
+        "parentRegionId": {
+          "description": "Nesting: that region's id in the parent pack",
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "scenario": {
+          "description": "The atlas scenario the split was made in, whole, so atlas scopes resolve the same way anywhere",
+          "$ref": "#/$defs/Scenario"
         }
       },
       "required": [
@@ -215,6 +241,25 @@
           "properties": {
             "kind": {
               "type": "string",
+              "const": "atlasSovereign"
+            },
+            "sovereign": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Every de jure atlas unit under this sovereign at meta.date, e.g. \"Canada\" in 1867"
+            }
+          },
+          "required": [
+            "kind",
+            "sovereign"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
               "const": "region"
             },
             "pack": {
@@ -281,6 +326,329 @@
       "type": "string",
       "pattern": "^8[0-9a-f]{14}$",
       "description": "H3 cell index as lowercase hex (mode 1, so it starts with 8); never a number"
+    },
+    "Scenario": {
+      "type": "object",
+      "properties": {
+        "format": {
+          "type": "string",
+          "const": "meridian.scenario"
+        },
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9-]+$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "fork": {
+          "description": "Where the scenario leaves the base atlas; its first event is on or after it",
+          "$ref": "#/$defs/IsoDate"
+        },
+        "premise": {
+          "type": "string",
+          "minLength": 1,
+          "description": "One paragraph"
+        },
+        "events": {
+          "minItems": 1,
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ScenarioEvent"
+          },
+          "description": "Sorted by date ascending"
+        }
+      },
+      "required": [
+        "format",
+        "id",
+        "name",
+        "fork",
+        "premise",
+        "events"
+      ],
+      "additionalProperties": false,
+      "title": "Meridian Scenario"
+    },
+    "ScenarioEvent": {
+      "type": "object",
+      "properties": {
+        "date": {
+          "$ref": "#/$defs/IsoDate"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "note": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sources": {
+          "minItems": 1,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": "Citations, as for base events"
+        },
+        "requires": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/AtlasRequirement"
+          }
+        },
+        "changes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ScenarioChange"
+          }
+        }
+      },
+      "required": [
+        "date",
+        "title",
+        "note",
+        "sources",
+        "changes"
+      ],
+      "additionalProperties": false
+    },
+    "AtlasRequirement": {
+      "type": "object",
+      "properties": {
+        "unit": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$",
+          "description": "Stable snake_case id, e.g. \"ruperts_land\""
+        },
+        "exists": {
+          "description": "Default true: the unit exists",
+          "type": "boolean"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "colony",
+            "dominion",
+            "province",
+            "territory",
+            "district",
+            "hbc_charter",
+            "unorganized",
+            "foreign",
+            "disputed"
+          ]
+        },
+        "sovereign": {
+          "type": "string",
+          "minLength": 1
+        },
+        "because": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Why the event depends on it, with the instrument"
+        }
+      },
+      "required": [
+        "unit",
+        "because"
+      ],
+      "additionalProperties": false
+    },
+    "ScenarioChange": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "create": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_]*$"
+            },
+            "name": {
+              "type": "string",
+              "minLength": 1
+            },
+            "status": {
+              "type": "string",
+              "enum": [
+                "colony",
+                "dominion",
+                "province",
+                "territory",
+                "district",
+                "hbc_charter",
+                "unorganized",
+                "foreign",
+                "disputed"
+              ]
+            },
+            "sovereign": {
+              "type": "string",
+              "minLength": 1
+            },
+            "capital": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "geometry": {
+              "$ref": "#/$defs/__schema0"
+            },
+            "note": {
+              "type": "string"
+            },
+            "confidence": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "instrument": {
+              "description": "What the counterfactual rests on: the proposal, bill or vote",
+              "type": "string"
+            },
+            "rationale": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "create"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "alter": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_]*$"
+            },
+            "name": {
+              "type": "string",
+              "minLength": 1
+            },
+            "status": {
+              "type": "string",
+              "enum": [
+                "colony",
+                "dominion",
+                "province",
+                "territory",
+                "district",
+                "hbc_charter",
+                "unorganized",
+                "foreign",
+                "disputed"
+              ]
+            },
+            "sovereign": {
+              "type": "string",
+              "minLength": 1
+            },
+            "capital": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "geometry": {
+              "$ref": "#/$defs/__schema0"
+            },
+            "note": {
+              "type": "string"
+            },
+            "confidence": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "instrument": {
+              "description": "What the counterfactual rests on: the proposal, bill or vote",
+              "type": "string"
+            },
+            "rationale": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "alter"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "rename": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_]*$"
+            },
+            "name": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "rename",
+            "name"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "dissolve": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_]*$"
+            }
+          },
+          "required": [
+            "dissolve"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "__schema0": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "unit": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_]*$",
+              "description": "A base atlas unit"
+            },
+            "at": {
+              "description": "The date whose row of that unit is used",
+              "$ref": "#/$defs/IsoDate"
+            }
+          },
+          "required": [
+            "unit",
+            "at"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "union": {
+              "minItems": 2,
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/__schema0"
+              }
+            }
+          },
+          "required": [
+            "union"
+          ],
+          "additionalProperties": false
+        }
+      ]
     },
     "IdColumn": {
       "type": "object",
@@ -351,12 +719,15 @@
         },
         "stats": {
           "type": "object",
-          "propertyNames": {
-            "type": "string"
+          "properties": {
+            "score": {
+              "$ref": "#/$defs/RegionScore"
+            }
           },
           "additionalProperties": {
             "type": "number"
-          }
+          },
+          "description": "Numbers by name, plus the game-facing `score` object"
         },
         "dossier": {
           "anyOf": [
@@ -378,6 +749,47 @@
         "capital",
         "stats",
         "dossier"
+      ],
+      "additionalProperties": false
+    },
+    "RegionScore": {
+      "type": "object",
+      "properties": {
+        "population": {
+          "type": "number",
+          "minimum": 0,
+          "description": "People, 2021 census"
+        },
+        "gdp": {
+          "type": "number",
+          "minimum": 0,
+          "description": "GDP allocated to the region, CAD millions (an allocation: see gdpCaveat)"
+        },
+        "resource_index": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Share of the labour force in agriculture, forestry, fishing, hunting, mining, quarrying, oil and gas"
+        },
+        "cohesion": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "1 − the population-weighted lens variance, scaled to 0–1"
+        },
+        "exposure": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "The dependency score: the largest industry's labour-force share"
+        }
+      },
+      "required": [
+        "population",
+        "gdp",
+        "resource_index",
+        "cohesion",
+        "exposure"
       ],
       "additionalProperties": false
     },

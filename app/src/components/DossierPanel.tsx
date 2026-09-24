@@ -1,6 +1,7 @@
-import { Fragment } from 'react';
+import { Fragment, useState } from 'react';
 import { BORDERS_HEADING, dossierFacts, KILL_HEADING, nameLine, SAVE_HEADING } from '../dossier/fields';
-import { downloadMarkdown } from '../splitter/controller';
+import { downloadMarkdown, splitRegion } from '../splitter/controller';
+import type { RegionScore } from '../schema/regionPack';
 import type { RegionDossier } from '../schema/dossier';
 import { useSplitStore } from '../state/splitStore';
 
@@ -34,7 +35,65 @@ export function DossierPanel() {
       </div>
     );
   }
-  return <Dossier dossier={dossier} onClose={() => selectRegion(null)} />;
+  return (
+    <>
+      <Dossier dossier={dossier} onClose={() => selectRegion(null)} />
+      {split.scores?.[selected as number] && <Score score={split.scores[selected as number]} />}
+      <SplitThisRegion regionId={selected as number} />
+    </>
+  );
+}
+
+/** The game-facing score (plan Phase 6 §5); definitions in docs/interop.md. */
+function Score({ score }: { score: RegionScore }) {
+  return (
+    <section className="gen-section" data-testid="region-score">
+      <h3>Score</h3>
+      <dl className="facts">
+        <dt>Population</dt>
+        <dd>{fmt.format(score.population)}</dd>
+        <dt>GDP</dt>
+        <dd>
+          ${fmt.format(score.gdp)}M <span className="hint">— estimate, allocated</span>
+        </dd>
+        <dt title="Labour-force share in NAICS 11 and 21">Resource index</dt>
+        <dd>{score.resource_index.toFixed(3)}</dd>
+        <dt title="1 − lens variance, scaled to 0–1">Cohesion</dt>
+        <dd>{score.cohesion.toFixed(3)}</dd>
+        <dt title="The largest industry's labour-force share">Exposure</dt>
+        <dd>{score.exposure.toFixed(3)}</dd>
+      </dl>
+    </section>
+  );
+}
+
+/** Nesting (plan Phase 6 §2): this region becomes the scope of the next split. */
+function SplitThisRegion({ regionId }: { regionId: number }) {
+  const [n, setN] = useState(3);
+  const running = useSplitStore((s) => s.running);
+  return (
+    <section className="gen-section">
+      <h3>Split this region</h3>
+      <div className="row">
+        <label className="field">
+          Into
+          <input
+            type="number"
+            min={2}
+            max={30}
+            value={n}
+            aria-label="Regions in the nested split"
+            data-testid="nest-n"
+            onChange={(e) => setN(Math.max(2, Math.min(30, Number(e.target.value) || 2)))}
+          />
+        </label>
+        <button disabled={running} data-testid="nest-split" onClick={() => void splitRegion(regionId, n)}>
+          Split it
+        </button>
+      </div>
+      <p className="hint">The new split keeps this one as its parent; the breadcrumb goes back up.</p>
+    </section>
+  );
 }
 
 /** The panel's order is dossierFacts' order, which the Markdown export follows too. */

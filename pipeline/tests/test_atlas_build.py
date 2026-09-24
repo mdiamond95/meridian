@@ -458,3 +458,36 @@ def test_disputed_rows_carry_their_dispute_and_do_not_have_to_agree():
     claims = [u for u in document["units"] if u["truth"] == "disputed"]
     assert [u["dispute"] for u in claims] == ["oregon", "oregon"]
     assert {u["sovereign"] for u in claims} == {"Britain", "United States"}
+
+
+def test_requires_pass_through_and_must_hold_in_the_base():
+    start = {
+        "date": "1870-01-01",
+        "title": "Start",
+        "note": "n",
+        "changes": [create("big", {"canada": True})],
+    }
+    held = {
+        "date": "1880-01-01",
+        "title": "Promoted",
+        "note": "n",
+        "requires": [
+            {"unit": "big", "status": "territory", "because": "Only  a territory\n can be promoted."}
+        ],
+        "changes": [{"alter": "big", "status": "province"}],
+    }
+    events, _ = build.resolve_events(doc(start, held), FakeSources())
+    assert events[1]["requires"] == [
+        {"unit": "big", "status": "territory", "because": "Only a territory can be promoted."}
+    ]
+    assert "requires" not in events[0]
+
+    broken = {**held, "requires": [{"unit": "big", "sovereign": "Britain", "because": "b"}]}
+    with pytest.raises(ValueError, match="1880-01-01: requires big sovereign='Britain'"):
+        build.resolve_events(doc(start, broken), FakeSources())
+    absent = {**held, "requires": [{"unit": "small", "because": "b"}]}
+    with pytest.raises(ValueError, match="requires small exists=True"):
+        build.resolve_events(doc(start, absent), FakeSources())
+    no_reason = {**held, "requires": [{"unit": "big"}]}
+    with pytest.raises(ValueError, match="takes unit, because"):
+        build.resolve_events(doc(start, no_reason), FakeSources())

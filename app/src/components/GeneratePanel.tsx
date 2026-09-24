@@ -292,20 +292,24 @@ function ScopePicker() {
   const tool = useSplitStore((s) => s.tool);
   const drawPoints = useSplitStore((s) => s.drawPoints);
   const split = useSplitStore((s) => s.split);
+  const nodeId = useSplitStore((s) => s.nodeId);
   const set = useSplitStore((s) => s.set);
   const atlas = useAtlasStore((s) => s.data);
   const date = useAtlasStore((s) => s.date);
   const units = useMemo(() => (atlas ? resolveUnits(atlas.atlas, date, ['dejure']) : []), [atlas, date]);
+  const sovereigns = useMemo(() => [...new Set(units.map((u) => u.sovereign))].sort(), [units]);
   const scope = spec.scope;
 
   const choose = (kind: ScopeKind) => {
     if (kind === 'canada') setSpec({ scope: { kind } });
     if (kind === 'province') setSpec({ scope: { kind, province: 'AB' } });
     if (kind === 'atlasUnit' && units.length) setSpec({ scope: { kind, unit: units[0].id } });
-    if (kind === 'region' && split) {
+    if (kind === 'atlasSovereign')
+      setSpec({ scope: { kind, sovereign: sovereigns.includes('Canada') ? 'Canada' : sovereigns[0] } });
+    if (kind === 'region' && split && nodeId) {
+      // The region's split becomes this one's parent in the nesting tree (plan Phase 6 §2).
       set({ regionSource: split.assignment });
-      const pack = split.source.kind === 'pack' ? split.source.id : 'current';
-      setSpec({ scope: { kind, pack, region: 0 } });
+      setSpec({ scope: { kind, pack: nodeId, region: 0 } });
     }
     if (kind === 'polygon') setTool('draw');
   };
@@ -322,6 +326,7 @@ function ScopePicker() {
           <option value="canada">Canada</option>
           <option value="province">A province or territory</option>
           <option value="atlasUnit">An atlas unit at the current date</option>
+          <option value="atlasSovereign">A country in the atlas at the current date</option>
           <option value="region" disabled={!split}>
             A region of the current split
           </option>
@@ -351,6 +356,20 @@ function ScopePicker() {
           {units.map((u) => (
             <option key={u.id} value={u.id}>
               {u.name}
+            </option>
+          ))}
+        </select>
+      )}
+      {scope.kind === 'atlasSovereign' && (
+        <select
+          aria-label="Sovereign"
+          data-testid="sovereign-select"
+          value={scope.sovereign}
+          onChange={(e) => setSpec({ scope: { kind: 'atlasSovereign', sovereign: e.target.value } })}
+        >
+          {sovereigns.map((s) => (
+            <option key={s} value={s}>
+              {s}
             </option>
           ))}
         </select>

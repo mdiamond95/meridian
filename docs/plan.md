@@ -400,7 +400,9 @@ Sitting B. UI and constraints.
    `meridian.getScores(packUrl)` helper in docs/interop.md.
 ```
 
-**Gate:** Newfoundland-independent scenario shows no 1949 accession and the atlas still resolves cleanly to today; nesting three levels deep round-trips. Tag `v0.6-scenarios`.
+*Amended 2026-09-24 (the brief for this phase): two presets ship, Newfoundland independent 1949 and Buffalo 1905 (`docs/scenarios/`); no-1912-extensions and Acadian Maritimes wait. One overlay ships, immigrant-share halos over CMAs; the rotational-workforce flows wait in `docs/backlog.md` for a curated home-to-camp table. Scores are defined in `docs/interop.md` with a House of Cards worked example (the 1867 Dominion split into 5).*
+
+**Gate (amended 2026-09-24):** Newfoundland-independent scenario shows no 1949 accession and the atlas still resolves cleanly to today; Buffalo shows one province from 1905 with a stated capital and no Alberta–Saskatchewan line, and the 1912 and later events still apply; nesting three levels deep round-trips. Tag `pre-phase7`, then `v0.6-scenarios`.
 
 ---
 

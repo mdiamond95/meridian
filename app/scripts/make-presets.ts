@@ -10,7 +10,7 @@ import { buildPresetPack } from '../src/dossier/presetPack';
 import { TopologySchema } from '../src/schema/topojson';
 import { cellTopology } from '../src/splitter/outline';
 import { PRESETS } from '../src/splitter/presets';
-import { realSplitterData } from '../src/splitter/testing/realSplitterData';
+import { realAtlas, realSplitterData } from '../src/splitter/testing/realSplitterData';
 
 const out = new URL('../../packs/', import.meta.url);
 const data = realSplitterData();
@@ -25,7 +25,9 @@ const topo = cellTopology(
 );
 for (const preset of PRESETS) {
   const started = Date.now();
-  const { result, finished, dossiers, setAnalysis, pack } = buildPresetPack(preset, data, topo);
+  const { result, finished, dossiers, setAnalysis, pack } = buildPresetPack(preset, data, topo, {
+    atlas: realAtlas(),
+  });
   writeFileSync(new URL(`${preset.id}.${data.meshVersion}.json`, out), JSON.stringify(pack) + '\n');
   const pops = finished.regions.map((r) => r.population);
   console.log(

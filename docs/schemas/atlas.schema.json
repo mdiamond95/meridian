@@ -64,6 +64,13 @@
           "minimum": 0,
           "maximum": 1
         },
+        "requires": {
+          "description": "Preconditions a scenario can break; the event is then skipped with a notice",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/AtlasRequirement"
+          }
+        },
         "changes": {
           "type": "array",
           "items": {
@@ -83,6 +90,48 @@
       "type": "string",
       "format": "date",
       "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+    },
+    "AtlasRequirement": {
+      "type": "object",
+      "properties": {
+        "unit": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$",
+          "description": "Stable snake_case id, e.g. \"ruperts_land\""
+        },
+        "exists": {
+          "description": "Default true: the unit exists",
+          "type": "boolean"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "colony",
+            "dominion",
+            "province",
+            "territory",
+            "district",
+            "hbc_charter",
+            "unorganized",
+            "foreign",
+            "disputed"
+          ]
+        },
+        "sovereign": {
+          "type": "string",
+          "minLength": 1
+        },
+        "because": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Why the event depends on it, with the instrument"
+        }
+      },
+      "required": [
+        "unit",
+        "because"
+      ],
+      "additionalProperties": false
     },
     "AtlasChange": {
       "type": "object",
@@ -124,6 +173,7 @@
           "type": "string",
           "enum": [
             "colony",
+            "dominion",
             "province",
             "territory",
             "district",

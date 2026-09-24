@@ -131,6 +131,16 @@ def test_1950_includes_newfoundland_as_a_province():
     assert resolve("1948-01-01")["newfoundland"]["status"] == "colony"
 
 
+def test_the_accession_and_the_rename_carry_their_preconditions():
+    events = {e["date"]: e for e in atlas()["events"]}
+    assert [(r["unit"], r["sovereign"]) for r in events["1949-03-31"]["requires"]] == [
+        ("newfoundland", "Britain")
+    ]
+    assert [(r["unit"], r["sovereign"]) for r in events["2001-12-06"]["requires"]] == [
+        ("newfoundland", "Canada")
+    ]
+
+
 def test_nunavut_arrives_on_1999_04_01():
     assert "nunavut" not in resolve("1998-12-31")
     assert "nunavut" not in resolve("1999-03-31")

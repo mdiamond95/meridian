@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { currentEvent, dateToYear, formatDate, yearRange, yearToDate } from '../atlas/resolve';
+import { eventKey } from '../scenario/apply';
 import { startYear, useAtlasStore } from '../state/atlasStore';
 
 /** Bottom timeline: a year slider with a tick per atlas event. */
@@ -8,6 +9,7 @@ export function Timeline() {
   const status = useAtlasStore((s) => s.status);
   const date = useAtlasStore((s) => s.date);
   const setDate = useAtlasStore((s) => s.setDate);
+  const scenario = useAtlasStore((s) => s.scenario);
 
   const start = useAtlasStore((s) => s.start);
   const range = useMemo(() => (data ? yearRange(data.atlas, new Date()) : null), [data]);
@@ -53,10 +55,11 @@ export function Timeline() {
         />
         <ol className="timeline-ticks" aria-label="Events">
           {data.atlas.events.map((e) => (
-            <li key={e.date} style={{ left: offset(dateToYear(e.date)) }}>
+            <li key={eventKey(e)} style={{ left: offset(dateToYear(e.date)) }}>
               <button
                 className="timeline-tick"
-                data-active={event?.date === e.date}
+                data-active={event === e}
+                data-scenario={scenario?.scenarioEvents.has(eventKey(e)) || undefined}
                 title={`${formatDate(e.date)}: ${e.title}`}
                 aria-label={`${formatDate(e.date)}: ${e.title}`}
                 onClick={() => setDate(e.date)}

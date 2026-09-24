@@ -13,6 +13,7 @@ import {
   shareability,
   shareLink,
   type ImportUse,
+  downloadTree,
 } from '../splitter/controller';
 import { useSplitStore } from '../state/splitStore';
 
@@ -74,11 +75,26 @@ function Export() {
           </button>
         ))}
       </div>
+      <NestedTree />
       <p className="hint">
         GeoJSON, TopoJSON and KML carry each region&apos;s dossier; KML opens in Google My Maps with a folder
         per region and the dividing lines in their own folder.
       </p>
     </section>
+  );
+}
+
+/** Nesting (plan Phase 6 §2): the whole tree as one JSON, the root pack with its children nested. */
+function NestedTree() {
+  const nest = useSplitStore((s) => s.nest);
+  const count = Object.keys(nest).length;
+  if (count < 2) return null;
+  return (
+    <p>
+      <button data-testid="export-tree" onClick={downloadTree}>
+        The tree ({count} splits, one JSON)
+      </button>
+    </p>
   );
 }
 

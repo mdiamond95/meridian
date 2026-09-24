@@ -18,7 +18,9 @@
     "determinism": "playwright test --config playwright.determinism.config.ts",
     "presets": "tsx scripts/make-presets.ts",
     "rules": "tsx scripts/build-rules.ts",
-    "rules:check": "tsx scripts/build-rules.ts --check"
+    "rules:check": "tsx scripts/build-rules.ts --check",
+    "scenarios": "tsx scripts/build-scenarios.ts",
+    "scenarios:check": "tsx scripts/build-scenarios.ts --check"
   },
   "dependencies": {
     "@tmcw/togeojson": "^7.1.2",

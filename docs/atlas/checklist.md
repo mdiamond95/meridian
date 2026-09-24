@@ -729,6 +729,8 @@ Norway recognises Canada's sovereignty over the Sverdrup Islands, closing the la
 
 Newfoundland becomes Canada's tenth province after two referendums. Its boundaries, Labrador included, are those of 1927.
 
+Requires `newfoundland` (sovereign Britain): Newfoundland joined from Commission of Government, under which Britain had governed it since 1934 (Newfoundland Act 1933, 24 & 25 Geo. V c. 2, UK); the Terms of Union were negotiated by delegations the Commission appointed and given effect by the British North America Act, 1949 (12, 13 & 14 Geo. VI c. 22, UK). A self-governing Newfoundland would have had to seek union through its own legislature.
+
 - [ ] alter: **Newfoundland** (`newfoundland_1927`, province, dejure) — same polygon as before  
   Privy Council report of 1 March 1927: due north from Blanc-Sablon to 52°N, west to the Romaine River, up it to its source, and along the crest of the Atlantic watershed to Cape Chidley. The modern border. Area 399,483 km²; extent 46.61°N to 60.38°N, 52.62°W to 67.82°W. NRCan 1949 “Newfoundland”: 96.8% overlap, 12,566 km² differ.
 
@@ -778,6 +780,8 @@ Nunavut is created from the eastern and northern Northwest Territories, followin
 ## 2001-12-06 — Newfoundland and Labrador
 
 A constitutional amendment renames the province Newfoundland and Labrador. Its boundaries are unchanged.
+
+Requires `newfoundland` (sovereign Canada): The name was changed by the Constitution Amendment, 2001 (Newfoundland and Labrador), a Canadian amendment to the Terms of Union, which reaches only a province of Canada.
 
 - [ ] rename: **Newfoundland and Labrador** (`newfoundland_1927`, province, dejure) — same polygon as before  
   Privy Council report of 1 March 1927: due north from Blanc-Sablon to 52°N, west to the Romaine River, up it to its source, and along the crest of the Atlantic watershed to Cape Chidley. The modern border. Area 399,483 km²; extent 46.61°N to 60.38°N, 52.62°W to 67.82°W. NRCan 2001 “Newfoundland”: 96.8% overlap, 12,568 km² differ.

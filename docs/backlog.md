@@ -28,3 +28,26 @@ classifier that can say "Township 54" and "Range 5, west of the 4th meridian".
 **Blocked on:** confirming each province's licence, and whether one national assembly of the three
 exists under an open licence (NRCan's Canada Lands Survey System covers federal lands, not the
 prairie township grid).
+
+## Overlays
+
+### Rotational workforce as flows between home and camp
+**For:** the second non-geographic overlay (vision §8, "Rotational Canada"; plan Phase 6 §3): lines from
+the census subdivisions where fly-in fly-out and rotational workers live to the camps and sites they work
+at, weighted by headcount, drawn over any partition without claiming cells. The overlay framework already
+has the `flow` kind and its renderer (`app/src/overlays/overlays.ts`, `OverlayLayer.tsx`); only the data
+is missing.
+
+**Needs:** a curated home-to-camp table: one row per (home CSD uid, site name, site point, workers, year,
+source), with the site as a point, not a CSD, since camps are rarely where anyone is counted. Candidate
+sources, none yet checked for licence or coverage: the census's place-of-work tables (they record the
+work CSD, which for a camp is usually an unorganized area, and cannot tell rotation from commuting),
+provincial camp registries (Alberta's oil sands camp inventories), company sustainability reports, and
+published studies of rotational work in the oil sands, northern mining and offshore Newfoundland.
+
+**Work:** the table under `pipeline/` with a source row per input in docs/data-sources.md, a small build
+step that resolves home CSDs to points and writes a versioned `flows.<version>.json`, a schema, and one
+`OverlayDef` of kind `flow`.
+
+**Blocked on:** the table itself. No open source gives home and site together, so it has to be compiled
+and cited by hand, and a thin or one-industry table would be a misleading map.

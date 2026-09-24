@@ -10,6 +10,7 @@ import { IsoDateSchema } from './columns';
 
 export const UNIT_STATUSES = [
   'colony',
+  'dominion',
   'province',
   'territory',
   'district',
@@ -35,6 +36,21 @@ export const AtlasChangeSchema = z
   })
   .meta({ id: 'AtlasChange' });
 
+/**
+ * A base event's precondition (plan Phase 6): what must be true of one unit just before the event.
+ * The base atlas meets every one (the pipeline checks); a scenario that breaks one skips the event and
+ * says why, with `because`.
+ */
+export const AtlasRequirementSchema = z
+  .object({
+    unit: UnitIdSchema,
+    exists: z.boolean().optional().describe('Default true: the unit exists'),
+    status: z.enum(UNIT_STATUSES).optional(),
+    sovereign: z.string().min(1).optional(),
+    because: z.string().min(1).describe('Why the event depends on it, with the instrument'),
+  })
+  .meta({ id: 'AtlasRequirement' });
+
 export const AtlasEventSchema = z
   .object({
     date: IsoDateSchema.describe('The date the instrument took effect'),
@@ -46,6 +62,10 @@ export const AtlasEventSchema = z
       .max(1)
       .optional()
       .describe('Present when sources disagree on the effective date'),
+    requires: z
+      .array(AtlasRequirementSchema)
+      .optional()
+      .describe('Preconditions a scenario can break; the event is then skipped with a notice'),
     changes: z.array(AtlasChangeSchema),
   })
   .meta({ id: 'AtlasEvent' });
@@ -141,4 +161,5 @@ export type AtlasFile = z.infer<typeof AtlasFileSchema>;
 export type AtlasEvent = z.infer<typeof AtlasEventSchema>;
 export type AtlasUnit = z.infer<typeof AtlasUnitSchema>;
 export type AtlasChange = z.infer<typeof AtlasChangeSchema>;
+export type AtlasRequirement = z.infer<typeof AtlasRequirementSchema>;
 export type AtlasReference = z.infer<typeof AtlasReferenceSchema>;

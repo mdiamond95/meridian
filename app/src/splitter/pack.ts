@@ -1,8 +1,15 @@
 import { z } from 'zod';
 import { encodeColumn, decodeColumn } from '../schema/columns';
 import type { RegionDossier, SetAnalysis } from '../schema/dossier';
-import { RegionPackSchema, type RegionPack, type RegionPackWire } from '../schema/regionPack';
+import {
+  RegionPackSchema,
+  type RegionPack,
+  type RegionPackWire,
+  type RegionScore,
+} from '../schema/regionPack';
+import type { Scenario } from '../schema/scenario';
 import type { NamedRegion, SplitSpec } from './split';
+import { packId, parentOf } from './tree';
 
 /**
  * Region packs (vision §7): build one from a split, decode one, list the shipped presets, and decide
@@ -30,6 +37,12 @@ export interface PackExtras {
   /** one per region, in id order (Phase 4) */
   dossiers?: RegionDossier[];
   setAnalysis?: SetAnalysis;
+  /** game-facing scores, one per region in id order (Phase 6) */
+  scores?: RegionScore[];
+  /** the pack's id; defaults to a hash of the recipe and the cells */
+  id?: string;
+  /** the atlas scenario the split was made in */
+  scenario?: Scenario | null;
 }
 
 export function buildPack(
@@ -39,8 +52,9 @@ export function buildPack(
   meshVersion: string,
   extras: PackExtras = {},
 ): RegionPackWire {
-  const { edits = [], dossiers, setAnalysis } = extras;
+  const { edits = [], dossiers, setAnalysis, scores, scenario } = extras;
   const { scope, seed, method, date, ...params } = spec;
+  const parent = parentOf(spec);
   return RegionPackSchema.parse({
     format: 'meridian.regionPack',
     version: 1,
@@ -53,6 +67,9 @@ export function buildPack(
       date,
       byteOrder: 'le',
       ...(edits.length ? { edited: true, edits } : {}),
+      id: extras.id ?? packId(spec, assignment),
+      ...(parent ? { parentPack: parent.id, parentRegionId: parent.regionId } : {}),
+      ...(scenario ? { scenario } : {}),
     },
     assignment: encodeColumn(assignment, { kind: 'id' }),
     regions: regions.map((r) => ({
@@ -67,6 +84,7 @@ export function buildPack(
         pieces: r.pieces,
         compactness: Math.round(r.compactness * 1000) / 1000,
         carved: r.carved ? 1 : 0,
+        ...(scores?.[r.id] ? { score: scores[r.id] } : {}),
       },
       dossier: dossiers?.[r.id] ?? {},
     })),

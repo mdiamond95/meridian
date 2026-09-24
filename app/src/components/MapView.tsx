@@ -3,9 +3,11 @@ import L from 'leaflet';
 import { CARTO_MISSING_WARNING, selectBasemap } from '../map/basemap';
 import { installPatterns } from '../map/patterns';
 import { AtlasLayer } from './AtlasLayer';
+import { BaseOutlineLayer } from './BaseOutlineLayer';
 import { CompareDivider } from './CompareDivider';
 import { ContactLayer } from './ContactLayer';
 import { IndigenousLayer } from './IndigenousLayer';
+import { OverlayLayer } from './OverlayLayer';
 import { ReferenceLayer } from './ReferenceLayer';
 import { SplitLayer } from './SplitLayer';
 
@@ -49,7 +51,9 @@ export function MapView() {
       {map && <ContactLayer map={map} />}
       {map && <AtlasLayer map={map} />}
       {map && <ReferenceLayer map={map} />}
+      {map && <BaseOutlineLayer map={map} />}
       {map && <SplitLayer map={map} />}
+      {map && <OverlayLayer map={map} />}
       <CompareDivider />
     </div>
   );

@@ -629,6 +629,57 @@ button {
   color: #a1260d;
 }
 
+.scenario-badge {
+  position: absolute;
+  top: var(--gap);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+  max-width: calc(100% - 2 * 120px);
+  padding: 8px 14px;
+  border: 2px solid #8a4b00;
+  border-radius: var(--radius);
+  background: #fff8ea;
+  box-shadow: var(--shadow);
+}
+
+.timeline-tick[data-scenario='true'] {
+  background: #8a4b00;
+}
+
+.scenario-diff,
+.scenario-skipped,
+.scenario-events {
+  margin: 0 0 8px;
+  padding-left: 18px;
+}
+
+.scenario-diff li,
+.scenario-skipped li,
+.scenario-events li {
+  margin: 0 0 6px;
+}
+
+.breadcrumb {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 6px;
+  margin: 0 0 8px;
+  padding: 0;
+  list-style: none;
+  font-size: 0.85rem;
+}
+
+.breadcrumb li + li::before {
+  content: '›';
+  margin-right: 6px;
+  color: var(--ink-muted);
+}
+
 .badge {
   font-size: 0.75rem;
   font-weight: 600;

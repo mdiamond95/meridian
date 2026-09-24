@@ -17,7 +17,7 @@ import {
 } from './pack';
 import { CAPITALS, PRESETS } from './presets';
 import { runSplit } from './split';
-import { realSplitterData } from './testing/realSplitterData';
+import { realAtlas, realSplitterData } from './testing/realSplitterData';
 import { decodeHash, encodeHash } from './url';
 
 /**
@@ -69,7 +69,7 @@ describe('shipped presets', () => {
       // The recipe in the pack is the preset's spec, and running it gives the committed assignment.
       expect(specFromPack(pack)).toEqual(JSON.parse(JSON.stringify(preset.spec)));
       // Regenerated exactly as `npm run presets` writes it: the split, its dossiers and its analysis.
-      const rebuilt = buildPresetPack(preset, data, topo);
+      const rebuilt = buildPresetPack(preset, data, topo, { atlas: realAtlas() });
       expect(rebuilt.finished.assignment).toEqual(pack.assignment);
       expect(rebuilt.pack).toEqual(read(`${id}.v1.json`));
       expect(rebuilt.dossiers.map((d) => d.name)).toEqual(pack.regions.map((r) => r.name));

@@ -1,0 +1,42 @@
+# A counterfactual branch of the atlas (plan Phase 6; docs/decisions.md, 2026-09-24 — Phase 6).
+# Compiled by `npm run scenarios -w app` into app/src/scenario/scenarios.json; schema in
+# docs/schemas/scenario.schema.json. Events here are merged into the base event list, after the
+# base's own events on the same date; base events whose `requires` this breaks are skipped with a notice.
+format: meridian.scenario
+id: newfoundland-independent-1949
+name: Newfoundland independent
+fork: 1948-07-22
+premise: >-
+  Newfoundland had been governed by a British-appointed Commission since 1934, when the Dominion gave
+  up responsible government in a debt crisis. In the second referendum of 22 July 1948, Confederation
+  with Canada beat a return to responsible government by 52.3% to 47.7%, about 7,000 votes. This
+  scenario gives the other ballot the majority: Britain restores the Dominion of Newfoundland, which
+  does not join Canada. The atlas records the decision on the day of the vote rather than the months of
+  transition after it. Newfoundland keeps the boundaries of 1927, Labrador included; the 1949 accession
+  and the 2001 renaming, both acts that assume a Canadian province, do not happen, and Canada today has
+  nine provinces.
+events:
+  - date: 1948-07-22
+    title: Responsible government restored
+    note: >-
+      The second referendum returns a majority for responsible government, and Britain restores the
+      Dominion of Newfoundland, self-governing and outside Canada. Its boundaries are those of 1927.
+    sources:
+      - >-
+        Newfoundland referendum, second ballot, 22 July 1948: Confederation with Canada 78,323 votes,
+        Responsible Government as it existed in 1933 71,334 (the official count). The scenario reverses
+        the result.
+      - >-
+        Newfoundland Act 1933 (24 & 25 Geo. V c. 2, UK), which suspended the constitution and provided
+        for responsible government to be restored once Newfoundland was self-supporting and its people
+        asked for it; the 1948 ballot offered that restoration as one of its two choices.
+    changes:
+      - alter: newfoundland
+        status: dominion
+        sovereign: Newfoundland
+        instrument: >-
+          The 1948 referendum's second choice, "Responsible Government as it existed in 1933", which
+          would have ended Commission of Government under the Newfoundland Act 1933.
+        note: >-
+          Counterfactual: a self-governing dominion from the 1948 vote; in the base atlas Newfoundland
+          joins Canada on 31 March 1949.

@@ -112,7 +112,10 @@ CLIPS = ("canada", "north_america", "none")
 FOREIGN_CODES = ("US", "GL")
 # Per-row annotations: they describe one drawing, so an alter does not carry them forward.
 ROW_ANNOTATIONS = ("note", "confidence", "instrument", "rationale")
-EVENT_KEYS = {"date", "title", "note", "date_confidence", "changes"}
+EVENT_KEYS = {"date", "title", "note", "date_confidence", "requires", "changes"}
+# A base event's preconditions (plan Phase 6): a scenario that breaks one skips the event. Each names a
+# unit and what must be true of it just before the event; `because` says why, for the skip notice.
+REQUIRE_KEYS = {"unit", "exists", "status", "sovereign", "because"}
 # Parts of a clipped reference drawing smaller than this are slivers from differing coastlines.
 REFERENCE_MIN_PART_KM2 = 20.0
 CHANGE_KINDS = ("create", "alter", "rename", "dissolve")
@@ -393,6 +396,7 @@ def resolve_events(doc: dict, sources: Sources) -> tuple[list[dict], list[Row]]:
         if unknown:
             raise ValueError(f"event {date}: unknown keys {sorted(unknown)}")
         log(f"{date} {event['title']}")
+        requires = [check_requirement(r, open_rows, date) for r in event.get("requires", [])]
         changes_out = []
         evaluator.before = dict(evaluator.current)
         for change in event["changes"]:
@@ -408,8 +412,36 @@ def resolve_events(doc: dict, sources: Sources) -> tuple[list[dict], list[Row]]:
         event_out = {"date": date, "title": event["title"], "note": " ".join(event["note"].split())}
         if "date_confidence" in event:
             event_out["dateConfidence"] = event["date_confidence"]
+        if requires:
+            event_out["requires"] = requires
         events_out.append({**event_out, "changes": changes_out})
     return events_out, rows
+
+
+def check_requirement(requirement: dict, open_rows: dict[str, Row], date: str) -> dict:
+    """Validate one `requires` entry and check that the base atlas meets it: an event's
+    precondition must hold in the history it belongs to, or it is not a precondition."""
+    unknown = set(requirement) - REQUIRE_KEYS
+    if unknown or "unit" not in requirement or "because" not in requirement:
+        raise ValueError(f"event {date}: a requirement takes unit, because and optional {REQUIRE_KEYS}")
+    unit_id = requirement["unit"]
+    row = open_rows.get(unit_id)
+    exists = requirement.get("exists", True)
+    if (row is not None) != exists:
+        raise ValueError(
+            f"event {date}: requires {unit_id} exists={exists}, which the base atlas does not meet"
+        )
+    for key in ("status", "sovereign"):
+        if key in requirement and (row is None or row.fields[key] != requirement[key]):
+            raise ValueError(
+                f"event {date}: requires {unit_id} {key}={requirement[key]!r}; the base has another"
+            )
+    out = {"unit": unit_id}
+    if "exists" in requirement:
+        out["exists"] = exists
+    out.update({k: requirement[k] for k in ("status", "sovereign") if k in requirement})
+    out["because"] = " ".join(requirement["because"].split())
+    return out
 
 
 def apply_change(
@@ -828,6 +860,11 @@ def checklist(events: list[dict], rows: list[Row], checks: list[tuple[dict, str 
                 f"Date confidence {event['dateConfidence']}: sources disagree; see the note.",
                 "",
             ]
+        for requirement in event.get("requires", []):
+            what = ", ".join(
+                f"{k} {requirement[k]}" for k in ("exists", "status", "sovereign") if k in requirement
+            )
+            lines += [f"Requires `{requirement['unit']}` ({what or 'exists'}): {requirement['because']}", ""]
         if not event["changes"]:
             lines += ["No polygon changes on this date.", ""]
         for change in event["changes"]:
