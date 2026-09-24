@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
+import { reportTiles, visibleTileUrls } from '../offline/register';
 import { CARTO_MISSING_WARNING, selectBasemap } from '../map/basemap';
 import { installPatterns } from '../map/patterns';
 import { AtlasLayer } from './AtlasLayer';
@@ -34,7 +35,15 @@ export function MapView() {
   useEffect(() => {
     if (!containerRef.current) return;
     const instance = L.map(containerRef.current, { zoomSnap: 0.25, worldCopyJump: true });
-    L.tileLayer(BASEMAP.url, BASEMAP.options).addTo(instance);
+    // CORS tiles, so the service worker stores ordinary responses rather than opaque ones (both
+    // providers send Access-Control-Allow-Origin: *); once a view's tiles have all loaded, the worker
+    // is told which they are, and keeps only those for offline use.
+    const tiles = L.tileLayer(BASEMAP.url, { ...BASEMAP.options, crossOrigin: 'anonymous' }).addTo(instance);
+    tiles.on('load', () =>
+      reportTiles(
+        visibleTileUrls(instance.getPane('tilePane') as HTMLElement, Math.round(instance.getZoom())),
+      ),
+    );
     instance.fitBounds(CANADA_BOUNDS, chromePadding());
     const removePatterns = installPatterns(instance);
     setMap(instance);

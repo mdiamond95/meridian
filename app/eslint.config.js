@@ -22,6 +22,16 @@ export default tseslint.config(
     },
   },
   {
+    // The service worker is plain JavaScript, copied into the build with two constants prepended.
+    files: ['src/offline/sw.js'],
+    extends: [js.configs.recommended],
+    languageOptions: {
+      ecmaVersion: 2023,
+      sourceType: 'script',
+      globals: { ...globals.serviceworker, VERSION: 'readonly', PRECACHE: 'readonly' },
+    },
+  },
+  {
     files: ['scripts/**', 'tests/smoke/**', 'tests/determinism/**', '*.config.ts'],
     languageOptions: { globals: globals.node },
   },

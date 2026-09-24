@@ -11,7 +11,9 @@ export default defineConfig({
   fullyParallel: false,
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? 'github' : 'list',
-  use: { baseURL: `http://localhost:${PORT}` },
+  // The service worker is blocked except in the offline spec, which allows it: requests a worker
+  // answers never reach page.route, which other specs rely on.
+  use: { baseURL: `http://localhost:${PORT}`, serviceWorkers: 'block' },
   projects: [
     { name: 'desktop', use: { ...devices['Desktop Chrome'] } },
     // iPad viewport in Chromium: checks the sheet layout without a WebKit download in CI.
