@@ -1,3 +1,4 @@
+import { indexedDbCache, type DecodedCache } from '../data/decodedCache';
 import { maybeGunzip } from '../data/loadMesh';
 import { meshArrays, type MeshArrays } from '../engine/graph';
 import type { Columns } from '../engine/solver';
@@ -101,10 +102,42 @@ export interface SplitterUrls {
   snap: string;
 }
 
+/** Where the last load came from: the decoded cache, or the network. */
+export type SplitterDataSource = 'cache' | 'network';
+
+let defaultCache: DecodedCache<SplitterData> | null = null;
+function sharedCache(): DecodedCache<SplitterData> | null {
+  // Reading `indexedDB` itself throws where site data is blocked; the cache is then off.
+  try {
+    if (typeof indexedDB === 'undefined') return null;
+  } catch {
+    return null;
+  }
+  return (defaultCache ??= indexedDbCache<SplitterData>());
+}
+
+/**
+ * The cache key is the four fingerprinted URLs: Vite puts a content hash in each, so a new mesh
+ * version or attribute build is a new key and the old entry is never read.
+ */
+export const splitterCacheKey = (urls: SplitterUrls) =>
+  ['splitter', urls.mesh, urls.attrs, urls.places, urls.snap].join('|');
+
 export async function loadSplitterData(
   urls: SplitterUrls,
   fetchImpl: typeof fetch = fetch,
-): Promise<SplitterData> {
+  cache: DecodedCache<SplitterData> | null = sharedCache(),
+): Promise<{ data: SplitterData; source: SplitterDataSource }> {
+  const key = splitterCacheKey(urls);
+  const cached = await cache?.get(key);
+  if (cached) return { data: cached, source: 'cache' };
+  const data = await fetchSplitterData(urls, fetchImpl);
+  // Written in the background: a refused write only means the next open decodes again.
+  void cache?.put(key, data);
+  return { data, source: 'network' };
+}
+
+async function fetchSplitterData(urls: SplitterUrls, fetchImpl: typeof fetch): Promise<SplitterData> {
   const [mesh, attrs, places, snap] = await Promise.all([
     fetchJson(urls.mesh, fetchImpl),
     fetchJson(urls.attrs, fetchImpl),

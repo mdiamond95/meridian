@@ -121,8 +121,96 @@ Identical raw inputs (pinned by hash in `data/raw/MANIFEST.json`) and the locked
   `confidence: 0.5`, because no inland limit existed in law. The display copy drops islands under
   2 km² and is simplified to about 750 m.
 
-## Refreshing for a new census
+## Data refresh playbook
 
-See docs/data-sources.md for each source's cadence. A new census means a new `MESH_VERSION`
-(`common.py`), new source rows, and new artefact filenames. Old region packs keep referencing the
-mesh version they were built on.
+There are two kinds of refresh:
+
+- **Within a mesh version:** a new release of a source the mesh does not depend on, such as the GDP
+  table each May or a Wikidata re-query. The artefacts are rebuilt under the same names, and every
+  pack still fits.
+- **A new mesh version:** the next census (2026 geography, released from 2027) changes the census
+  subdivisions and dissemination areas the mesh is built from. That is a new `meshVersion`, and
+  everything keyed to cells moves with it.
+
+Each source's release cadence is in `docs/data-sources.md`.
+
+### A. Refresh within a mesh version (for example, GDP)
+
+1. Fetch the new input. For GDP, run the *Fetch StatCan GDP table* workflow, then
+   `make download ARGS="--only statcan_gdp_36100711 --refresh"`. The manifest records the new
+   file's hash.
+2. Run `make build`, which rewrites `data/build/SHA256SUMS`.
+3. Run `make verify`, alone, with the editor's extra windows closed (`docs/perf.md`).
+4. Only the artefacts built from that input should change. For GDP, that is
+   `attrs.v1.json.gz`: `mesh.v1` and `cells.v1` must be byte-identical. If the mesh changed, stop:
+   this is a new mesh version (B).
+5. In the app:
+   - Run `npm run presets -w app`. Assignments do not change unless a lens reads the refreshed
+     column. The dossiers, scores and set analysis in the packs do.
+   - Run `npm test`, then `npm run determinism -w app`.
+   - A golden that moves gets a one-line reason in its commit (running rules).
+6. Nothing breaks for old packs: same mesh, same cells. Their dossiers describe the data they were
+   made with.
+
+### B. A new census: a new mesh version
+
+**1. Sources**
+- Add new rows to `docs/data-sources.md` (the 2026 CSD, DA and CMA boundary files and census
+  profiles), each with its licence and attribution string.
+- Keep the 2021 rows: `v1` must stay rebuildable.
+- Pin the new inputs with `make download`.
+
+**2. Version**
+- Set `MESH_VERSION = "v2"` in `common.py`.
+- Every mesh-keyed output is renamed: `mesh.v2.json.gz`, `attrs.v2.json.gz`,
+  `cells.v2.topojson.gz`, `places.v2.json.gz` and `snap.v2.json.gz`.
+- The atlas, contact and Indigenous artefacts are not mesh-keyed. They keep `v1` unless their own
+  contract changes; `indigenous` reads census language data through `attrs`, not directly.
+- Add the new outputs to `artefacts.yaml`.
+
+**3. Build and check**
+- Run `make build`, `make verify` (alone) and `make validate`.
+- Check the Phase 1 gates in pytest: population reconciles to the census totals, and every cell has
+  a province.
+- Run `make_fixture.py` for the new `*.fixture.v2` files.
+
+**4. Keep the old files**
+- `mesh.v1.json.gz` and the other `v1` files stay in `data/build/` and on `main`, never edited
+  (docs/interop.md, versioning rule 3).
+- The app re-fits a pack from another mesh by fetching that mesh's cell centres from
+  `MESH_ARCHIVE` (`app/src/import/pack.ts`, raw GitHub on `main`). Deleting `mesh.v1.json.gz`
+  breaks every re-fit of a `v1` pack.
+
+**5. The app**
+- Point `app/src/splitter/assets.ts` at the `v2` files.
+- Run `npm run presets -w app`, which writes `packs/<slug>.v2.json` beside the `v1` files and
+  points `packs/index.json` at `v2`.
+- Regenerate the goldens (`app/src/engine/golden/*.json`, the cross-engine hashes) and justify each
+  in its commit.
+- Check the wording: the text that says "2021 census" in presets, dossiers and the House of Cards
+  example in `docs/interop.md`.
+- Nothing needs clearing:
+  - the decoded-data cache in IndexedDB is keyed by the artefacts' fingerprinted URLs, so the new
+    files are a new key and the old entry is dropped on the first write;
+  - the service worker's cache is per build.
+
+**6. Release**
+- Tag, so external consumers can pin both meshes by raw URL at a tag.
+- Add a Migrations note to `docs/interop.md` only if the RegionPack contract itself changed. A new
+  mesh is not a contract change.
+
+### What breaks for old packs and links on a new mesh
+
+| What | What happens | Why |
+|---|---|---|
+| A `v1` pack, unedited, opened from the library or a file | The app offers to **regenerate** it from its seed and parameters on `v2`, or to **re-fit** it | The recipe is kept, but a solver run on other cells gives different regions: same method, not the same map. |
+| A `v1` pack edited by hand | **Re-fit only**. Regenerating would lose the edits, so `fitPack` refuses it. | Re-fit gives each new cell the region of the nearest old cell centre within 30 km. Measured on alberta-15 against a synthetic `v2`: 99.77% of population lands in the same region. |
+| Land the old mesh did not cover (new coastal cells) | Unassigned after a re-fit (region −1) | Nothing within 30 km to copy from. |
+| A `#split=` share link | **Reruns on the current mesh** and gives a different split, silently | The link carries the recipe, not the mesh version or the cells. A link that must reproduce exactly should be shared as a pack file instead. |
+| A `#pack=<slug>` link | Loads the current mesh's preset | `index.json` lists the current mesh's files. |
+| Keep-together and keep-apart pins | A pin whose CSD uid no longer exists is **dropped** without notice | CSD uids change between censuses. Pins are resolved through `data.csds`. |
+| Carved metros (CMA carve-out) | Carve the new census's CMAs | CMA membership goes through each cell's CSD. |
+| Nested split trees (`children`) | Each node follows the rows above on its own. A re-fitted child's parent region may no longer match its cells exactly. | Nesting records `parentRegionId`, not geometry. |
+| Scenarios, the atlas, scores' definitions | Unchanged | They are geometry and rules, not cells. The scores of a regenerated pack are recomputed from `v2` data. |
+| External consumers reading `packs/*.v1.json` by raw URL | Keep working if pinned to a tag. On `main` they read the `v1` files, which are never removed. | Versioning rules 3 and 4. |
+| Offline | A re-fit needs the network the first time | The old mesh is fetched from `MESH_ARCHIVE`, not precached. |

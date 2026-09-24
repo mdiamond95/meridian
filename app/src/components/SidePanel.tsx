@@ -11,12 +11,42 @@ import { NestBreadcrumb } from './NestBreadcrumb';
 import { ScenarioPanel } from './ScenarioPanel';
 import { SetPanel } from './SetPanel';
 
+const TABS = [
+  ['details', 'Details'],
+  ['scenario', 'Scenario'],
+  ['generate', 'Generate'],
+  ['dossier', 'Region'],
+  ['set', 'Set'],
+  ['compare', 'Compare'],
+  ['files', 'Files'],
+] as const;
+
 /** Right-hand panel on wide screens; a bottom sheet on iPad and phones. */
 export function SidePanel() {
   const open = useUiStore((s) => s.panelOpen);
   const toggle = useUiStore((s) => s.togglePanel);
   const tab = useUiStore((s) => s.panelTab);
   const setTab = useUiStore((s) => s.setPanelTab);
+
+  // Left and right move to the neighbouring tab (wrapping), Home and End to the ends; the tab is
+  // shown as soon as it has focus, and Tab then goes into its panel.
+  const onTabKey = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    const at = TABS.findIndex(([id]) => id === tab);
+    const next =
+      e.key === 'ArrowRight'
+        ? (at + 1) % TABS.length
+        : e.key === 'ArrowLeft'
+          ? (at - 1 + TABS.length) % TABS.length
+          : e.key === 'Home'
+            ? 0
+            : e.key === 'End'
+              ? TABS.length - 1
+              : -1;
+    if (next < 0) return;
+    e.preventDefault();
+    setTab(TABS[next][0]);
+    document.getElementById(`tab-${TABS[next][0]}`)?.focus();
+  };
 
   return (
     <aside className="panel" data-open={open} data-testid="panel" aria-label="Details">
@@ -25,22 +55,16 @@ export function SidePanel() {
         <span>Details</span>
       </button>
       <div id="panel-body" className="panel-body" hidden={!open}>
-        <div className="tabs" role="tablist">
-          {(
-            [
-              ['details', 'Details'],
-              ['scenario', 'Scenario'],
-              ['generate', 'Generate'],
-              ['dossier', 'Region'],
-              ['set', 'Set'],
-              ['compare', 'Compare'],
-              ['files', 'Files'],
-            ] as const
-          ).map(([id, label]) => (
+        <div className="tabs" role="tablist" aria-label="Panels" onKeyDown={onTabKey}>
+          {TABS.map(([id, label]) => (
             <button
               key={id}
+              id={`tab-${id}`}
               role="tab"
               aria-selected={tab === id}
+              aria-controls="panel-tabpanel"
+              // One tab stop for the row; the arrow keys move between tabs (WAI-ARIA tabs pattern).
+              tabIndex={tab === id ? 0 : -1}
               data-testid={`${id}-tab`}
               onClick={() => setTab(id)}
             >
@@ -48,14 +72,16 @@ export function SidePanel() {
             </button>
           ))}
         </div>
-        {tab === 'details' && <PanelContent />}
-        {['generate', 'dossier', 'set', 'files'].includes(tab) && <NestBreadcrumb />}
-        {tab === 'scenario' && <ScenarioPanel />}
-        {tab === 'generate' && <GeneratePanel />}
-        {tab === 'dossier' && <DossierPanel />}
-        {tab === 'set' && <SetPanel />}
-        {tab === 'compare' && <ComparePanel />}
-        {tab === 'files' && <FilesPanel />}
+        <div id="panel-tabpanel" role="tabpanel" aria-labelledby={`tab-${tab}`} className="tabpanel">
+          {tab === 'details' && <PanelContent />}
+          {['generate', 'dossier', 'set', 'files'].includes(tab) && <NestBreadcrumb />}
+          {tab === 'scenario' && <ScenarioPanel />}
+          {tab === 'generate' && <GeneratePanel />}
+          {tab === 'dossier' && <DossierPanel />}
+          {tab === 'set' && <SetPanel />}
+          {tab === 'compare' && <ComparePanel />}
+          {tab === 'files' && <FilesPanel />}
+        </div>
       </div>
     </aside>
   );

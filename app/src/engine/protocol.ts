@@ -10,7 +10,11 @@ import { solveSteps, type Columns, type Params, type Progress, type SolveResult 
  */
 
 export type WorkerRequest =
-  | { type: 'init'; mesh: MeshArrays; columns: Columns }
+  /**
+   * The mesh once, then columns as runs first need them: the worker keeps both, so a run sends only
+   * its mask, parameters and (transferred) template, never the mesh again.
+   */
+  | { type: 'init'; mesh?: MeshArrays; columns: Columns }
   | {
       type: 'run';
       id: number;
@@ -83,8 +87,11 @@ export function createSolverHost(
     handle(message: WorkerRequest) {
       switch (message.type) {
         case 'init':
-          mesh = message.mesh;
-          columns = message.columns;
+          if (message.mesh) {
+            mesh = message.mesh;
+            columns = {};
+          }
+          columns = { ...columns, ...message.columns };
           break;
         case 'run':
           run(message);

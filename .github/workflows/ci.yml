@@ -45,6 +45,8 @@ jobs:
         run: npm run rules:check -w app
       - name: Scenarios up to date
         run: npm run scenarios:check -w app
+      - name: Licences page up to date with docs/data-sources.md
+        run: npm run licences:check -w app
       - name: Build
         run: npm run build
       - name: Install Playwright Chromium
@@ -66,7 +68,7 @@ jobs:
       - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v10.1.0 # setup-uv publishes no moving major tag
         with:
-          version: '0.12.13'
+          version: "0.12.13"
           enable-cache: true
           cache-dependency-glob: pipeline/uv.lock
       - run: make install

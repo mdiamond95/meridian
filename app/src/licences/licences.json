@@ -1,0 +1,380 @@
+[
+  {
+    "attribution": "Adapted from Statistics Canada, 2021 Census – Boundary files, 2022. This does not constitute an endorsement by Statistics Canada of this product.",
+    "use": "built",
+    "sources": [
+      {
+        "id": "statcan_csd_2021",
+        "name": "Statistics Canada 2021 cartographic boundary file: census subdivisions (layer 9 of the official map service; generalized server-side to 20 m)",
+        "licence": "Statistics Canada Open Licence",
+        "licenceUrl": "https://www.statcan.gc.ca/en/terms-conditions/open-licence"
+      },
+      {
+        "id": "statcan_cma_2021",
+        "name": "Statistics Canada 2021 cartographic boundary file: CMAs and CAs (layer 6)",
+        "licence": "Statistics Canada Open Licence",
+        "licenceUrl": "https://www.statcan.gc.ca/en/terms-conditions/open-licence"
+      },
+      {
+        "id": "statcan_da_2021",
+        "name": "Statistics Canada 2021 cartographic boundary file: dissemination areas (layer 12), used for DA representative points",
+        "licence": "Statistics Canada Open Licence",
+        "licenceUrl": "https://www.statcan.gc.ca/en/terms-conditions/open-licence"
+      }
+    ]
+  },
+  {
+    "attribution": "Adapted from Statistics Canada, Census Profile, 2021 Census of Population, 2022. This does not constitute an endorsement by Statistics Canada of this product.",
+    "use": "built",
+    "sources": [
+      {
+        "id": "statcan_profile_da_2021",
+        "name": "Statistics Canada 2021 Census Profile (98-401-X2021), DA level, via the Census Profile SDMX API: population 2021/2016, mother tongue, Indigenous identity, immigrant status",
+        "licence": "Statistics Canada Open Licence",
+        "licenceUrl": "https://www.statcan.gc.ca/en/terms-conditions/open-licence"
+      },
+      {
+        "id": "statcan_profile_csd_2021",
+        "name": "Statistics Canada 2021 Census Profile, CSD level: the DA characteristics plus labour force 15+ by NAICS 2017 sector (2259, 2261–2281)",
+        "licence": "Statistics Canada Open Licence",
+        "licenceUrl": "https://www.statcan.gc.ca/en/terms-conditions/open-licence"
+      },
+      {
+        "id": "statcan_profile_csd_indigenous_languages_2021",
+        "name": "Statistics Canada 2021 Census Profile, CSD level: mother tongue (single responses, 100% data) for each of the 70 Indigenous languages under characteristic 385, mapped to families in pipeline/atlas/language_families.yaml",
+        "licence": "Statistics Canada Open Licence",
+        "licenceUrl": "https://www.statcan.gc.ca/en/terms-conditions/open-licence"
+      }
+    ]
+  },
+  {
+    "attribution": "Adapted from Statistics Canada, Table 36-10-0711-01 Gross domestic product (GDP) at basic prices, by industry, provinces and territories, 2022 (current dollars). This does not constitute an endorsement by Statistics Canada of this product.",
+    "use": "built",
+    "sources": [
+      {
+        "id": "statcan_gdp_36100711",
+        "name": "Statistics Canada table 36-10-0711-01, GDP at basic prices by industry, provinces and territories (replaces discontinued 36-10-0402-01)",
+        "licence": "Statistics Canada Open Licence",
+        "licenceUrl": "https://www.statcan.gc.ca/en/terms-conditions/open-licence"
+      }
+    ]
+  },
+  {
+    "attribution": "Contains information licensed under the Open Government Licence – Canada.",
+    "use": "built",
+    "sources": [
+      {
+        "id": "nrcan_atlas_boundaries_1m",
+        "name": "NRCan Atlas of Canada 1:1M boundary polygons (land + inland water, including the Canadian Great Lakes); used for mesh coverage and province assignment",
+        "licence": "Open Government Licence – Canada",
+        "licenceUrl": "https://open.canada.ca/en/open-government-licence-canada"
+      },
+      {
+        "id": "cirnac_historic_treaties",
+        "name": "CIRNAC/ISC Historic Treaties (pre-1975), Internet Archive copy of the official file captured 2025-08-07",
+        "licence": "Open Government Licence – Canada",
+        "licenceUrl": "https://open.canada.ca/en/open-government-licence-canada"
+      },
+      {
+        "id": "cirnac_modern_treaties",
+        "name": "CIRNAC/ISC Modern Treaties (settlement areas), Internet Archive copy captured 2025-08-07",
+        "licence": "Open Government Licence – Canada",
+        "licenceUrl": "https://open.canada.ca/en/open-government-licence-canada"
+      },
+      {
+        "id": "nrcan_aboriginal_lands",
+        "name": "NRCan Aboriginal Lands of Canada Legislative Boundaries (Indian reserves: ALTYPE = Indian Reserve)",
+        "licence": "Open Government Licence – Canada",
+        "licenceUrl": "https://open.canada.ca/en/open-government-licence-canada"
+      },
+      {
+        "id": "cirnac_inuit_regions",
+        "name": "CIRNAC/ISC Inuit Regions (Inuit Nunangat), Internet Archive copy captured 2025-08-07",
+        "licence": "Open Government Licence – Canada",
+        "licenceUrl": "https://open.canada.ca/en/open-government-licence-canada"
+      },
+      {
+        "id": "aafc_ecozones",
+        "name": "AAFC National Ecological Framework: terrestrial ecozones (AAFC's ArcGIS Online service)",
+        "licence": "Open Government Licence – Canada",
+        "licenceUrl": "https://open.canada.ca/en/open-government-licence-canada"
+      },
+      {
+        "id": "statcan_drainage_regions",
+        "name": "Statistics Canada drainage regions and ocean drainage areas",
+        "licence": "Open Government Licence – Canada",
+        "licenceUrl": "https://open.canada.ca/en/open-government-licence-canada"
+      },
+      {
+        "id": "nrcan_nhn_workunits",
+        "name": "NRCan National Hydro Network work-unit index (WSC sub-drainage areas; Saskatchewan–Nelson sub-basins)",
+        "licence": "Open Government Licence – Canada",
+        "licenceUrl": "https://open.canada.ca/en/open-government-licence-canada"
+      },
+      {
+        "id": "nrcan_c1w_strahler_arctic",
+        "name": "NRCan Canada1Water NHN flow network with Strahler order, arctic region (Kessel, Frey & Russell 2024, doi:10.4095/pyc51h1rm4)",
+        "licence": "Open Government Licence – Canada",
+        "licenceUrl": "https://open.canada.ca/en/open-government-licence-canada"
+      },
+      {
+        "id": "nrcan_c1w_strahler_atlantic",
+        "name": "NRCan Canada1Water NHN flow network with Strahler order, atlantic region (Kessel, Frey & Russell 2024, doi:10.4095/pyc51h1rm4)",
+        "licence": "Open Government Licence – Canada",
+        "licenceUrl": "https://open.canada.ca/en/open-government-licence-canada"
+      },
+      {
+        "id": "nrcan_c1w_strahler_baffin",
+        "name": "NRCan Canada1Water NHN flow network with Strahler order, baffin region (Kessel, Frey & Russell 2024, doi:10.4095/pyc51h1rm4)",
+        "licence": "Open Government Licence – Canada",
+        "licenceUrl": "https://open.canada.ca/en/open-government-licence-canada"
+      },
+      {
+        "id": "nrcan_c1w_strahler_hudson",
+        "name": "NRCan Canada1Water NHN flow network with Strahler order, hudson region (Kessel, Frey & Russell 2024, doi:10.4095/pyc51h1rm4)",
+        "licence": "Open Government Licence – Canada",
+        "licenceUrl": "https://open.canada.ca/en/open-government-licence-canada"
+      },
+      {
+        "id": "nrcan_c1w_strahler_islands",
+        "name": "NRCan Canada1Water NHN flow network with Strahler order, islands region (Kessel, Frey & Russell 2024, doi:10.4095/pyc51h1rm4)",
+        "licence": "Open Government Licence – Canada",
+        "licenceUrl": "https://open.canada.ca/en/open-government-licence-canada"
+      },
+      {
+        "id": "nrcan_c1w_strahler_mackenzie",
+        "name": "NRCan Canada1Water NHN flow network with Strahler order, mackenzie region (Kessel, Frey & Russell 2024, doi:10.4095/pyc51h1rm4)",
+        "licence": "Open Government Licence – Canada",
+        "licenceUrl": "https://open.canada.ca/en/open-government-licence-canada"
+      },
+      {
+        "id": "nrcan_c1w_strahler_nelson",
+        "name": "NRCan Canada1Water NHN flow network with Strahler order, nelson region (Kessel, Frey & Russell 2024, doi:10.4095/pyc51h1rm4)",
+        "licence": "Open Government Licence – Canada",
+        "licenceUrl": "https://open.canada.ca/en/open-government-licence-canada"
+      },
+      {
+        "id": "nrcan_c1w_strahler_pacific",
+        "name": "NRCan Canada1Water NHN flow network with Strahler order, pacific region (Kessel, Frey & Russell 2024, doi:10.4095/pyc51h1rm4)",
+        "licence": "Open Government Licence – Canada",
+        "licenceUrl": "https://open.canada.ca/en/open-government-licence-canada"
+      },
+      {
+        "id": "elections_fed_2023",
+        "name": "Elections Canada federal electoral districts, 2023 Representation Order",
+        "licence": "Open Government Licence – Canada",
+        "licenceUrl": "https://open.canada.ca/en/open-government-licence-canada"
+      },
+      {
+        "id": "elections_results_ge45",
+        "name": "Elections Canada 45th general election (2025-04-28) official results, Table 11 (elected candidate per district), Internet Archive copy",
+        "licence": "Open Government Licence – Canada",
+        "licenceUrl": "https://open.canada.ca/en/open-government-licence-canada"
+      },
+      {
+        "id": "nrcan_te_1867",
+        "name": "NRCan Atlas of Canada, Territorial Evolution of Canada: 1867 map polygons (layer 8)",
+        "licence": "Open Government Licence – Canada",
+        "licenceUrl": "https://open.canada.ca/en/open-government-licence-canada"
+      },
+      {
+        "id": "nrcan_te_1870",
+        "name": "NRCan Atlas of Canada, Territorial Evolution of Canada: 1870 map polygons (layer 18)",
+        "licence": "Open Government Licence – Canada",
+        "licenceUrl": "https://open.canada.ca/en/open-government-licence-canada"
+      },
+      {
+        "id": "nrcan_te_1871",
+        "name": "NRCan Atlas of Canada, Territorial Evolution of Canada: 1871 map polygons (layer 203)",
+        "licence": "Open Government Licence – Canada",
+        "licenceUrl": "https://open.canada.ca/en/open-government-licence-canada"
+      },
+      {
+        "id": "nrcan_te_1873",
+        "name": "NRCan Atlas of Canada, Territorial Evolution of Canada: 1873 map polygons (layer 213)",
+        "licence": "Open Government Licence – Canada",
+        "licenceUrl": "https://open.canada.ca/en/open-government-licence-canada"
+      },
+      {
+        "id": "nrcan_te_1874",
+        "name": "NRCan Atlas of Canada, Territorial Evolution of Canada: 1874 map polygons (layer 223)",
+        "licence": "Open Government Licence – Canada",
+        "licenceUrl": "https://open.canada.ca/en/open-government-licence-canada"
+      },
+      {
+        "id": "nrcan_te_1876",
+        "name": "NRCan Atlas of Canada, Territorial Evolution of Canada: 1876 map polygons (layer 233)",
+        "licence": "Open Government Licence – Canada",
+        "licenceUrl": "https://open.canada.ca/en/open-government-licence-canada"
+      },
+      {
+        "id": "nrcan_te_1880",
+        "name": "NRCan Atlas of Canada, Territorial Evolution of Canada: 1880 map polygons (layer 243)",
+        "licence": "Open Government Licence – Canada",
+        "licenceUrl": "https://open.canada.ca/en/open-government-licence-canada"
+      },
+      {
+        "id": "nrcan_te_1881",
+        "name": "NRCan Atlas of Canada, Territorial Evolution of Canada: 1881 map polygons (layer 253)",
+        "licence": "Open Government Licence – Canada",
+        "licenceUrl": "https://open.canada.ca/en/open-government-licence-canada"
+      },
+      {
+        "id": "nrcan_te_1882",
+        "name": "NRCan Atlas of Canada, Territorial Evolution of Canada: 1882 map polygons (layer 263)",
+        "licence": "Open Government Licence – Canada",
+        "licenceUrl": "https://open.canada.ca/en/open-government-licence-canada"
+      },
+      {
+        "id": "nrcan_te_1886",
+        "name": "NRCan Atlas of Canada, Territorial Evolution of Canada: 1886 map polygons (layer 273)",
+        "licence": "Open Government Licence – Canada",
+        "licenceUrl": "https://open.canada.ca/en/open-government-licence-canada"
+      },
+      {
+        "id": "nrcan_te_1889",
+        "name": "NRCan Atlas of Canada, Territorial Evolution of Canada: 1889 map polygons (layer 283)",
+        "licence": "Open Government Licence – Canada",
+        "licenceUrl": "https://open.canada.ca/en/open-government-licence-canada"
+      },
+      {
+        "id": "nrcan_te_1895",
+        "name": "NRCan Atlas of Canada, Territorial Evolution of Canada: 1895 map polygons (layer 294)",
+        "licence": "Open Government Licence – Canada",
+        "licenceUrl": "https://open.canada.ca/en/open-government-licence-canada"
+      },
+      {
+        "id": "nrcan_te_1897",
+        "name": "NRCan Atlas of Canada, Territorial Evolution of Canada: 1897 map polygons (layer 305)",
+        "licence": "Open Government Licence – Canada",
+        "licenceUrl": "https://open.canada.ca/en/open-government-licence-canada"
+      },
+      {
+        "id": "nrcan_te_1898",
+        "name": "NRCan Atlas of Canada, Territorial Evolution of Canada: 1898 map polygons (layer 316)",
+        "licence": "Open Government Licence – Canada",
+        "licenceUrl": "https://open.canada.ca/en/open-government-licence-canada"
+      },
+      {
+        "id": "nrcan_te_1901",
+        "name": "NRCan Atlas of Canada, Territorial Evolution of Canada: 1901 map polygons (layer 327)",
+        "licence": "Open Government Licence – Canada",
+        "licenceUrl": "https://open.canada.ca/en/open-government-licence-canada"
+      },
+      {
+        "id": "nrcan_te_1905",
+        "name": "NRCan Atlas of Canada, Territorial Evolution of Canada: 1905 map polygons (layer 338)",
+        "licence": "Open Government Licence – Canada",
+        "licenceUrl": "https://open.canada.ca/en/open-government-licence-canada"
+      },
+      {
+        "id": "nrcan_te_1912",
+        "name": "NRCan Atlas of Canada, Territorial Evolution of Canada: 1912 map polygons (layer 349)",
+        "licence": "Open Government Licence – Canada",
+        "licenceUrl": "https://open.canada.ca/en/open-government-licence-canada"
+      },
+      {
+        "id": "nrcan_te_1920",
+        "name": "NRCan Atlas of Canada, Territorial Evolution of Canada: 1920 map polygons (layer 360)",
+        "licence": "Open Government Licence – Canada",
+        "licenceUrl": "https://open.canada.ca/en/open-government-licence-canada"
+      },
+      {
+        "id": "nrcan_te_1927",
+        "name": "NRCan Atlas of Canada, Territorial Evolution of Canada: 1927 map polygons (layer 371)",
+        "licence": "Open Government Licence – Canada",
+        "licenceUrl": "https://open.canada.ca/en/open-government-licence-canada"
+      },
+      {
+        "id": "nrcan_te_1949",
+        "name": "NRCan Atlas of Canada, Territorial Evolution of Canada: 1949 map polygons (layer 382)",
+        "licence": "Open Government Licence – Canada",
+        "licenceUrl": "https://open.canada.ca/en/open-government-licence-canada"
+      },
+      {
+        "id": "nrcan_te_1999",
+        "name": "NRCan Atlas of Canada, Territorial Evolution of Canada: 1999 map polygons (layer 391)",
+        "licence": "Open Government Licence – Canada",
+        "licenceUrl": "https://open.canada.ca/en/open-government-licence-canada"
+      },
+      {
+        "id": "nrcan_te_2001",
+        "name": "NRCan Atlas of Canada, Territorial Evolution of Canada: 2001 map polygons (layer 400)",
+        "licence": "Open Government Licence – Canada",
+        "licenceUrl": "https://open.canada.ca/en/open-government-licence-canada"
+      }
+    ]
+  },
+  {
+    "attribution": "Contains information licensed under the Open Government Licence – Alberta.",
+    "use": "built",
+    "sources": [
+      {
+        "id": "ab_metis_settlements",
+        "name": "Government of Alberta, Métis Settlements boundaries",
+        "licence": "Open Government Licence – Alberta",
+        "licenceUrl": "https://open.alberta.ca/licence"
+      }
+    ]
+  },
+  {
+    "attribution": "Language families and locations from Glottolog 5.3: Hammarström, Harald & Forkel, Robert & Haspelmath, Martin & Bank, Sebastian. 2026. Glottolog 5.3. Leipzig: Max Planck Institute for Evolutionary Anthropology. https://doi.org/10.5281/zenodo.15525265. Licensed under CC BY 4.0; family assignments per mesh cell adapted by Meridian.",
+    "use": "built",
+    "sources": [
+      {
+        "id": "glottolog_languoids",
+        "name": "Glottolog 5.3 languoid table (languoid.csv: every language, family and dialect with its family, coordinates and countries)",
+        "licence": "Creative Commons Attribution 4.0 International (CC BY 4.0)",
+        "licenceUrl": "https://creativecommons.org/licenses/by/4.0/"
+      }
+    ]
+  },
+  {
+    "attribution": "Community names and locations from Wikidata (CC0).",
+    "use": "built",
+    "sources": [
+      {
+        "id": "wikidata_indigenous_communities",
+        "name": "Wikidata: First Nations, Inuit communities and Alberta Métis Settlements with coordinates and English names, for map labels",
+        "licence": "Creative Commons CC0 1.0 (public domain dedication)",
+        "licenceUrl": "https://creativecommons.org/publicdomain/zero/1.0/"
+      }
+    ]
+  },
+  {
+    "attribution": "© OpenStreetMap contributors © CARTO",
+    "use": "displayed",
+    "sources": [
+      {
+        "id": "CARTO Positron basemap",
+        "name": "CARTO Positron basemap",
+        "licence": "CARTO basemaps free tier (API key required; see decisions.md)",
+        "licenceUrl": null
+      }
+    ]
+  },
+  {
+    "attribution": "© OpenStreetMap contributors",
+    "use": "displayed",
+    "sources": [
+      {
+        "id": "OpenStreetMap standard tiles (fallback when no CARTO key at build time; not used on Pages)",
+        "name": "OpenStreetMap standard tiles (fallback when no CARTO key at build time; not used on Pages)",
+        "licence": "ODbL data; tiles under the OSMF Tile Usage Policy (light development use only)",
+        "licenceUrl": null
+      }
+    ]
+  },
+  {
+    "attribution": "Territorial Evolution of Canada, Natural Resources Canada. Contains\n  information licensed under the Open Government Licence – Canada.",
+    "use": "displayed",
+    "sources": [
+      {
+        "id": "nrcan_te_*",
+        "name": "NRCan's Territorial Evolution drawing, shown where the atlas departs from it",
+        "licence": "Open Government Licence – Canada",
+        "licenceUrl": "https://open.canada.ca/en/open-government-licence-canada"
+      }
+    ]
+  }
+]

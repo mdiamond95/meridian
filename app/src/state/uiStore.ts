@@ -14,6 +14,9 @@ interface UiState {
   /** Non-geographic overlays switched on, by id (src/overlays/overlays.ts). */
   overlays: Record<string, boolean>;
   toggleOverlay: (id: string) => void;
+  /** The Licences and sources dialog (plan Phase 7 §5). */
+  licencesOpen: boolean;
+  setLicencesOpen: (open: boolean) => void;
 }
 
 export const useUiStore = create<UiState>()((set) => ({
@@ -26,4 +29,6 @@ export const useUiStore = create<UiState>()((set) => ({
   openPanel: () => set({ panelOpen: true }),
   overlays: {},
   toggleOverlay: (id) => set((s) => ({ overlays: { ...s.overlays, [id]: !s.overlays[id] } })),
+  licencesOpen: false,
+  setLicencesOpen: (licencesOpen) => set({ licencesOpen }),
 }));

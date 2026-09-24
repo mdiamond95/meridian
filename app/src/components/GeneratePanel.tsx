@@ -44,6 +44,7 @@ const fmt = new Intl.NumberFormat('en-CA');
 export function GeneratePanel() {
   const dataStatus = useSplitStore((s) => s.dataStatus);
   const error = useSplitStore((s) => s.error);
+  const dataSource = useSplitStore((s) => s.dataSource);
 
   useEffect(() => {
     void ensureSplitterData();
@@ -53,7 +54,7 @@ export function GeneratePanel() {
     return <p className="placeholder">Loading the mesh…</p>;
   if (dataStatus === 'error') return <p className="error">The splitter could not load: {error}</p>;
   return (
-    <div className="generate" data-testid="generate">
+    <div className="generate" data-testid="generate" data-source={dataSource ?? undefined}>
       <Library />
       <SpecForm />
       <Constraints />

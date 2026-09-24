@@ -1,0 +1,70 @@
+# A counterfactual branch of the atlas (plan Phase 6; docs/decisions.md, 2026-09-24 — Phase 6).
+# Compiled by `npm run scenarios -w app` into app/src/scenario/scenarios.json; schema in
+# docs/schemas/scenario.schema.json. Events here are merged into the base event list, after the
+# base's own events on the same date; base events whose `requires` this breaks are skipped with a notice.
+format: meridian.scenario
+id: acadian-maritimes
+name: Maritime Union
+fork: 1867-07-01
+premise: >-
+  In March 1864 Nova Scotia's assembly, on Charles Tupper's motion, called for a conference on uniting
+  the three Maritime colonies, and delegates of Nova Scotia, New Brunswick and Prince Edward Island met
+  at Charlottetown from 1 to 9 September 1864. The delegates from the Province of Canada came to put a wider union, and Maritime
+  union was set aside for Confederation. This scenario lets the conference do what it was called for:
+  the three colonies unite, and enter Confederation as one Maritime Province on 1 July 1867. The atlas
+  dates the union to that day, when the British North America Act made the other provinces, rather
+  than invent a date for a separate act. Prince Edward Island is the largest assumption: it was the
+  least willing of the three, its delegates were almost all against a legislative union, and in the
+  record it stayed out of Confederation until 1873. Here it comes in with the others, so the record's
+  1873 event, which makes the Island a province, has nothing to act on and is skipped. The name
+  "Maritime Province" is the scenario's choice: the only use of "Acadia" for such a union found for
+  this scenario is a rhetorical question in the Island's assembly in April 1864, not a proposal. The
+  scenario names no capital either; the same question asked where it would be, and it was never
+  settled. The province is Nova Scotia, New Brunswick and the Island joined, so it draws
+  nothing the base atlas does not. An Acadian province carved out of New Brunswick cannot be drawn
+  here, because the atlas has no line for it.
+events:
+  - date: 1867-07-01
+    title: The Maritime Province
+    note: >-
+      Nova Scotia, New Brunswick and Prince Edward Island enter Confederation as one province, with
+      the colonies' boundaries as its own. Cape Breton is part of it through Nova Scotia.
+    sources:
+      - >-
+        The Charlottetown Conference, 1–9 September 1864, called to discuss the union of the three
+        Maritime colonies (Dictionary of Canadian Biography, "The Charlottetown and Quebec Conferences
+        (1864)"); Nova Scotia's resolution for a Maritime union conference, moved by Charles Tupper
+        and carried on 28 March 1864 (Phillip Buckner, "Tupper, Sir Charles", Dictionary of Canadian
+        Biography, vol. 14).
+      - >-
+        Francis W. P. Bolger, "The Charlottetown Conference and its Significance in Canadian History",
+        CCHA Report 27 (1960), 11–23: Prince Edward Island "the least enthusiastic of all the
+        Provinces", its delegates "almost without exception hostile to the original proposal of a
+        Legislative Union", and J. H. Gray's question in the Island's assembly in April 1864, "Is
+        Charlottetown or Summerside to be the capital of Cabotia or Acadia, or whatever the country may
+        be called?"
+      - >-
+        British North America Act, 1867, 30 & 31 Vict. c. 3, ss. 5 and 7 (the four provinces, and Nova
+        Scotia and New Brunswick within their existing limits) and s. 146 (the admission of Prince
+        Edward Island): here one province in place of three.
+    changes:
+      - dissolve: nova_scotia
+      - dissolve: new_brunswick
+      - dissolve: prince_edward_island
+      - create: maritime_province
+        name: Maritime Province
+        status: province
+        sovereign: Canada
+        capital: null
+        geometry:
+          union:
+            - {unit: nova_scotia, at: 1867-07-01}
+            - {unit: new_brunswick, at: 1867-07-01}
+            - {unit: prince_edward_island, at: 1867-07-01}
+        instrument: >-
+          The Maritime union the Charlottetown Conference was called to discuss (1864), entering
+          Confederation under the British North America Act, 1867, in place of Nova Scotia and New
+          Brunswick, and Prince Edward Island's admission of 1873.
+        note: >-
+          Counterfactual: the three Maritime colonies as one province, their boundaries unchanged. The
+          name is the scenario's choice.

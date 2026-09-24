@@ -60,8 +60,10 @@ export function ensureSplitterData(): Promise<void> {
   if (loading) return loading;
   store.set({ dataStatus: 'loading', error: null });
   loading = Promise.all([loadSplitterData(SPLITTER_URLS), loadCellTopology(CELLS_URL), loadLibrary(BASE)])
-    .then(([data, topology, library]) => {
-      useSplitStore.getState().set({ data, topology: cellTopology(topology), library, dataStatus: 'ready' });
+    .then(([{ data, source }, topology, library]) => {
+      useSplitStore
+        .getState()
+        .set({ data, dataSource: source, topology: cellTopology(topology), library, dataStatus: 'ready' });
     })
     .catch((err: unknown) => {
       console.error(err);

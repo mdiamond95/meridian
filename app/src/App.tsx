@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { ATLAS_TOPOLOGY_URL, ATLAS_URL } from './atlas/assets';
 import { loadAtlas } from './atlas/loadAtlas';
 import { LayersMenu } from './components/LayersMenu';
+import { LicencesDialog } from './components/LicencesDialog';
 import { MapView } from './components/MapView';
 import { PreContactBase } from './components/PreContactBase';
 import { ScenarioBadge } from './components/ScenarioBadge';
@@ -34,6 +35,10 @@ export function App() {
   // does not fire hashchange, so a finished run does not rerun itself.
   useEffect(() => {
     const follow = () => {
+      if (location.hash === '#licences') {
+        useUiStore.getState().setLicencesOpen(true);
+        return;
+      }
       const state = decodeHash(location.hash);
       if (state.kind === 'none') return;
       useUiStore.getState().setPanelTab('generate');
@@ -57,6 +62,7 @@ export function App() {
       <ScenarioBadge />
       <SidePanel />
       <Timeline />
+      <LicencesDialog />
     </div>
   );
 }

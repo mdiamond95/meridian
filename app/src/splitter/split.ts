@@ -1,5 +1,5 @@
 import type { LoadedAtlas } from '../atlas/loadAtlas';
-import { buildScopeGraph, scopeMask, type ScopeGraph } from '../engine/graph';
+import { buildScopeGraph, scopeMask, type MeshArrays, type ScopeGraph } from '../engine/graph';
 import {
   computeRegionStats,
   DEFAULT_WEIGHTS,
@@ -134,8 +134,8 @@ export function prepareSplit(spec: SplitSpec, data: SplitterData, context: Scope
       for (const c of inside) solveMask[c] = 0;
     }
   }
-  const solveGraph = buildScopeGraph(data.arrays, solveMask);
-  const scopeGraph = carved.length ? buildScopeGraph(data.arrays, scope) : solveGraph;
+  const solveGraph = cachedScopeGraph(data.arrays, solveMask);
+  const scopeGraph = carved.length ? cachedScopeGraph(data.arrays, scope) : solveGraph;
 
   // Pins: a keep-together group applies to cells still being split; a keep-apart group applies to
   // one anchor cell per CSD (a whole city cannot be apart from itself).
@@ -183,7 +183,7 @@ export function preparedFromAssignment(
   data: SplitterData,
 ): PreparedSplit {
   const mask = Uint8Array.from(assignment, (r) => (r >= 0 ? 1 : 0));
-  const graph = buildScopeGraph(data.arrays, mask);
+  const graph = cachedScopeGraph(data.arrays, mask);
   return {
     spec,
     scopeMask: mask,
@@ -307,4 +307,40 @@ export function runSplit(spec: SplitSpec, data: SplitterData, context: ScopeCont
     snapEdges: prepared.snap,
   });
   return { prepared, result, finished: finishSplit(prepared, result, data) };
+}
+
+/**
+ * Scope graphs of the last few masks, per mesh. Building one for all of Canada costs about 300 ms on
+ * the main thread (most of it finding the sea crossings), and a user re-running the same scope with
+ * another N or seed should not pay it again (docs/perf.md). Graphs are read-only once built.
+ */
+const graphCache = new WeakMap<MeshArrays, Map<string, ScopeGraph>>();
+const GRAPH_CACHE_SIZE = 4;
+
+function maskKey(mask: Uint8Array): string {
+  // FNV-1a over the bytes, plus the count of cells in scope: a collision would need both to agree.
+  let hash = 0x811c9dc5;
+  let count = 0;
+  for (let i = 0; i < mask.length; i++) {
+    hash = Math.imul(hash ^ mask[i], 0x01000193);
+    count += mask[i] ? 1 : 0;
+  }
+  return `${mask.length}:${count}:${(hash >>> 0).toString(16)}`;
+}
+
+export function cachedScopeGraph(arrays: MeshArrays, mask: Uint8Array): ScopeGraph {
+  let graphs = graphCache.get(arrays);
+  if (!graphs) graphCache.set(arrays, (graphs = new Map()));
+  const key = maskKey(mask);
+  const hit = graphs.get(key);
+  if (hit) {
+    // Most recently used last, so the oldest is the one dropped.
+    graphs.delete(key);
+    graphs.set(key, hit);
+    return hit;
+  }
+  const graph = buildScopeGraph(arrays, mask);
+  graphs.set(key, graph);
+  if (graphs.size > GRAPH_CACHE_SIZE) graphs.delete(graphs.keys().next().value as string);
+  return graph;
 }

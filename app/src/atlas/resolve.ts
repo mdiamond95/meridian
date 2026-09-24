@@ -43,6 +43,21 @@ export function resolvedAt(atlas: Pick<AtlasFile, 'events'>, date: string): stri
   return currentEvent(atlas, date)?.date ?? '';
 }
 
+/** The first event after `date`. */
+export function nextEvent(events: readonly AtlasEvent[], date: string): AtlasEvent | null {
+  return events.find((e) => e.date > date) ?? null;
+}
+
+/** The last event before `date`: the start of the current window when inside one. */
+export function previousEvent(events: readonly AtlasEvent[], date: string): AtlasEvent | null {
+  let found: AtlasEvent | null = null;
+  for (const e of events) {
+    if (e.date >= date) break;
+    found = e;
+  }
+  return found;
+}
+
 /** The slider works in years; a year shows the map as it stood at the end of that year. */
 export function yearToDate(year: number): string {
   return `${String(year).padStart(4, '0')}-12-31`;
