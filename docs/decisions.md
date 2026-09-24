@@ -654,3 +654,29 @@ Mark's decisions on PR #5, and what they changed.
 - A pack now carries every region's dossier and the set analysis, and the region's name comes from the
   dossier. `buildPresetPack` is the one path that builds a preset, used by `npm run presets` and by the
   test that regenerates them, so the script and the test cannot drift.
+
+## 2026-09-24 — Disk: `make verify` without the Canada1Water zips
+
+The Codespace disk was at 90% (3.0 GB free of 32 GB). The eight Canada1Water Strahler zips in
+`data/raw/nrcan_c1w_strahler_*` were 10.1 GB of it, and `make verify` needed all of them because the
+rivers layer (`polygons.py`) extracted every regional GeoPackage on every build. The atlas's three
+river regions already came from a cache in `data/raw/.cache`.
+
+- **Options.** (a) Keep the zips on disk permanently and find 10 GB elsewhere; (b) verify the rivers
+  from a committed hash of an intermediate reaches file, so the zips can be deleted between runs.
+- **Chosen: (b).** Nothing else on the disk is that size: the caches cleared held 0.5 GB, the
+  Playwright browsers (1.3 GB) are all used by the determinism gate, and `/tmp` (41 GB free) is the
+  Codespace's ephemeral disk, lost on a rebuild, so it cannot hold inputs "permanently".
+- **How.** `common.cached_intermediate(name, produce)` keeps an intermediate in `data/raw/.cache/` and
+  its SHA-256 in the committed `pipeline/intermediates.sha256`. A cached file must match its hash; with
+  no cached file, `produce()` reads raw and the result must match the hash too; a name with no hash yet
+  is recorded, to be committed with the build. The rivers layer now reads the Strahler ≥ 7 reaches of
+  all eight regions through it (`c1w-reaches-<key>.json.gz`, 58 MB, keyed by the eight zips' manifest
+  SHA-256 and the threshold), and the atlas's per-region river caches go through it as well.
+- **Proof.** Rebuilt from the zips through the new path, `layers/rivers.v1.topojson.gz` is byte-identical
+  to `SHA256SUMS` (`416017d9…`). The zips were then deleted and `make verify` run without them.
+- **What this gives up.** `make verify` now proves the rivers layer from the intermediate, not from the
+  zips. Re-proving the intermediate needs the zips again (`make download`, 10 GB): delete
+  `data/raw/.cache/c1w-reaches-*.json.gz` and rebuild, and the new file must hash to the committed
+  value. A new Canada1Water release changes the manifest SHA-256, so the key, so the file name: it can
+  never be satisfied by a stale cache.

@@ -14,6 +14,9 @@ and source, clipped to Canada, with the Wikidata community labels (indigenous.py
 
 from __future__ import annotations
 
+import gzip
+import hashlib
+import json
 import resource
 import shutil
 import subprocess
@@ -28,7 +31,18 @@ import pandas as pd
 import shapely
 
 from census import release_memory
-from common import BUILD, EQUAL_AREA_CRS, MESH_VERSION, WGS84, gzip_bytes, raw_file, write_bytes
+from common import (
+    BUILD,
+    EQUAL_AREA_CRS,
+    MESH_VERSION,
+    WGS84,
+    cached_intermediate,
+    dumps,
+    gzip_bytes,
+    load_manifest,
+    raw_file,
+    write_bytes,
+)
 from geo import read_vector, zip_dataset
 from mesh import PRUID_TO_CODE
 from splitter_inputs import layer_cells, layer_places, layer_snap
@@ -122,25 +136,51 @@ def csd_layers() -> dict[str, gpd.GeoDataFrame]:
     }
 
 
+def c1w_reaches() -> dict:
+    """Canada1Water reaches at or above the order threshold, every region in order, as
+    {"crs": EPSG code, "reaches": [[Strahler, name or null, WKB hex], ...]}. Read once from the 10 GB
+    of regional zips, then from data/raw/.cache, checked against its committed hash (common.py)."""
+    import zipfile
+
+    manifest = load_manifest()
+    inputs = [manifest[f"nrcan_c1w_strahler_{r}"]["sha256"] for r in RIVER_REGIONS]
+    key = hashlib.sha256(json.dumps([RIVER_MIN_STRAHLER, inputs]).encode()).hexdigest()[:16]
+
+    def read() -> bytes:
+        crs, rows = None, []
+        for region in RIVER_REGIONS:
+            # Reading a multi-GB GeoPackage through /vsizip/ takes ~20 min per region; extracting it
+            # to a scratch directory first takes about a minute.
+            with tempfile.TemporaryDirectory(prefix=f"meridian-c1w-{region}-") as scratch:
+                with zipfile.ZipFile(raw_file(f"nrcan_c1w_strahler_{region}")) as zf:
+                    member = next(m for m in zf.namelist() if m.endswith(".gpkg"))
+                    path = zf.extract(member, scratch)
+                reaches = read_vector(
+                    path, columns=["Strahler", "NAME_1"], where=f"Strahler >= {RIVER_MIN_STRAHLER}"
+                )
+            log(f"  {region}: {len(reaches):,} reaches")
+            epsg = reaches.crs.to_epsg()
+            if epsg is None or crs not in (None, epsg):
+                raise ValueError(f"Canada1Water {region} CRS {reaches.crs} differs from EPSG:{crs}")
+            crs = epsg
+            wkb = shapely.to_wkb(reaches.geometry.to_numpy(), hex=True)
+            names = [None if pd.isna(n) else n for n in reaches["NAME_1"]]
+            rows += [[int(o), n, w] for o, n, w in zip(reaches["Strahler"], names, wkb, strict=True)]
+        return gzip_bytes(dumps({"crs": crs, "reaches": rows}))
+
+    return json.loads(gzip.decompress(cached_intermediate(f"c1w-reaches-{key}.json.gz", read)))
+
+
 def river_network(canada) -> gpd.GeoDataFrame:
     """Canada1Water reaches at or above the order threshold, clipped to Canada and merged into
     one line per (order, name) so the layer is a few thousand features, not a million reaches."""
-    import zipfile
-
-    frames = []
-    for region in RIVER_REGIONS:
-        # Reading a multi-GB GeoPackage through /vsizip/ takes ~20 min per region; extracting it to
-        # a scratch directory first takes about a minute.
-        with tempfile.TemporaryDirectory(prefix=f"meridian-c1w-{region}-") as scratch:
-            with zipfile.ZipFile(raw_file(f"nrcan_c1w_strahler_{region}")) as zf:
-                member = next(m for m in zf.namelist() if m.endswith(".gpkg"))
-                path = zf.extract(member, scratch)
-            reaches = read_vector(
-                path, columns=["Strahler", "NAME_1"], where=f"Strahler >= {RIVER_MIN_STRAHLER}"
-            )
-        log(f"  {region}: {len(reaches):,} reaches")
-        frames.append(reaches.to_crs(EQUAL_AREA_CRS))
-    rivers = gpd.GeoDataFrame(pd.concat(frames, ignore_index=True), crs=EQUAL_AREA_CRS)
+    doc = c1w_reaches()
+    orders, names, wkb = zip(*doc["reaches"], strict=True)
+    rivers = gpd.GeoDataFrame(
+        {"Strahler": orders, "NAME_1": names},
+        geometry=shapely.from_wkb(list(wkb)),
+        crs=f"EPSG:{doc['crs']}",
+    ).to_crs(EQUAL_AREA_CRS)
     rivers["geometry"] = shapely.force_2d(rivers.geometry.to_numpy())
     rivers["order"] = rivers["Strahler"].astype(int)
     rivers["name"] = rivers["NAME_1"].fillna("")
