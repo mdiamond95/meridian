@@ -1,32 +1,83 @@
 # Meridian
 
-A boundary generator for Canada. It treats every way of carving up the country as one
-operation: assign mesh cells to regions under rules, then describe what you made. See
-[docs/vision.md](docs/vision.md) and [docs/plan.md](docs/plan.md).
+**A map of Canada you can redraw.** Meridian shows how the country's borders changed from the Hudson's
+Bay Company charter of 1670 to today. It lets you split Canada, or any province, or Canada as it stood
+in any year, into new regions by population, economy, language, geography or chance. Then it describes
+each region it made.
 
-**Live:** https://mdiamond95.github.io/meridian/
+**Live:** https://mdiamond95.github.io/meridian/ — built for an iPad, and works offline after the first
+visit.
 
-Status: Phase 0, the scaffold. The map shell deploys; there is no data yet.
+## What it can do
 
-## Commands
+- **Historical atlas.** Drag the timeline, or use the arrow keys, to see the country's first-order
+  borders on any date since 1670.
+  - Every change is cited to the statute or order that made it.
+  - Three truth layers: what the law said, what was actually controlled, and what was claimed or
+    disputed (hatched).
+  - Before the atlas begins: Indigenous language families, and a contact frontier showing when
+    Europeans first reached each area.
+- **The splitter.** Choose an area and a number of regions, and the engine assigns 38,432 small
+  hexagons of land to regions under your rules.
+  - The area can be Canada, a province, a historical unit, a region you already made, or a shape you
+    draw.
+  - The rules: balance by population, cut along the sharpest differences in a chosen "lens", grow
+    from capitals, or chance.
+  - Pin cities together or apart, and snap borders to rivers, watersheds, treaties or ridings.
+  - Paint cells by hand afterwards: the judgement is yours.
+- **Dossiers.** Every region gets:
+  - a name, a capital, its population and area, and an estimated GDP;
+  - its industries, and its borders described in words;
+  - its language and treaty profile.
+
+  The whole set gets a power ranking and a federalism panel: what it would break in the Senate, the
+  amending formula, equalization, Quebec's asymmetry and territorial status. Compare any two splits,
+  or a split against actual Canada.
+- **Scenarios.** Change a year and carry the change forward:
+  - Newfoundland stays out in 1949;
+  - Alberta and Saskatchewan are one province called Buffalo;
+  - the 1912 extensions never happen;
+  - the Maritimes unite.
+
+  Split any region again, as deep as you like.
+- **Take it with you.** Export a split as a region pack (JSON), GeoJSON, TopoJSON, KML for Google My
+  Maps, SVG, PNG, or Markdown dossiers. Import GeoJSON and KML.
+  - Share links reproduce a split exactly.
+  - Other projects read the packs through a documented contract ([docs/interop.md](docs/interop.md)).
+
+Every source and licence is listed in the app (Layers → Licences and sources) and in
+[docs/data-sources.md](docs/data-sources.md).
+
+## Three commands
 
 From the repo root (in a Codespace everything is already installed):
 
 ```sh
 npm test          # unit tests (Vitest)
 npm run build     # typecheck and build the app to app/dist
-npm run smoke     # Playwright loads the built site and checks the map renders (build first)
+npm run smoke     # Playwright loads the built site and checks it works (build first)
 ```
 
-The pipeline has one command so far:
+`npm run dev` runs the app locally. The data pipeline rebuilds every map artefact from public sources
+byte for byte (`make download`, `make build`, `make verify`; see
+[pipeline/README.md](pipeline/README.md)). Also available: `npm run lint`,
+`npm run frame-time -w app` (performance, [docs/perf.md](docs/perf.md)),
+`npm run determinism -w app` (the same split in three browsers), and `make test`.
 
-```sh
-make dry-run      # validate pipeline/artefacts.yaml and print the artefact plan; downloads nothing
-```
+## Honest limits
 
-Also available: `npm run dev`, `npm run lint`, `npm run schemas` (re-export
-`docs/schemas/*.json` after changing `app/src/schema`), `make validate` (check every file in
-`data/build/` against its JSON Schema), `make examples`, and `make lint` / `make test`.
+- Sub-provincial GDP is an allocation, never a measurement; the tool labels it so everywhere.
+- Pre-1871 population is estimate and interpolation; pre-1600 is Indigenous population estimates with wide bands.
+- Indigenous territory polygons are approximations of relationships that were not polygonal; the atlas says so on the layer itself.
+- "Accurate borders for every year" is achievable for first-order units; it is not achievable for sub-provincial districts before roughly 1880 without a research project of its own. Scope districts to the events we can source.
+- The engine will produce ugly regions where the data is thin (the North). The lens method's judgement — what a region would call itself — is not automatable; the manual override exists because of that.
+
+## More
+
+- [CHANGELOG.md](CHANGELOG.md): what each release added.
+- [docs/vision.md](docs/vision.md): the full design.
+- [docs/plan.md](docs/plan.md): the phases.
+- [docs/decisions.md](docs/decisions.md): why things are the way they are.
 
 ## Layout
 

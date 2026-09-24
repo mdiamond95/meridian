@@ -199,6 +199,10 @@ How it was measured:
 - 24 one-year steps, one per frame (60 years a second), starting from a settled lookahead.
 - The test now asserts the **maximum** step under 16 ms, where before it asserted the median.
 
+A second full run before the PR gave step maxima of 8.4 / 1.0 ms (desktop 1867 / 1999) and
+4.1 / 1.9 ms (iPad), with a longest frame of 74 ms once on desktop: the step stays under the frame,
+the frame gaps vary run to run.
+
 **What is still over a frame is not the step.** A Chromium trace of the 1867 run shows the long
 frames are young-generation GC (a 35 ms scavenge). It collects the projected points that the refill
 allocated, while the slider is being dragged at 60 years a second. At a keyboard's repeat rate the

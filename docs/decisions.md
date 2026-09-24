@@ -839,3 +839,155 @@ defined in `docs/interop.md`, with a House of Cards worked example.
   the recipe in `docs/interop.md`; a Vitest runs the page's `getScores` helper as written on it and checks
   the printed table. The four presets are regenerated for `meta.id` and `stats.score`; assignments are
   unchanged.
+
+## 2026-09-24 — Phase 7: hardening and 1.0
+
+The brief (Mark) takes Phase 7 as the plan writes it, with six additions:
+1. Cross an event in under 16 ms at every step, by pre-decoding the adjacent event's geometry.
+2. Offline after the first visit, with a Playwright test.
+3. Keyboard-driven timeline and Generate panel, a deuteranopia-safe region palette checked pairwise,
+   and focus order.
+4. The two remaining scenario presets, and a line for dominion-1867-5 on Labrador.
+5. The playbook, the CHANGELOG, a licences page, and a README front page drafted from the vision.
+6. Release as v1.0.0.
+
+### Performance
+- **The "backlog item on event-crossing frame time" was not in `docs/backlog.md`.** Its substance is
+  the Phase 2 note in `docs/perf.md`: crossings cost 13–21 ms at p95, guarded at 25 ms. That is
+  what was cleared.
+- **A crossing is a visibility swap** (`AtlasLayer`).
+  - The rows of the three event windows either side of the current one (`LOOKAHEAD`) stay attached,
+    with `display: none` on their paths. A crossing flips `display`.
+  - Rows further away are detached, because hidden paths are still re-projected on every zoom.
+  - What the brief calls "pre-decoding" has to include Leaflet's projection and the SVG path, not
+    just the GeoJSON. Parsing was already done by the idle warm-up; attaching was the cost.
+- **Refill in idle slices, budgeted by vertices** (about 2,000 per millisecond, measured 2,750).
+  - While the slider moves, a row that does not fit the idle time left waits, until the slider has
+    been still for 150 ms.
+  - The idle request has a 250 ms timeout. Chromium was seen to declare no idle period for over
+    60 s after a pan with a split on the map.
+- **One path per row.** Splitting a multipolygon into one path per part, to spread its projection
+  over slices, made crossings slower (the NWT of 1880 is 880 parts) and was reverted.
+- **The gate is the step's work, and every step.** The frame-time test asserts the maximum, not the
+  median, under 16 ms. The longest frames that remain (22–41 ms) are young-generation GC of the
+  projected points while dragging at 60 years a second. `docs/perf.md` says so rather than hiding
+  it.
+- **The splitter's decoded data is cached in IndexedDB.**
+  - It uses its own database (`meridian-decoded`), so the pack library's schema version does not
+    move.
+  - The key is the four fingerprinted artefact URLs, so a new build or mesh version is a new key.
+    Writing one drops the others.
+  - The whole `SplitterData` is stored by structured clone: typed arrays and Maps survive.
+  - Every call is wrapped. Reading `indexedDB` itself throws where site data is blocked; the smoke
+    test for that case caught it.
+  - The cell topology is not cached. It is a validated TopoJSON, and it is the remaining cost of an
+    open.
+- **The worker gets the mesh once,** and each column the first time a run needs it. A template
+  assignment is transferred; the result's assignment already was. The mask and snap edges are
+  cloned, because the prepared split keeps using them on the main thread: transferring would detach
+  them.
+- **Scope graphs are cached by mask** (FNV-1a and the in-scope count, per mesh, the last four). All
+  of Canada costs 300 ms on the main thread to build.
+- **"Lazy-load layer TopoJSON" was already true.** The first view fetches only the atlas, and
+  `data/build/layers/` never ships. A smoke test now holds both.
+- **"Canvas renderer for hexes" was already true in effect.** The splitter never draws hexes one by
+  one: regions are dissolved from the cell topology and drawn on a canvas renderer (Phase 3). The
+  atlas stays on SVG because the claim hatches are SVG patterns.
+- **Memory is measured with Playwright's iPad Pro 11 descriptor in Chromium** (JS heap after a
+  forced GC, and renderer RSS), because Safari's cannot be read from Playwright. The heap is flat
+  across runs, and the renderer levels off at about 690 MB. The Safari check is the manual iPad pass
+  in the plan, which is Mark's.
+- **Not done:** the main thread still runs about 800 ms of work when a 30-region split of Canada
+  lands, mostly the dossiers. They supply the region names on the map, so deferring them would
+  rename regions after the first paint. Moved to `docs/backlog.md`.
+
+### Offline
+- **A service worker written by the build** (`src/offline/sw.js` plus a Vite plugin).
+  - It precaches every file in `dist`, versioned by a hash of their bytes.
+  - Pages are network-first, falling back to the cached page. Build files are cache-first.
+  - Cache lookups ignore `Vary` and the query string: a module script's request missed the copy
+    that the install step fetched with other headers.
+- **Tiles:**
+  - They are requested with CORS, so the cache holds ordinary responses, not opaque ones that
+    Chrome pads to about 7 MB each against quota. CARTO and OSM both send
+    `Access-Control-Allow-Origin: *`.
+  - The worker keeps a tile as it loads. When a view's tiles have all loaded, the map sends it the
+    list for the current zoom level, and it drops the rest.
+  - Only tiles someone actually viewed are kept, and none are prefetched, which stays within OSM's
+    tile policy.
+  - Tiles loaded before the worker first takes control are not kept. That is the first view of the
+    first visit.
+- **The worker registers in production builds only.** Smoke blocks service workers, except in the
+  offline spec: requests a worker answers never reach `page.route`, which other specs rely on.
+
+### Accessibility
+- **Timeline:**
+  - Page Up and Page Down jump to the next and previous event. A range input's own Page keys move a
+    tenth of a thousand years.
+  - The event ticks are one tab stop, with a roving tabindex. The arrow keys, Home and End move
+    between events.
+  - A visually hidden hint tells a screen reader user the keys.
+- **Panel tabs follow the WAI-ARIA tabs pattern:** one tab stop, arrows, Home and End, and a
+  `tabpanel` labelled by its tab. Tab moves from the row into the panel.
+- **Focus:**
+  - Every focusable element gets a `:focus-visible` ring.
+  - A smoke test tabs through the Generate panel. It asserts that every stop is inside the panel
+    until Run, and that scope, method, N, seed and Run come in layout order.
+  - axe finds no WCAG 2.1 A or AA violations in any tab. It found one, the import file input with no
+    label, which is fixed.
+- **Painting cells stays pointer-only.** Pins have a keyboard route (the gazetteer search); painting
+  a cell needs a point on the map.
+- **The region palette is chosen for deuteranopia.**
+  - Method: Machado, Oliveira and Fernandes (2009) at severity 1.0, applied in linear sRGB, and
+    CIEDE2000 between every pair of the eight hues.
+  - Four conditions: normal vision and deuteranopia, each at full strength (exports) and as drawn
+    (fill opacity over the light basemap).
+  - The old palette's worst pair was 3.8 (deuteranopia, as drawn), with a green and a pink that
+    collapse. The best-known safe palettes (Okabe–Ito, Tol) reach only 5.5, because 0.42 opacity
+    compresses everything.
+  - The new palette came from a constrained search, with lightness 35–80 and chroma ≤ 65 so the
+    fills stay map-like: `#004eb7 #ef8c8c #9e4d00 #f2be47 #2dbaff #80447b #7fd3d2 #006334`.
+  - Fill opacity is now 0.5. Worst pairs: 20.6 normal and 13.5 deuteranopia at full strength; 12.7
+    normal and 12.8 deuteranopia as drawn.
+  - `palette.test.ts` asserts at least 12 in all four conditions. It first checks the CIEDE2000 code
+    against Sharma, Wu and Dalal's published test pairs.
+- **The language-family palette is unchanged.** It is a separate scheme: eight hues for eight
+  families, a neutral for three small ones, and every area labelled, outside the brief's "region
+  palette". It uses the old region hues, so it has the old pairs' weakness under deuteranopia; that
+  is in `docs/backlog.md`.
+
+### Content
+- **The two presets were written by a subagent and reviewed here.**
+  - **No 1912 extensions** (fork 15 May 1912). It holds for Quebec until the 1927 Labrador award and
+    for Manitoba and Ontario until 1999; after that the map matches the record, and the premise
+    says why. A scenario can only use base drawings. No base drawing is the 1927 Quebec less
+    Labrador, or the southern part of Keewatin alone, so those cannot be drawn.
+  - **Maritime Union** (id `acadian-maritimes`, fork 1 July 1867). "Acadian Maritimes" is read as
+    Maritime Union, the proposal the Charlottetown Conference was called for, because a francophone
+    Acadian province cut out of New Brunswick has no base drawing. PEI comes in with the others; the
+    premise calls that the scenario's largest assumption. The name "Acadia" is not used: the only
+    1864 use found was rhetorical, so "Maritime Province" is the scenario's own choice.
+- **Decision for Mark:** holding No 1912 to today needs a scenario geometry operation `minus`, one
+  base drawing less another, which still draws no line of its own. It changes the Phase 6 rule and
+  `apply.ts`, so it was not done. It is in the backlog.
+- **dominion-1867-5's premise:**
+  - It gains one sentence: its 105 cells in today's Labrador, between 52° and 53°N, follow the
+    atlas's 1867 reading of Quebec. That reading is the St. Lawrence side of the height of land, with
+    only the Atlantic slope and Newfoundland's coast strip outside it, until 1927.
+  - Checked against the pack and `events.yaml`.
+  - Only `packs/index.json` changes; the packs are byte-identical.
+
+### Docs and release
+- **The licences page is generated from `docs/data-sources.md`** (`npm run licences`, checked in CI),
+  so the doc stays the one source.
+  - It covers the two tables plus the NRCan drawing's credit, which is in the notes.
+  - It groups by attribution string and lists the sources each one covers: 10 strings, 53 sources.
+  - It opens from the layers menu, a "Licences" link on the map's attribution line, or `#licences`.
+- **The attribution line moves to the top right on narrow screens.** The iPad sheet covered it,
+  OSM and CARTO credits included, which the licences test found.
+- **The README front page is a draft.** The plan has Mark write it ("it is your project's voice");
+  the brief asked for a draft from `docs/vision.md` that Mark may edit.
+  - The honest-limits section is copied verbatim.
+  - It says "built for an iPad", not "works on an iPad", until the manual pass is done.
+- **The CHANGELOG has one entry per release tag.** There is no v0.1: v0.2-atlas is the first tag,
+  and covers Phases 0–2.
