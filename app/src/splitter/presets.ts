@@ -75,7 +75,7 @@ export const PRESETS: Preset[] = [
     id: 'dominion-1867-5',
     name: 'The Dominion of 1867 in 5',
     description:
-      "Canada as it stood on 1 July 1867 — Ontario, Quebec, Nova Scotia and New Brunswick — taken from the atlas as one scope and balanced by population into five regions. The House of Cards entry point in docs/interop.md: it is the pack meridian.getScores reads there. Numbers are today's (2021 census) over 1867's land.",
+      "Canada as it stood on 1 July 1867 — Ontario, Quebec, Nova Scotia and New Brunswick — taken from the atlas as one scope and balanced by population into five regions. The House of Cards entry point in docs/interop.md: it is the pack meridian.getScores reads there. Numbers are today's (2021 census) over 1867's land. Its 105 cells in today's Labrador, between 52° and 53°N, follow the atlas's 1867 reading of interior Labrador: Quebec ran to the St. Lawrence side of the height of land, and only the Atlantic slope and Newfoundland's coast strip were outside it, until the 1927 award.",
     spec: {
       ...base,
       scope: { kind: 'atlasSovereign', sovereign: 'Canada' },
