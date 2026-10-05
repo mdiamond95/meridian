@@ -16,7 +16,7 @@ from pathlib import Path
 from common import BUILD, ROOT, sha256_file
 
 SUMS = "SHA256SUMS"
-STEPS = [["mesh.py"], ["attributes.py"], ["polygons.py"], ["-m", "atlas.build"]]
+STEPS = [["mesh.py"], ["attributes.py"], ["polygons.py"], ["-m", "atlas.build"], ["ridings.py"]]
 SKIP = {SUMS, ".gitkeep"}
 
 

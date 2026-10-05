@@ -75,3 +75,16 @@ export function immutabilityViolations(
   }
   return violations.sort((a, b) => a.file.localeCompare(b.file));
 }
+
+/**
+ * Unit tables (docs/interop.md, "Unit tables"; 1.0.3) are published under data/build/ as gzipped JSON
+ * and are immutable like packs: one released keeps its content in every later release. This says
+ * whether a file's JSON text is one.
+ */
+export function isUnitTable(text: string): boolean {
+  try {
+    return (JSON.parse(text) as { format?: unknown }).format === 'meridian.unitTable';
+  } catch {
+    return false;
+  }
+}

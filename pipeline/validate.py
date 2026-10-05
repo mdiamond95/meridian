@@ -86,6 +86,8 @@ def semantic_errors(doc: Any) -> list[str]:
         ids = [r["id"] for r in doc["regions"]]
         if len(ids) != len(set(ids)):
             errors.append("regions: duplicate region id")
+    elif fmt == "meridian.unitTable":
+        errors += unit_table_errors(doc)
     elif fmt == "meridian.atlas":
         dates = [e["date"] for e in doc["events"]]
         if dates != sorted(dates):
@@ -96,6 +98,44 @@ def semantic_errors(doc: Any) -> list[str]:
         for i, ref in enumerate(doc.get("references", [])):
             if ref["validTo"] is not None and ref["validTo"] <= ref["validFrom"]:
                 errors.append(f"references[{i}].validTo: must follow validFrom")
+    return errors
+
+
+def unit_table_errors(doc: dict) -> list[str]:
+    """app/src/schema/unitTable.ts's superRefine: sorted ids, symmetric ascending neighbours, places by
+    population descending, contiguous jurisdiction spans from meta.jurisdictionsFrom to today."""
+    errors: list[str] = []
+    rows = doc["rows"]
+    ids = {r["id"] for r in rows}
+    neighbours = {r["id"]: set(r["neighbours"]) for r in rows}
+    for i, row in enumerate(rows):
+        at = f"rows[{i}]"
+        if i and rows[i - 1]["id"] >= row["id"]:
+            errors.append(f"{at}.id: rows not strictly sorted by id")
+        for name in ("urbanClass", "industryDominant"):
+            if str(row[name]) not in doc["lookups"][name]:
+                errors.append(f"{at}.{name}: not in lookups")
+        ns = row["neighbours"]
+        if any(b <= a for a, b in zip(ns, ns[1:], strict=False)):
+            errors.append(f"{at}.neighbours: not strictly ascending")
+        for n in ns:
+            if n == row["id"] or n not in ids:
+                errors.append(f"{at}.neighbours: {n} is itself or not a row")
+            elif row["id"] not in neighbours[n]:
+                errors.append(f"{at}.neighbours: {n} does not list {row['id']}")
+        order = [(-p["population"], p["csd"]) for p in row["places"]]
+        if any(b <= a for a, b in zip(order, order[1:], strict=False)):
+            errors.append(f"{at}.places: not sorted by population descending, then csd")
+        spans = row["jurisdictions"]
+        if spans[0]["from"] != doc["meta"]["jurisdictionsFrom"]:
+            errors.append(f"{at}.jurisdictions[0]: must start at meta.jurisdictionsFrom")
+        if spans[-1]["to"] is not None:
+            errors.append(f"{at}.jurisdictions: the last span must run on (to: null)")
+        for j, span in enumerate(spans):
+            if span["to"] is not None and span["to"] <= span["from"]:
+                errors.append(f"{at}.jurisdictions[{j}].to: must follow from")
+            if j and spans[j - 1]["to"] != span["from"]:
+                errors.append(f"{at}.jurisdictions[{j}].from: spans not contiguous")
     return errors
 
 

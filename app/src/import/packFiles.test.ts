@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { choosePackFile, immutabilityViolations, packFileName, parsePackFile } from './packFiles';
+import {
+  choosePackFile,
+  immutabilityViolations,
+  isUnitTable,
+  packFileName,
+  parsePackFile,
+} from './packFiles';
 
 /** Published packs are immutable: changes go to a new numbered file, and CI refuses edits in place. */
 
@@ -75,6 +81,27 @@ describe('immutabilityViolations', () => {
     expect(immutabilityViolations(released, now)).toEqual([
       { file: 'acadie-2.v1.json', problem: 'deleted' },
       { file: 'alberta-15.v1.json', problem: 'changed' },
+    ]);
+  });
+});
+
+describe('unit tables', () => {
+  it('are recognised by their format, so data/build/ files that are not tables are left alone', () => {
+    expect(isUnitTable('{"format":"meridian.unitTable","version":1}')).toBe(true);
+    expect(isUnitTable('{"format":"meridian.attrs"}')).toBe(false);
+    expect(isUnitTable('not json')).toBe(false);
+  });
+
+  it('are held to the same rule as packs: a released table edited or deleted fails', () => {
+    const table = (pop: number) =>
+      JSON.stringify({ format: 'meridian.unitTable', rows: [{ id: 1, population: pop }] });
+    const released = new Map([['ridings.v1.json.gz', table(5)]]);
+    expect(immutabilityViolations(released, new Map([['ridings.v1.json.gz', table(5)]]))).toEqual([]);
+    expect(immutabilityViolations(released, new Map([['ridings.v1.json.gz', table(6)]]))).toEqual([
+      { file: 'ridings.v1.json.gz', problem: 'changed' },
+    ]);
+    expect(immutabilityViolations(released, new Map())).toEqual([
+      { file: 'ridings.v1.json.gz', problem: 'deleted' },
     ]);
   });
 });

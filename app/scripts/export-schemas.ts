@@ -17,6 +17,7 @@ import { PlacesFileSchema, SnapFileSchema } from '../src/schema/places';
 import { RegionPackSchema } from '../src/schema/regionPack';
 import { ScenarioSchema } from '../src/schema/scenario';
 import { TopologySchema } from '../src/schema/topojson';
+import { UnitTableSchema } from '../src/schema/unitTable';
 
 const outDir = resolve(dirname(fileURLToPath(import.meta.url)), '../../docs/schemas');
 const check = process.argv.includes('--check');
@@ -32,6 +33,7 @@ const contracts = {
   'regionPack.schema.json': RegionPackSchema,
   'scenario.schema.json': ScenarioSchema,
   'topojson.schema.json': TopologySchema,
+  'unitTable.schema.json': UnitTableSchema,
 };
 
 let stale = 0;

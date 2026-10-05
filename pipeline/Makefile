@@ -1,5 +1,5 @@
 # Meridian pipeline. Run from pipeline/ or via the root Makefile.
-.PHONY: install dry-run lint test validate examples download mesh attrs layers atlas build verify fixture spot-check
+.PHONY: install dry-run lint test validate examples download mesh attrs layers atlas ridings build verify fixture spot-check
 
 install:
 	uv sync --frozen
@@ -35,8 +35,11 @@ layers:
 atlas:
 	uv run --frozen python -m atlas.build
 
+ridings:
+	uv run --frozen python ridings.py
+
 # One command from raw inputs to validated, hashed artefacts.
-build: mesh attrs layers atlas
+build: mesh attrs layers atlas ridings
 	uv run --frozen python checksums.py write
 	uv run --frozen python validate.py
 
