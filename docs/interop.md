@@ -1,25 +1,46 @@
 # Interop: sharing a split with other projects
 
-How a Meridian split leaves this repo and comes back: the shared pack folder, the RegionPack v1
-contract, the rules for changing it, and a vanilla Leaflet page that draws a pack in twenty lines (for
-the cities atlas and Birdseye).
+How a Meridian split leaves this repo and comes back: the shared pack folder, the rules a consumer
+follows, the RegionPack v1 contract, the rules for changing it, and a vanilla Leaflet page that draws
+a pack in twenty lines (for the cities atlas and Birdseye).
 
 ## Where packs live
 
 Shared packs are in the top-level **`packs/`** folder of this repo, one file per pack, named
-**`<slug>.<meshVersion>.json`** (`alberta-15.v1.json`). `packs/index.json` lists them
-(`format: "meridian.packLibrary"`, each entry's `id`, `name`, `description` and `file`).
+**`<slug>.<meshVersion>.json`** (`alberta-15.v1.json`), or **`<slug>.<meshVersion>.<n>.json`**
+(`alberta-15.v1.2.json`) for a regeneration on the same mesh. `packs/index.json` lists the current file
+of each pack (`format: "meridian.packLibrary"`, each entry's `id`, `name`, `description` and `file`).
 
 | Who | Fetches |
 |---|---|
 | The Meridian app | `packs/<file>` by relative URL (served from `packs/` in dev, copied into the build) |
-| Other projects, following changes | `https://raw.githubusercontent.com/mdiamond95/meridian/main/packs/<file>` |
-| Other projects, pinned | `https://raw.githubusercontent.com/mdiamond95/meridian/<tag>/packs/<file>`, e.g. tag `v0.5-interop` |
+| Other projects | `https://raw.githubusercontent.com/mdiamond95/meridian/<tag>/packs/<file>`, at a release tag such as `v1.0.1` |
+
+`main` is the working copy and moves without notice; fetch from a release tag
+([the releases](https://github.com/mdiamond95/meridian/tags), `v1.0.0` and later).
 
 To draw a pack you also need the mesh it was made on. The cell polygons are
 `data/build/cells.<meshVersion>.topojson.gz` (gzipped TopoJSON, object `cells`, one Polygon per mesh
 cell in cell-index order), and the cells themselves (H3 ids, centroids, provinces) are
 `data/build/mesh.<meshVersion>.json.gz`. Both are fetched from the same raw URLs.
+
+## Consumer rules
+
+What a project reading Meridian packs does. The snippets on this page follow them.
+
+1. **Pin a release tag.** Fetch from `https://raw.githubusercontent.com/mdiamond95/meridian/<tag>/`,
+   never `main`. A published pack never changes (versioning rule 7): a file you read at one tag is the
+   same at every later tag, so moving the pin to a newer release cannot change a pack you already
+   use. A regenerated pack arrives under a new name, which the newer `packs/index.json` lists.
+2. **Read regions, not cells.** Use each region's polygon (dissolved from the mesh's cells, as the
+   Leaflet page does), its `stats` and its `stats.score`. Do not store cell indexes or H3 ids, or key
+   anything on them: they belong to one `meshVersion` and mean nothing on another. Key on the pack's
+   file name and the region's `id`.
+3. **Ignore fields you do not know.** New optional fields are added without a version bump
+   (versioning rule 1).
+4. **Check the format and version, and refuse otherwise.** `format` must be `"meridian.regionPack"`
+   and `version` must be `1`. Anything else is not a pack this page describes: stop with an error
+   rather than guess.
 
 ## The RegionPack v1 contract
 
@@ -110,12 +131,15 @@ current date" → Canada, the balanced method, 5 regions and seed 1867, and run;
 `packs/dominion-1867-5.v1.json` (the committed copy). Populations are today's over 1867's land: the mesh
 carries the 2021 census, not the 1871 one.
 
-**2. The scores.**
+**2. The scores.** Pinned to a release tag (consumer rule 1); `getScores` above checks the format and
+version (rule 4) and reads only the regions' scores (rules 2 and 3).
 
+<!-- hoc-fetch:start -->
 ```js
-const BASE = 'https://raw.githubusercontent.com/mdiamond95/meridian/v0.6-scenarios/';
+const BASE = 'https://raw.githubusercontent.com/mdiamond95/meridian/v1.0.1/';
 const scores = await meridian.getScores(BASE + 'packs/dominion-1867-5.v1.json');
 ```
+<!-- hoc-fetch:end -->
 
 <!-- hoc-scores:start -->
 | id | name | population | gdp | resource_index | cohesion | exposure |
@@ -127,8 +151,9 @@ const scores = await meridian.getScores(BASE + 'packs/dominion-1867-5.v1.json');
 | 4 | Rivière Péribonka | 4688581 | 255000 | 0.040 | 0.969 | 0.153 |
 <!-- hoc-scores:end -->
 
-`app/src/interop.test.ts` runs the helper above as written on the committed pack and checks it
-returns this table, and that the recipe above is the preset's.
+`app/src/interop.test.ts` runs the two snippets above as written on the committed pack and checks they
+return this table, that the recipe above is the preset's, and that every URL on this page is pinned
+to a release tag that has the file.
 
 ### Versioning rules
 
@@ -146,6 +171,13 @@ returns this table, and that the recipe above is the preset's.
 6. **Moving a pack to another mesh:** an unedited pack is regenerated from its recipe; any pack can be
    re-fitted by giving each new cell the region of the old mesh's nearest cell centre (the app offers
    both when it imports a pack from another mesh; `app/src/import/pack.ts`).
+7. **Published packs are immutable** (1.0.2). A file under `packs/` that was in a release keeps its
+   content in every later release: it is never edited in place or deleted. A regeneration that comes
+   out different on the same mesh is written beside it as `<slug>.<meshVersion>.<n>.json` (n = 2, 3, …)
+   and `index.json` moves to it; `npm run presets -w app` does this
+   (`app/src/import/packFiles.ts`). CI (`npm run packs:check -w app`) compares every file under
+   `packs/` with the previous release tag, as canonical JSON so that reformatting is not a change, and
+   fails on any pack changed or removed. `packs/index.json` is the listing, not a pack, and is exempt.
 
 ### Migrations
 
@@ -164,7 +196,9 @@ the Maritimes). A new scope kind widens a union rather than adding a field: a re
 
 Twenty lines, no build step. It fetches a pack and the cells of the mesh it names, decodes the
 assignment, and dissolves each region's cells with `topojson.merge` (TopoJSON arcs are shared, so the
-merge is exact). The Playwright test `app/tests/smoke/interop.spec.ts` runs this snippet as written.
+merge is exact). It follows the consumer rules: a pinned tag, a format and version check, and only
+regions' polygons and names kept. The Playwright test `app/tests/smoke/interop.spec.ts` runs this
+snippet as written.
 
 <!-- leaflet-snippet:start -->
 ```html
@@ -174,17 +208,17 @@ merge is exact). The Playwright test `app/tests/smoke/interop.spec.ts` runs this
 <script src="https://unpkg.com/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
 <div id="map" style="position:absolute;inset:0"></div>
 <script type="module">
-const BASE = 'https://raw.githubusercontent.com/mdiamond95/meridian/main/';
+const BASE = 'https://raw.githubusercontent.com/mdiamond95/meridian/v1.0.1/';
 const pack = await (await fetch(BASE + 'packs/alberta-15.v1.json')).json();
+if (pack.format !== 'meridian.regionPack' || pack.version !== 1) throw new Error('not a RegionPack v1');
 const gz = await fetch(BASE + `data/build/cells.${pack.meta.meshVersion}.topojson.gz`);
 const cells = await new Response(gz.body.pipeThrough(new DecompressionStream('gzip'))).json();
 const bytes = Uint8Array.from(atob(pack.assignment.data), (c) => c.charCodeAt(0));
 const assignment = new Int32Array(bytes.buffer); // little-endian, one region id per cell
 const map = L.map('map');
 L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(map);
-const cellGeoms = cells.objects.cells.geometries;
 const layers = pack.regions.map((region) => L.geoJSON(
-  topojson.merge(cells, cellGeoms.filter((_, i) => assignment[i] === region.id)),
+  topojson.merge(cells, cells.objects.cells.geometries.filter((_, i) => assignment[i] === region.id)),
   { style: { weight: 1, color: '#333', fillOpacity: 0.4 } }).bindTooltip(region.name).addTo(map));
 map.fitBounds(L.featureGroup(layers).getBounds());
 </script>

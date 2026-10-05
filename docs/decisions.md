@@ -1069,3 +1069,50 @@ The brief (Mark):
 ### 1.1 headline
 "Scenario overlays may use the same boundary primitives as base events" heads `docs/backlog.md`, with
 "No 1912 extensions to today" as its first test case. It replaces the narrower `minus` entry.
+
+## 2026-10-05 — Release 1.0.2: pack immutability and consumer rules
+
+### Published packs are immutable
+- **The brief's test keyed on `meta.id` as a content hash; it is not one.** A preset's `meta.id` is
+  its slug (`acadie-2`); only splits made in the app carry `split-` and a hash of the recipe and
+  cells. "Unchanged unless `meta.id` is unchanged" would let every preset edit through. **Mark chose**
+  to have the test compute the hash itself: each file's canonical JSON (keys sorted, no whitespace),
+  at the previous release tag and now. No field was added, so no published pack had to change to
+  carry one.
+- **What fails:** a file under `packs/` at the previous release tag that is now missing, or whose
+  canonical JSON differs. Reformatting is not a change. `packs/index.json` is exempt: it is the
+  listing and moves when a pack is regenerated.
+- **The previous release** is the newest `v<digit>*` tag before `HEAD` (`git describe` on `HEAD^`),
+  so the check runs the same on a PR's merge commit and on the push to main, and a commit that is
+  itself tagged is compared with the release before it. `pre-phase*` tags never match; the
+  `v0.x-*` milestone tags do, but are older than `v1.0.0`, so `describe` no longer reaches them. The
+  CI app job checks out full history for the tags.
+- **Regenerations go to a new file.** The brief wrote `packs/<slug>.v<meshVersion>.<n>.json`;
+  `meshVersion` already carries the `v` (`"v1"`), so the name is `<slug>.<meshVersion>.<n>.json`,
+  `acadie-2.v1.2.json`, with `n` from 2. `npm run presets` writes a preset's pack only when it differs
+  from the slug's latest file, to the next number, and points `index.json` at it. Run now, it writes
+  nothing: the five presets regenerate to their committed content.
+- The logic is `app/src/import/packFiles.ts` (pure, unit-tested); the CI entry point is
+  `app/scripts/check-packs.ts` (`npm run packs:check -w app`). `canonical` is now exported from
+  `app/src/splitter/tree.ts` rather than written twice.
+
+### Consumer rules in docs/interop.md
+- **The version check is the top-level `version`, not `meta.schemaVersion`.** There is no
+  `meta.schemaVersion`; `version: 1` is the contract version and `getScores` already refused anything
+  else. Adding the field would have meant editing the five published packs, which the first item
+  forbids. **Mark chose** `version === 1`. The rule also requires `format === "meridian.regionPack"`,
+  as the contract table already did.
+- **"Read polygons, stats and scores, not cell ids":** a pack carries no polygons; a consumer gets
+  them by dissolving the mesh's cells by the assignment, as the Leaflet page does. The rule is
+  written as "read regions, not cells": use a region's polygon, `stats` and `stats.score`, and never
+  store or key on cell indexes or H3 ids, which belong to one mesh.
+- **Examples pin `v1.0.1`, not `v1.0.2`.** The packs are identical at both (that is the point of
+  item 1), and `v1.0.1` exists before this PR merges, so the links work from the moment the page is
+  published. The "following changes: main" row is gone from "Where packs live"; the page says `main`
+  moves and is not for consumers.
+- **The Leaflet snippet** gains the format and version check and stays twenty lines (the cell
+  geometries are read inline). **The House of Cards fetch** is now a marked block that
+  `app/src/interop.test.ts` runs as written, instead of the test holding its own copy of the URL.
+  A new test checks that every `BASE` on the page is a `vX.Y.Z` tag and that each file the snippet
+  after it fetches exists at that tag; the smoke spec reads its URL from the snippet and checks the
+  same pin.

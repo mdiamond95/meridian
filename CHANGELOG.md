@@ -3,6 +3,16 @@
 One entry per release tag. Each phase was merged to `main` after `pre-phase<N>` was tagged. The
 detail is in `docs/log/` (what happened in each session) and `docs/decisions.md` (why).
 
+## v1.0.2 — 2026-10-05
+
+- **Published packs never change.** A pack file that was in a release keeps its content in every
+  later release; a regeneration that comes out different is written beside it with a number
+  (`acadie-2.v1.2.json`) and the pack index moves to it. CI checks every pack against the previous
+  release.
+- **Rules for projects that read packs** (`docs/interop.md`): pin a release tag, read regions rather
+  than cells, ignore unknown fields, and refuse any format or version other than RegionPack v1. The
+  examples now fetch from `v1.0.1` instead of `main`, and check the version.
+
 ## v1.0.1 — 2026-09-24
 
 - **A split lands without freezing the page.** Naming, dossiers, set analysis, scores and region

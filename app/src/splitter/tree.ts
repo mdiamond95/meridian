@@ -19,7 +19,7 @@ function fnv1a(bytes: Uint8Array, hash = 0x811c9dc5): number {
 }
 
 /** JSON with object keys sorted and undefined values dropped, so equal specs hash equally. */
-function canonical(value: unknown): string {
+export function canonical(value: unknown): string {
   if (Array.isArray(value)) return `[${value.map((v) => canonical(v ?? null)).join(',')}]`;
   if (value && typeof value === 'object')
     return `{${Object.keys(value)

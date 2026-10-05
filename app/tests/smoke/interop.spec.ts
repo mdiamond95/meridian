@@ -9,8 +9,6 @@ import { expect, test } from '@playwright/test';
  */
 
 const ROOT = new URL('../../../', import.meta.url);
-const RAW = 'https://raw.githubusercontent.com/mdiamond95/meridian/main/';
-
 function snippet(): string {
   const doc = readFileSync(new URL('docs/interop.md', ROOT), 'utf8');
   const block = doc.split('<!-- leaflet-snippet:start -->')[1]?.split('<!-- leaflet-snippet:end -->')[0];
@@ -29,6 +27,9 @@ const UNPKG: Record<string, string> = {
 test('the docs/interop.md Leaflet snippet draws a pack and names a region on hover', async ({ page }) => {
   const html = snippet();
   expect(html.trim().split('\n')).toHaveLength(20);
+  // Pinned to a release tag, not main (docs/interop.md, consumer rule 1).
+  const RAW = html.match(/const BASE = '([^']+)'/)?.[1] ?? '';
+  expect(RAW).toMatch(/^https:\/\/raw\.githubusercontent\.com\/mdiamond95\/meridian\/v\d+\.\d+\.\d+\/$/);
   const pack = JSON.parse(readFileSync(new URL('packs/alberta-15.v1.json', ROOT), 'utf8')) as {
     regions: { id: number; name: string }[];
   };
