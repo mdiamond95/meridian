@@ -28,6 +28,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0 # the release tags, for the pack immutability check
       - uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
@@ -47,6 +49,8 @@ jobs:
         run: npm run scenarios:check -w app
       - name: Licences page up to date with docs/data-sources.md
         run: npm run licences:check -w app
+      - name: Published packs unchanged since the previous release tag
+        run: npm run packs:check -w app
       - name: Build
         run: npm run build
       - name: Install Playwright Chromium

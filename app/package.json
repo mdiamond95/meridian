@@ -17,6 +17,7 @@
     "frame-time": "playwright test --config playwright.perf.config.ts",
     "determinism": "playwright test --config playwright.determinism.config.ts",
     "presets": "tsx scripts/make-presets.ts",
+    "packs:check": "tsx scripts/check-packs.ts",
     "rules": "tsx scripts/build-rules.ts",
     "rules:check": "tsx scripts/build-rules.ts --check",
     "scenarios": "tsx scripts/build-scenarios.ts",

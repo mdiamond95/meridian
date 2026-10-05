@@ -1,11 +1,13 @@
 // @vitest-environment node
+import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { PRESETS } from './splitter/presets';
 
 /**
  * docs/interop.md runs as written: the meridian.getScores helper on the committed House of Cards pack
- * returns the table the page prints, and the page's recipe is the preset's (plan Phase 6 §5).
+ * returns the table the page prints, and the page's recipe is the preset's (plan Phase 6 §5). Every
+ * raw URL the page gives is pinned to a release tag that has the file (consumer rule 1).
  */
 const doc = readFileSync(new URL('../../docs/interop.md', import.meta.url), 'utf8');
 const block = (name: string) => {
@@ -46,8 +48,11 @@ describe('docs/interop.md', () => {
   });
 
   it('meridian.getScores reads the pack and returns the table the page prints', async () => {
-    const BASE = 'https://raw.githubusercontent.com/mdiamond95/meridian/v0.6-scenarios/';
-    const scores = await helper(fileFetch).getScores(BASE + 'packs/dominion-1867-5.v1.json');
+    const run = new Function(
+      'meridian',
+      `return (async () => {\n${block('hoc-fetch')}\nreturn scores;\n})();`,
+    ) as (m: ReturnType<typeof helper>) => Promise<Score[]>;
+    const scores = await run(helper(fileFetch));
     expect(scores).toHaveLength(5);
     const rows = block('hoc-scores')
       .split('\n')
@@ -80,5 +85,36 @@ describe('docs/interop.md', () => {
   it('the helper refuses what is not a region pack', async () => {
     const fake = (async () => new Response('{"format":"other"}')) as unknown as typeof fetch;
     await expect(helper(fake).getScores('x')).rejects.toThrow(/not a Meridian region pack/);
+  });
+
+  it('the helper refuses a version it does not read (consumer rule 4)', async () => {
+    const v2 = (async () =>
+      new Response('{"format":"meridian.regionPack","version":2}')) as unknown as typeof fetch;
+    await expect(helper(v2).getScores('x')).rejects.toThrow(/version 2/);
+  });
+
+  it('every raw URL is pinned to a release tag that has the files it fetches (consumer rule 1)', () => {
+    const bases = [
+      ...doc.matchAll(
+        /const BASE = '(https:\/\/raw\.githubusercontent\.com\/mdiamond95\/meridian\/([^/']+)\/)'/g,
+      ),
+    ];
+    expect(bases.length).toBeGreaterThanOrEqual(2);
+    for (const [, base, tag] of bases) {
+      expect(tag, base).toMatch(/^v\d+\.\d+\.\d+$/);
+      const after = doc.slice(doc.indexOf(base));
+      const files = [
+        ...after
+          .slice(0, after.indexOf('```'))
+          .matchAll(/BASE \+ [`'](packs\/[^`']+|data\/build\/[^`']+)[`']/g),
+      ].map((m) => m[1].replace('${pack.meta.meshVersion}', 'v1'));
+      expect(files.length, base).toBeGreaterThan(0);
+      for (const file of files) {
+        expect(
+          () => execFileSync('git', ['cat-file', '-e', `${tag}:${file}`], { stdio: 'ignore' }),
+          `${tag}:${file}`,
+        ).not.toThrow();
+      }
+    }
   });
 });
