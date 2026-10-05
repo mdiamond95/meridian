@@ -44,6 +44,7 @@ Measured budgets and results. Each section says how it was measured, so the numb
 |---|---|---|---|---|
 | `attributes.py` alone | 1,740 MB | — | 1,340 MB | identical to SHA256SUMS |
 | `polygons.py` alone | 1,646 MB (CSD dissolves) | 1,044 MB (boundaries, after Python released) | 1,241 MB | all 8 layers identical |
+| `ridings.py` (2026-10-05, 1.0.3, inside `make verify`) | 1,713 MB (DA points, then CSDs) | — | 1,667 MB | identical to SHA256SUMS |
 
 Measured with the `ru_maxrss` value in the step logs, plus a 3 s sampler of `free -m` and per-process RSS.
 

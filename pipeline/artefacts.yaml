@@ -127,3 +127,21 @@ artefacts:
       # edge is not a boundary and must never be snapped to one.
       - { path: data/build/contact.v1.json, schema: docs/schemas/contact.schema.json }
       - { path: data/build/contact.v1.topojson.gz, schema: docs/schemas/topojson.schema.json }
+
+  # A unit table (1.0.3): one row per federal riding, for consumers whose unit is not a region. Built
+  # from the census and boundary sources, never from the mesh; reads places, the ridings layer and the
+  # atlas for its places, neighbours and jurisdictions. Immutable once released (docs/interop.md, rule 7).
+  - id: ridings
+    phase: 8
+    step: pipeline/ridings.py
+    description: Per-riding table (fed_2023) with scores, shares, places, neighbours and de jure jurisdictions since 1867
+    inputs:
+      - elections_fed_2023
+      - statcan_csd_2021
+      - statcan_da_2021
+      - statcan_cma_2021
+      - statcan_profile_da_2021
+      - statcan_profile_csd_2021
+      - statcan_gdp_36100711
+    outputs:
+      - { path: data/build/ridings.v1.json.gz, schema: docs/schemas/unitTable.schema.json }

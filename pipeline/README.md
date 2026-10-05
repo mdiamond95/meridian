@@ -7,12 +7,12 @@ artefacts. It runs once per data refresh, not in the browser.
 
 ```sh
 make download     # fetch every source in docs/data-sources.md into data/raw/ (idempotent)
-make build        # mesh → attrs → layers → atlas, then write data/build/SHA256SUMS and validate
+make build        # mesh → attrs → layers → atlas → ridings, then write data/build/SHA256SUMS and validate
 make verify       # rebuild into a temp dir and confirm byte-identical output
 make test         # pytest: contracts, units, and the Phase 1 and 2 gate checks
 ```
 
-From the repo root, `make download`, `make build`, `make atlas` and `make verify` forward here.
+From the repo root, `make download`, `make build`, `make atlas`, `make ridings` and `make verify` forward here.
 
 `make build` needs everything that `make download` fetched. Two sources are special:
 
@@ -42,10 +42,23 @@ From the repo root, `make download`, `make build`, `make atlas` and `make verify
 | `data/build/places.v1.json.gz` | `polygons.py` (`places`, `splitter_inputs.py`) | `docs/schemas/places.schema.json` |
 | `data/build/cells.v1.topojson.gz` | `polygons.py` (`cells`, `splitter_inputs.py`) | `docs/schemas/topojson.schema.json` |
 | `data/build/snap.v1.json.gz` | `polygons.py` (`snap`, `splitter_inputs.py`) | `docs/schemas/snap.schema.json` |
+| `data/build/ridings.v1.json.gz` | `ridings.py` | `docs/schemas/unitTable.schema.json` |
 
 `pipeline/artefacts.yaml` is the plan: `make dry-run` prints it, and `make validate` checks every
 file in `data/build/` against its schema. The methods for each attribute column are in the
 `attributes.py` docstring and on each column's `method` field.
+
+## The riding table
+
+`make ridings` (after `layers` and `atlas`) writes `data/build/ridings.v1.json.gz`, a unit table with
+one row per federal riding of the 2023 Representation Order, for House of Cards (docs/interop.md,
+"Unit tables"). It is built from the census and boundary sources, not from the mesh: 128 of the 343
+ridings own no mesh cell. The methods are in the `ridings.py` docstring. It reads `places.v1`, the
+ridings layer and the atlas from `data/build/`, so it runs last.
+
+**A released table never changes** (docs/interop.md, versioning rule 7, checked by
+`npm run packs:check -w app`). If a refresh (GDP each May, say) changes it, write the rebuild to
+`ridings.v1.2.json.gz` and keep the released file and its recipe rebuildable.
 
 ## The historical atlas
 
@@ -143,7 +156,8 @@ Each source's release cadence is in `docs/data-sources.md`.
 3. Run `make verify`, alone, with the editor's extra windows closed (`docs/perf.md`).
 4. Only the artefacts built from that input should change. For GDP, that is
    `attrs.v1.json.gz`: `mesh.v1` and `cells.v1` must be byte-identical. If the mesh changed, stop:
-   this is a new mesh version (B).
+   this is a new mesh version (B). GDP also feeds `ridings.v1.json.gz`, which is immutable once
+   released: write the new table to the next numbered name (`ridings.v1.2.json.gz`) instead.
 5. In the app:
    - Run `npm run presets -w app`. Assignments do not change unless a lens reads the refreshed
      column. The dossiers, scores and set analysis in the packs do.

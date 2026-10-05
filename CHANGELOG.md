@@ -3,6 +3,20 @@
 One entry per release tag. Each phase was merged to `main` after `pre-phase<N>` was tagged. The
 detail is in `docs/log/` (what happened in each session) and `docs/decisions.md` (why).
 
+## v1.0.3 — 2026-10-05
+
+- **A riding table for House of Cards** (`data/build/ridings.v1.json.gz`). One row for each of the 343
+  federal ridings of the 2023 Representation Order: population, land area, the game scores (population,
+  GDP, resource index, exposure), language, identity and immigrant shares, urban class, dominant
+  industry, the places in it, its neighbours, and which jurisdiction it was under at every date since
+  Confederation. It is built from the census and the riding boundaries directly, because 128 ridings
+  are smaller than one map cell. There is no cohesion score: it needs a split, and a riding table has
+  none.
+- **Unit tables in `docs/interop.md`:** the fields, the rules for reading them (pin a tag, key on unit
+  and id, ignore unknown fields, check format and version), and the House of Cards example rewritten
+  to read the riding table at `v1.0.3`. The `dominion-1867-5` pack and its example stay.
+- **A released unit table never changes,** like a pack. CI checks it against the previous release.
+
 ## v1.0.2 — 2026-10-05
 
 - **Published packs never change.** A pack file that was in a release keeps its content in every

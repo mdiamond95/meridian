@@ -1,0 +1,448 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$ref": "#/$defs/UnitTable",
+  "$defs": {
+    "UnitTable": {
+      "type": "object",
+      "properties": {
+        "format": {
+          "type": "string",
+          "const": "meridian.unitTable"
+        },
+        "version": {
+          "type": "number",
+          "const": 1
+        },
+        "unit": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$",
+          "description": "The geography, e.g. \"fed_2023\"; key on (unit, id)"
+        },
+        "meta": {
+          "$ref": "#/$defs/UnitTableMeta"
+        },
+        "gdpCaveat": {
+          "type": "string",
+          "const": "GDP is an estimate: provincial GDP by industry shared over ridings by census labour force (allocation_v1), not a measurement of what a riding produces."
+        },
+        "lookups": {
+          "type": "object",
+          "properties": {
+            "urbanClass": {
+              "type": "object",
+              "propertyNames": {
+                "type": "string",
+                "pattern": "^\\d+$"
+              },
+              "additionalProperties": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "industryDominant": {
+              "type": "object",
+              "propertyNames": {
+                "type": "string",
+                "pattern": "^\\d+$"
+              },
+              "additionalProperties": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          },
+          "required": [
+            "urbanClass",
+            "industryDominant"
+          ],
+          "additionalProperties": false
+        },
+        "rows": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/UnitRow"
+          },
+          "description": "Sorted by id"
+        }
+      },
+      "required": [
+        "format",
+        "version",
+        "unit",
+        "meta",
+        "gdpCaveat",
+        "lookups",
+        "rows"
+      ],
+      "additionalProperties": false,
+      "title": "Meridian UnitTable"
+    },
+    "UnitTableMeta": {
+      "type": "object",
+      "properties": {
+        "unitName": {
+          "type": "string",
+          "minLength": 1
+        },
+        "censusYear": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "gdpMethod": {
+          "type": "string",
+          "const": "allocation_v1"
+        },
+        "gdpReferenceYear": {
+          "type": "string",
+          "pattern": "^\\d{4}$"
+        },
+        "gdpPrices": {
+          "type": "string",
+          "minLength": 1
+        },
+        "atlasVersion": {
+          "type": "string",
+          "pattern": "^v\\d+$"
+        },
+        "jurisdictionsFrom": {
+          "$ref": "#/$defs/IsoDate"
+        },
+        "sources": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "source": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Source id in docs/data-sources.md"
+              },
+              "text": {
+                "type": "string",
+                "minLength": 1
+              },
+              "licence": {
+                "type": "string",
+                "minLength": 1
+              },
+              "url": {
+                "type": "string",
+                "format": "uri"
+              }
+            },
+            "required": [
+              "source",
+              "text",
+              "licence",
+              "url"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "unitName",
+        "censusYear",
+        "gdpMethod",
+        "gdpReferenceYear",
+        "gdpPrices",
+        "atlasVersion",
+        "jurisdictionsFrom",
+        "sources"
+      ],
+      "additionalProperties": false
+    },
+    "IsoDate": {
+      "type": "string",
+      "format": "date",
+      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+    },
+    "UnitRow": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "maximum": 9007199254740991,
+          "description": "The unit number: FED_NUM for fed_2023"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "nameFr": {
+          "type": "string",
+          "minLength": 1
+        },
+        "province": {
+          "type": "string",
+          "enum": [
+            "NL",
+            "PE",
+            "NS",
+            "NB",
+            "QC",
+            "ON",
+            "MB",
+            "SK",
+            "AB",
+            "BC",
+            "YT",
+            "NT",
+            "NU"
+          ]
+        },
+        "population": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991,
+          "description": "2021 census"
+        },
+        "areaKm2": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "Land area: the boundary polygon clipped to the shoreline"
+        },
+        "score": {
+          "$ref": "#/$defs/UnitScore"
+        },
+        "shares": {
+          "$ref": "#/$defs/UnitShares"
+        },
+        "urbanClass": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991,
+          "description": "Key into lookups.urbanClass"
+        },
+        "industryDominant": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991,
+          "description": "Two-digit NAICS sector, key into lookups.industryDominant"
+        },
+        "places": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/UnitPlace"
+          },
+          "description": "Every places.v1 place whose point is in the unit, population descending"
+        },
+        "neighbours": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "maximum": 9007199254740991
+          },
+          "description": "Ids of units sharing a border, ascending"
+        },
+        "jurisdictions": {
+          "minItems": 1,
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/UnitJurisdiction"
+          },
+          "description": "Contiguous spans from meta.jurisdictionsFrom to today"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "nameFr",
+        "province",
+        "population",
+        "areaKm2",
+        "score",
+        "shares",
+        "urbanClass",
+        "industryDominant",
+        "places",
+        "neighbours",
+        "jurisdictions"
+      ],
+      "additionalProperties": false
+    },
+    "UnitScore": {
+      "type": "object",
+      "properties": {
+        "population": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991,
+          "description": "People, 2021 census"
+        },
+        "gdp": {
+          "type": "number",
+          "minimum": 0,
+          "description": "GDP allocated to the unit, CAD millions (an allocation: see gdpCaveat)"
+        },
+        "resource_index": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Share of the labour force in agriculture, forestry, fishing, hunting, mining, quarrying, oil and gas"
+        },
+        "exposure": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "The dependency score: the largest industry's labour-force share"
+        }
+      },
+      "required": [
+        "population",
+        "gdp",
+        "resource_index",
+        "exposure"
+      ],
+      "additionalProperties": false,
+      "description": "The scores of docs/interop.md \"Scores for games\", without cohesion, which needs a split"
+    },
+    "UnitShares": {
+      "type": "object",
+      "properties": {
+        "english": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Mother tongue English, multiple responses split equally"
+        },
+        "french": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Mother tongue French, multiple responses split equally"
+        },
+        "indigenous_language": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Mother tongue an Indigenous language"
+        },
+        "other_language": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "1 − english − french − indigenous_language"
+        },
+        "indigenous_identity": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Indigenous identity, 25% sample"
+        },
+        "immigrant": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Immigrants, 25% sample"
+        }
+      },
+      "required": [
+        "english",
+        "french",
+        "indigenous_language",
+        "other_language",
+        "indigenous_identity",
+        "immigrant"
+      ],
+      "additionalProperties": false
+    },
+    "UnitPlace": {
+      "type": "object",
+      "properties": {
+        "csd": {
+          "type": "string",
+          "pattern": "^\\d{7}$",
+          "description": "StatCan CSDUID, as in places.v1"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "population": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "maximum": 9007199254740991,
+          "description": "The whole CSD, 2021 census"
+        }
+      },
+      "required": [
+        "csd",
+        "name",
+        "population"
+      ],
+      "additionalProperties": false
+    },
+    "UnitJurisdiction": {
+      "type": "object",
+      "properties": {
+        "from": {
+          "description": "Inclusive: an atlas event date",
+          "$ref": "#/$defs/IsoDate"
+        },
+        "to": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/IsoDate"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Exclusive: the next change; null means still in force"
+        },
+        "unit": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$",
+          "description": "The de jure atlas unit id"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "colony",
+            "dominion",
+            "province",
+            "territory",
+            "district",
+            "hbc_charter",
+            "unorganized",
+            "foreign",
+            "disputed"
+          ]
+        },
+        "sovereign": {
+          "type": "string",
+          "minLength": 1
+        },
+        "share": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Share of the unit's land inside the unit's drawing: the smallest over the span"
+        },
+        "fallback": {
+          "description": "Present when no unit overlaps the unit: the nearest unit, with share 0",
+          "type": "boolean",
+          "const": true
+        }
+      },
+      "required": [
+        "from",
+        "to",
+        "unit",
+        "name",
+        "status",
+        "sovereign",
+        "share"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

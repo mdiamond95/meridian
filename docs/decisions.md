@@ -1116,3 +1116,99 @@ The brief (Mark):
   A new test checks that every `BASE` on the page is a `vX.Y.Z` tag and that each file the snippet
   after it fetches exists at that tag; the smoke spec reads its URL from the snippet and checks the
   same pin.
+
+## 2026-10-05 — Release 1.0.3: a riding table for consumers
+
+The brief (Mark): House of Cards moves onto Meridian, and its unit is the 343 federal ridings of the
+2023 Representation Order. Only 215 own a mesh cell, so Meridian publishes a per-riding table built
+from the same sources as the cells, not from the cells, and documents it as a contract.
+
+### The table
+- **A new pipeline step, `pipeline/ridings.py`, runs last** (`make ridings`, part of `make build` and
+  `make verify`): it reads `places.v1`, the ridings layer and the atlas from `data/build/`, and the
+  census and boundary files from `data/raw/`. It reads nothing from `mesh` or `attrs`.
+- **Format `"meridian.unitTable"`, `version: 1` (an integer), `unit: "fed_2023"`.** The integer follows
+  RegionPack, the other consumer contract, rather than the `"v1"` strings of the pipeline's internal
+  artefacts, so a consumer's check reads the same way for both. The file name keeps the `.v1.` the
+  brief gave; it is not mesh-keyed.
+- **Area is land area.** Elections Canada's polygons run out to sea: they sum to 13.8 million km², and
+  Nunavut's alone is 4.7 million. Each riding is intersected with the 2021 cartographic CSDs, which stop
+  at the shore. That land is `areaKm2`, the density for `urbanClass`, the spreading weight for a CSD
+  with no people, and the denominator of every jurisdiction `share`, so a share can never exceed 1.
+- **The census methods are attrs' methods with ridings in place of cells**, sharing the code where it
+  could be shared (`language_counts` moved to module level in `attributes.py`; attrs is byte-identical):
+  - DA representative points go to the riding polygon that holds them; all 57,932 did, so the
+    nearest-riding fallback never ran.
+  - Each CSD's population is apportioned over its DAs' ridings by DA population, by largest
+    remainder. The total is **36,991,981, equal to attrs and to the census**.
+  - The shares sum DA counts over the riding. Labour force by industry is each CSD's, spread by its
+    population share in each riding.
+- **The scores follow the definitions in `docs/interop.md`, literally.**
+  - `resource_index` and `exposure` are shares of the riding's labour force. The pack code
+    (`score.ts`) weights each cell's industry shares by its population, which approximates that; the
+    table has the labour counts, so it measures it directly.
+  - `gdp` is `allocation_v1` at riding level. Each province's ridings reconcile to the StatCan table
+    (2022, current dollars) within rounding, checked against attrs' provincial sums.
+- **No `cohesion`, and `docs/interop.md` says why.** Cohesion is a population-weighted variance over a
+  region's sub-units, with each lens column scaled over a split's scope. A riding table has no split,
+  no lens and no scope; using DAs as sub-units and Canada as the scope would give a number that means
+  something else under the same name.
+- **Places:** every `places.v1` point fell inside a riding polygon (the nearest-riding fallback exists
+  but never ran). Each of the 4,830 places is in exactly one riding, with its whole CSD's population.
+  108 ridings have no place: a city CSD's point falls in one of its ridings only.
+- **Neighbours** are the ridings sharing an arc in `layers/ridings.v1.topojson.gz`: **894 edges**, as
+  briefed, and symmetric.
+
+### Jurisdictions
+- **The atlas read is the published display topology** (`atlas.v1.topojson.gz`, about 750 m), the one
+  the app's timeline draws, so the table agrees with what a player sees. Because its coast is
+  simplified, the riding's land is overlapped with each drawing by area. A point test would lose small
+  coastal ridings: Vancouver Centre's land is only 48% inside British Columbia's drawing, yet BC is still
+  by far its largest overlap.
+- **Intervals** run between the de jure atlas event dates from 1867-07-01: 32 in all. The build fails
+  if a de jure unit changes on a date that is not an event. The current span has `to: null` rather
+  than today's date, so the file does not depend on the day it is built.
+- **Merging:** consecutive intervals merge where unit, name, status and sovereign all agree, so a
+  change of status (Newfoundland, colony to province in 1949) or of name (Newfoundland and Labrador,
+  2001) starts a new span. `share` is the smallest over the merged span, so it never overstates. 216
+  ridings have one span, and the most any riding has is 7.
+- **No fallbacks:** every riding overlaps some de jure unit on every date, so no row carries
+  `fallback: true`. The nearest-unit path exists but this data never reaches it; only `merge_spans`'s
+  handling of a fallback span is unit-tested.
+- **Two geometry faults were fixed in `ridings.py`, not in shared code:**
+  - Quantization collapses a sliver of Keewatin (1889–1905) to a 3-point ring, which the decoder now
+    drops. It has no area.
+  - GEOS `clip_by_rect` throws on one 50 km square of the valid Keewatin polygon; that square is cut
+    by a full intersection instead.
+  - `geo.tiled` is left alone, so attrs and the layers cannot move.
+
+### The 1867 gate
+The counts match the brief exactly: Ontario 118, Quebec 77, Nova Scotia 11, New Brunswick 10 (216 under
+Canada); British Columbia 43, Newfoundland 6, Prince Edward Island 4; Rupert's Land 66, North-Western
+Territory 7, British Arctic Islands 1. Nothing was tuned. Four Ontario ridings (Kenora—Kiiwetinoong,
+Kapuskasing—Timmins—Mushkegowuk, both Thunder Bay ridings), Abitibi—Baie-James—Nunavik—Eeyou and
+Labrador are mostly Rupert's Land that day. Labrador's later spans follow the atlas: North-West
+Territories, then the District of Ungava (1895), then Quebec (1912), then Newfoundland from the 1927
+Privy Council decision.
+
+### Interop and immutability
+- **One helper object.** `meridian.getUnitTable(url, unit)` and `meridian.jurisdictionOn(row, date)`
+  join `getScores` in the same block, so a game pastes one object. `getUnitTable` decompresses
+  (`DecompressionStream`), then checks format, version and unit.
+- **The House of Cards example reads the riding table at `v1.0.3`,** the tag this release creates. The
+  `dominion-1867-5` pack and its scores stay in the example, read at the same tag (the pack is
+  identical there). The Leaflet snippet stays at `v1.0.1`.
+  - The pin test used to require every tag to exist. It now also accepts the release in progress, the
+    top `CHANGELOG.md` entry, provided the files are in the checkout. Once `v1.0.3` is cut, the normal
+    `git cat-file` check applies.
+- **Versioning rule 7 now covers unit tables.**
+  - `npm run packs:check` finds the unit tables at the previous release tag by their content (every
+    gzipped JSON under `data/build/` whose `format` is `meridian.unitTable`), so a future table needs
+    no list kept up to date. It compares them decompressed, as canonical JSON.
+  - A rebuild that differs goes to `ridings.v1.<n>.json.gz`. The pipeline does not yet choose that name
+    itself; the README's refresh playbook says to.
+  - **Decision for Mark:** if a GDP refresh should automate the numbering, as `npm run presets` does
+    for packs, it is a small change to `ridings.py` and `checksums.py`.
+- **Memory:** the first run peaked at 2.2 GB in the jurisdiction overlay, above the ~1.7 GB headroom
+  `docs/perf.md` gives this machine. Overlays now run in chunks of 20,000 and keep only areas where no
+  geometry is needed. Peak RSS is 1,714 MB, about attrs' 1,740, and the output is byte-identical.

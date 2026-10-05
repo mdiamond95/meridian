@@ -280,22 +280,25 @@ def population_columns(mesh, das, da_prof, csd_prof, cell_csd_weight) -> dict[st
     return out
 
 
-def share_columns(mesh, das, da_prof, csd_prof) -> dict[str, np.ndarray]:
-    def language_counts(prof: pd.DataFrame) -> pd.DataFrame:
-        g = lambda c: prof[c].fillna(0) if c in prof else 0  # noqa: E731
-        return pd.DataFrame(
-            {
-                "mt_total": prof[C_MT_TOTAL],
-                "en": g(C_MT_EN) + g(C_MT_EN_FR) / 2 + g(C_MT_EN_NO) / 2 + g(C_MT_EN_FR_NO) / 3,
-                "fr": g(C_MT_FR) + g(C_MT_EN_FR) / 2 + g(C_MT_FR_NO) / 2 + g(C_MT_EN_FR_NO) / 3,
-                "indig": g(C_MT_INDIG),
-                "id_total": prof[C_ID_TOTAL],
-                "id_indig": prof[C_ID_INDIG],
-                "imm_total": prof[C_IMM_TOTAL],
-                "imm": prof[C_IMM],
-            }
-        )
+def language_counts(prof: pd.DataFrame) -> pd.DataFrame:
+    """Mother-tongue, identity and immigrant counts per geo code; multiple mother-tongue responses are
+    split equally among the languages named. Shared with ridings.py."""
+    g = lambda c: prof[c].fillna(0) if c in prof else 0  # noqa: E731
+    return pd.DataFrame(
+        {
+            "mt_total": prof[C_MT_TOTAL],
+            "en": g(C_MT_EN) + g(C_MT_EN_FR) / 2 + g(C_MT_EN_NO) / 2 + g(C_MT_EN_FR_NO) / 3,
+            "fr": g(C_MT_FR) + g(C_MT_EN_FR) / 2 + g(C_MT_FR_NO) / 2 + g(C_MT_EN_FR_NO) / 3,
+            "indig": g(C_MT_INDIG),
+            "id_total": prof[C_ID_TOTAL],
+            "id_indig": prof[C_ID_INDIG],
+            "imm_total": prof[C_IMM_TOTAL],
+            "imm": prof[C_IMM],
+        }
+    )
 
+
+def share_columns(mesh, das, da_prof, csd_prof) -> dict[str, np.ndarray]:
     n = len(mesh["cells"])
     da = language_counts(da_prof).reindex(das["dauid"]).reset_index(drop=True)
     da["cell"] = das["cell"].to_numpy()
