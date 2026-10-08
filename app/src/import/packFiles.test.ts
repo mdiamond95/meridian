@@ -5,6 +5,7 @@ import {
   isUnitTable,
   packFileName,
   parsePackFile,
+  unitTableLayer,
 } from './packFiles';
 
 /** Published packs are immutable: changes go to a new numbered file, and CI refuses edits in place. */
@@ -103,5 +104,15 @@ describe('unit tables', () => {
     expect(immutabilityViolations(released, new Map())).toEqual([
       { file: 'ridings.v1.json.gz', problem: 'deleted' },
     ]);
+  });
+
+  it('name the layer that must stay with them, when they have one', () => {
+    const hexes = {
+      format: 'meridian.unitTable',
+      meta: { layer: 'data/build/layers/hexes.r4.v1.topojson.gz' },
+    };
+    expect(unitTableLayer(JSON.stringify(hexes))).toBe('data/build/layers/hexes.r4.v1.topojson.gz');
+    expect(unitTableLayer('{"format":"meridian.unitTable","meta":{}}')).toBeNull();
+    expect(unitTableLayer('{"meta":{"layer":"../../etc/passwd"}}')).toBeNull();
   });
 });

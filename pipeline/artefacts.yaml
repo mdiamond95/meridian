@@ -145,3 +145,22 @@ artefacts:
       - statcan_gdp_36100711
     outputs:
       - { path: data/build/ridings.v1.json.gz, schema: docs/schemas/unitTable.schema.json }
+
+  # A second unit table (1.0.4): H3 resolution-4 hexagons for a hex board. Coarser than the mesh, so it
+  # aggregates the mesh cells; its land and clipped layer come from the CSDs, as ridings.v1's land does.
+  # Both files are immutable once released (docs/interop.md, rule 7).
+  - id: hexes
+    phase: 8
+    step: pipeline/hexes.py
+    description: H3 resolution-4 hexagon table (h3_r4) and its land-clipped layer, aggregated from the mesh cells
+    inputs:
+      - statcan_csd_2021
+      - statcan_da_2021
+      - statcan_cma_2021
+      - statcan_profile_da_2021
+      - statcan_profile_csd_2021
+      - statcan_gdp_36100711
+      - aafc_ecozones
+    outputs:
+      - { path: data/build/hexes.r4.v1.json.gz, schema: docs/schemas/unitTable.schema.json }
+      - { path: data/build/layers/hexes.r4.v1.topojson.gz, schema: docs/schemas/topojson.schema.json }

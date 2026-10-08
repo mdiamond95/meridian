@@ -148,10 +148,11 @@ The House of Cards worked example, under "Unit tables" below, reads these scores
    (`app/src/import/packFiles.ts`). CI (`npm run packs:check -w app`) compares every file under
    `packs/` with the previous release tag, as canonical JSON so that reformatting is not a change, and
    fails on any pack changed or removed. `packs/index.json` is the listing, not a pack, and is exempt.
-   The same holds for a unit table under `data/build/` (`ridings.v1.json.gz`): a rebuild that comes
-   out different is written beside it as `ridings.v1.<n>.json.gz` (n = 2, 3, …) and the released file
-   stays; the same CI check decompresses every unit table at the previous release tag and fails on any
-   changed or removed.
+   The same holds for a unit table under `data/build/` (`ridings.v1.json.gz`, `hexes.r4.v1.json.gz`)
+   and for the layer a table names in `meta.layer` (`layers/hexes.r4.v1.topojson.gz`): a rebuild that
+   comes out different is written beside it as `<name>.<n>.json.gz` (n = 2, 3, …) and the released
+   file stays. The same CI check decompresses every unit table at the previous release tag, and the
+   layers they name, and fails on any changed or removed.
 
 ### Migrations
 
@@ -172,32 +173,45 @@ Some consumers' unit is not a Meridian region. House of Cards plays on the 343 f
 2023 Representation Order, and a region pack cannot carry them: only 215 ridings own a mesh cell, and
 the other 128, mostly urban, are smaller than one. So Meridian publishes a table with one row per
 riding, built by `pipeline/ridings.py` from the same census and boundary sources as the cells, never
-from the cells.
+from the cells. For a hex board it also publishes H3 resolution-4 hexagons (about 1,770 km², 45 km
+across, roughly a county). Those are coarser than the mesh, so `pipeline/hexes.py` builds them from the
+mesh cells, as a region pack does.
 
-| File | `unit` | Rows |
-|---|---|---|
-| `data/build/ridings.v1.json.gz` | `fed_2023`: federal electoral districts, 2023 Representation Order | 343, in FED number order |
+| File | `unit` | Rows | From |
+|---|---|---|---|
+| `data/build/ridings.v1.json.gz` | `fed_2023`: federal electoral districts, 2023 Representation Order | 343, in FED number order | `v1.0.3` |
+| `data/build/hexes.r4.v1.json.gz` | `h3_r4`: H3 resolution-4 hexagons that hold at least one mesh cell | 6,011, in H3 index order | `v1.0.4` |
+| `data/build/layers/hexes.r4.v1.topojson.gz` | the `h3_r4` hexagons clipped to land, to draw | one geometry per row | `v1.0.4` |
 
 A unit table is gzipped JSON, validated by `docs/schemas/unitTable.schema.json` (generated from
 `app/src/schema/unitTable.ts`; the Zod schema is the source of truth). Fetch it from the same raw URLs
-as the mesh, at `v1.0.3` or later, and decompress it yourself (`raw.githubusercontent.com` serves `.gz`
+as the mesh, at the release in the table or later, and decompress it yourself (`raw.githubusercontent.com` serves `.gz`
 as plain bytes): `meridian.getUnitTable` in the helper above does both.
 
 ### Consumer rules for unit tables
 
 The consumer rules above, as they apply to a table:
 
-1. **Pin a release tag** (`v1.0.3` or later), never `main`. A published table never changes
-   (versioning rule 7).
-2. **Key on `unit` and `id`.** A row is identified by the pair, `("fed_2023", 35075)`, not by its
-   name (ridings are renamed by Act of Parliament) or its position. A new representation order is a
-   new `unit` in a new file; it never reuses this one's ids.
+1. **Pin a release tag** (`v1.0.3` or later for the ridings, `v1.0.4` or later for the hexagons),
+   never `main`. A published table, and the layer it names, never changes (versioning rule 7).
+2. **Key on `unit` and `id`.** A row is identified by the pair, `("fed_2023", 35075)` or
+   `("h3_r4", "840e491ffffffff")`, not by its name (ridings are renamed by Act of Parliament) or its
+   position. A new representation order is a new `unit` in a new file; it never reuses this one's ids.
+   An `h3_r4` id is an H3 index, which names the same hexagon on the globe in every H3 library and
+   every release: the ids are stable and can be stored. Which hexagons have rows follows the mesh, so
+   a new mesh version could add or drop rows, in a new file.
 3. **Ignore fields you do not know.** New optional fields are added without a version bump
    (versioning rule 1).
 4. **Check `format`, `version` and `unit`, and refuse otherwise.** `format` must be
    `"meridian.unitTable"`, `version` must be `1`, and `unit` the geography you expect.
 
 ### The UnitTable v1 contract
+
+`unit` decides the shape of the rows. Both shapes share `format`, `version`, `meta` (except as noted),
+`gdpCaveat`, `lookups`, and in every row `population`, `areaKm2`, `score`, `shares`, `urbanClass`,
+`industryDominant`, `places` and `jurisdictions`, with the meanings below.
+
+**`fed_2023`, the ridings:**
 
 | Field | Meaning |
 |---|---|
@@ -217,7 +231,50 @@ The consumer rules above, as they apply to a table:
 | `rows[].neighbours` | ids of the ridings sharing a border arc with it in `data/build/layers/ridings.v1.topojson.gz`, ascending; symmetric |
 | `rows[].jurisdictions` | `{from, to, unit, name, status, sovereign, share}` spans, contiguous from `1867-07-01`: `from` inclusive, `to` exclusive, `null` for the span in force today. `unit`, `name`, `status` and `sovereign` are the de jure atlas unit covering the largest share of the riding's land, measured as an area overlap with the unit's drawing, never a point test; `share` is that share, the smallest over the span. `fallback: true` marks a span where no unit overlaps the riding and the nearest was taken, with share 0 |
 
-**Scores.** Each is defined as in "Scores for games", measured on the riding rather than the region:
+**`h3_r4`, the hexagons.** The same fields, except as follows.
+
+| Field | Meaning |
+|---|---|
+| `meta` | also `h3Resolution` (4), `meshVersion` (`v1`, the mesh the rows were aggregated from), `layer` (the repository path of the clipped layer) and `landEdgeMetres` (1, see `neighbours`) |
+| `gdpCaveat` | the same caveat, worded for mesh cells and hexagons |
+| `lookups` | also `ecozone` (the attrs ecozones) and `csdType` (Statistics Canada's census subdivision types); `industryDominant` adds `0`, "no data" |
+| `rows[].id` | the H3 index of the hexagon, as 15 lower-case hex digits; rows are in H3 index order, which is string order |
+| `rows[].centroid` | `[lng, lat]`, the hexagon's H3 centre, to 5 decimals |
+| `rows[].province` | the province or territory holding most of its land; a hexagon with no land takes the province of most of its mesh cells |
+| `rows[].cells` | how many resolution-5 mesh cells it is the parent of (up to 7) |
+| `rows[].population`, `score`, `shares`, `industryDominant` | summed or population-weighted over its mesh cells from the mesh attributes, exactly as a region pack aggregates cells: a hexagon scores what a region made of its cells would. A hexagon with nobody in it has every share 0 and `industryDominant` 0 |
+| `rows[].areaKm2` | land area, measured as for the ridings: the hexagon clipped to the shoreline of the 2021 cartographic census subdivisions. **0 for 21 rows of open water** in Lakes Superior, Huron, Erie and Ontario, which the mesh holds because it counts the Atlas of Canada's inland water as land |
+| `rows[].urbanClass` | the class (CMA 3, CA 2) holding most of the hexagon's people, cell by cell, else rural 1 or remote 0 by density over its land |
+| `rows[].ecozone` | the ecozone covering the most of its mesh cells' area, key into `lookups.ecozone` |
+| `rows[].places` | every `places.v1` place whose point H3 puts in the hexagon, as `{csd, name, population, csdType}`, population descending. `csdType` is the CSD's type code in the 2021 boundary file (`CY` city, `T` town, `VL` village, `IRI` Indian reserve, `NO` unorganized, `RDA` regional district electoral area, and so on), labelled in `lookups.csdType`, so a town can be told from a census label without reading the name. One place, whose point falls in a hexagon with no mesh cell, goes to the hexagon of its mesh cell |
+| `rows[].neighbours` | `{id, kind}` for each hexagon in the table that shares an H3 edge with it, ascending by id; symmetric, with the same `kind` both ways. The rule is below |
+| `rows[].jurisdictions` | as for the ridings, over the hexagon's land. A hexagon with no land overlaps no unit, so every span is the nearest unit with `fallback: true` |
+
+**The neighbour rule.** Two hexagons in the table are neighbours when they share an edge of the H3
+grid. The link's `kind` is `"land"` when at least `meta.landEdgeMetres` (1 m) of that common edge
+lies on land, and `"water"` otherwise. The edge is H3's boundary between the two cells, as a straight
+line between its vertices in Statistics Canada Lambert (EPSG:3347). Land is the 2021 cartographic
+census subdivisions, the same land as `areaKm2`. In practice no edge carries between 0 and 1 m of
+land: 424 links cross none and are water; 16,599 are land, 67 of them with under 1 km of land on an
+edge about 25 km long. What the rule measures is the edge, not the journey: a hexagon over a strait
+narrower than itself holds both shores. The Strait of Belle Isle is about 15 km wide, and the hexagons
+over it hold both the island and Labrador, so their common edges lie on land and Newfoundland is
+linked to Labrador by land. The same holds in seven places on the Northumberland Strait, against nine
+water links between Prince Edward Island and the mainland, and in the Gulf Islands, which carry a land
+link from Vancouver Island to the mainland. A game that needs a strait to be water should treat those
+links as it chooses; the table records what lies on the edge.
+
+**The clipped layer.** `data/build/layers/hexes.r4.v1.topojson.gz` has one object, `hexes`, with one
+geometry per row in row order and the row's `id` as its only property. Each geometry is the hexagon's
+land, the same land as `areaKm2`, simplified with mapshaper at about 500 m as the ridings layer is.
+Neighbours share arcs, and an unclipped hexagon would paint the sea. The sea, Hudson Bay, the Great Lakes
+and Lake of the Woods are water. Lakes that the cartographic census subdivisions include are land,
+here as in `ridings.v1`: Lake Winnipeg, Lake Manitoba, Great Bear and Great Slave Lakes, Lake Athabasca,
+Lake Nipigon and Lac Saint-Jean. The 21 open-water rows are null
+geometries (`"type": null`). Draw it like the cells in the Leaflet page below, with
+`topojson.feature(topology, topology.objects.hexes)`.
+
+**Scores.** Each is defined as in "Scores for games". For the ridings they are measured on the riding rather than the region:
 the 2021 census population; GDP allocated by `allocation_v1` (provincial GDP by industry shared by the
 riding's share of the province's labour force in that industry); `resource_index`, the share of the
 riding's labour force in NAICS 11 and 21; `exposure`, the share of its largest industry. They are
@@ -225,10 +282,18 @@ aggregated from dissemination areas and census subdivision profiles to the ridin
 area by its representative point, never through mesh cells: a CSD's population and labour force are
 spread over the ridings its dissemination areas fall in, by their population.
 
-**No `cohesion`.** Cohesion is a variance over a region's sub-units with each lens column scaled over a
-split's scope. A riding table has no split, no lens and no scope, and any choice of sub-unit and scale
+For the hexagons they are the pack aggregation of the hexagon's cells; `resource_index` and `exposure`
+weight the cells' industry shares by population, as packs do.
+
+**No `cohesion`,** in either table. Cohesion is a variance over a region's sub-units with each lens column scaled over a
+split's scope. A unit table has no split, no lens and no scope, and any choice of sub-unit and scale
 would make a number that means something else under the same name, so the field is omitted rather
-than redefined. A game that wants it can compute it over its own groupings of ridings.
+than redefined. A game that wants it can compute it over its own groupings of units.
+
+**1.0.4 widens the contract.** `unit` was any snake_case string in the 1.0.3 schema, with one row
+shape. It is now a union: `fed_2023` keeps that row shape unchanged, and `h3_r4` adds its own. A
+reader that validates against the 1.0.3 `unitTable.schema.json` will reject a hex table and should
+update to the current schema. A reader of `ridings.v1.json.gz` alone is unaffected.
 
 **Jurisdictions are the atlas's, not the census's.** They come from the same atlas as the app's
 timeline (`atlas.v1`), drawn to about 750 m with islands under 2 km² dropped, which is why a riding's

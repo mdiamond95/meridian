@@ -3,6 +3,21 @@
 One entry per release tag. Each phase was merged to `main` after `pre-phase<N>` was tagged. The
 detail is in `docs/log/` (what happened in each session) and `docs/decisions.md` (why).
 
+## v1.0.4 — 2026-10-08
+
+- **A hex table for a hex board** (`data/build/hexes.r4.v1.json.gz`). One row for each of the 6,011
+  H3 resolution-4 hexagons (about 45 km across) that cover Canada, each with the same scores and shares
+  as the riding table, plus its province, ecozone, places, neighbours and jurisdictions since
+  Confederation. Each place now says what kind of census subdivision it is (city, town, village,
+  Indian reserve, unorganized and so on), so a town can be told from a census label. Each neighbour
+  says whether the two hexagons meet on land or only across water.
+- **The hexagons clipped to land, to draw** (`data/build/layers/hexes.r4.v1.topojson.gz`). The sea,
+  Hudson Bay and the Great Lakes are water. The 21 hexagons that are only Great Lakes water are rows
+  with no land.
+- **`docs/interop.md`** describes both unit tables, the neighbour rule and the layer. The unit-table
+  schema now has one row shape per unit; the riding table is unchanged.
+- **The hex table and its layer never change once released,** like the riding table and the packs.
+
 ## v1.0.3 — 2026-10-05
 
 - **A riding table for House of Cards** (`data/build/ridings.v1.json.gz`). One row for each of the 343
