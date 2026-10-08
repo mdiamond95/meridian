@@ -1,7 +1,8 @@
 /**
  * CI: published packs and unit tables are immutable (docs/interop.md, versioning rule 7). Every file
  * under packs/ at the previous release tag must still be there with the same content (canonical JSON),
- * except packs/index.json; so must every unit table under data/build/ (gzipped, compared decompressed).
+ * except packs/index.json; so must every unit table under data/build/ and the layer its meta.layer names
+ * (gzipped, compared decompressed).
  * The previous release is the newest v<digit>* tag before HEAD; pass a tag to compare with another.
  *
  *   npm run packs:check [-- v1.0.1]
@@ -11,7 +12,13 @@ import { createHash } from 'node:crypto';
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { gunzipSync } from 'node:zlib';
-import { immutabilityViolations, isUnitTable, LIBRARY_FILE, packContent } from '../src/import/packFiles';
+import {
+  immutabilityViolations,
+  isUnitTable,
+  LIBRARY_FILE,
+  packContent,
+  unitTableLayer,
+} from '../src/import/packFiles';
 
 const root = fileURLToPath(new URL('../../', import.meta.url));
 const git = (...args: string[]) =>
@@ -44,30 +51,38 @@ for (const { file, problem } of violations) {
   );
 }
 
-// Unit tables: every gzipped JSON under data/build/ at the tag that is one.
+// Unit tables: every gzipped JSON under data/build/ at the tag that is one, and the layer each names
+// in meta.layer (the h3_r4 table's clipped hexagons). Keyed by repository path, compared decompressed.
 const gitBytes = (spec: string) => execFileSync('git', ['show', spec], { cwd: root, maxBuffer: 1 << 30 });
 const tables = new Map(
   git('ls-tree', '--name-only', `${tag}:data/build`)
     .split('\n')
     .filter((f) => f.endsWith('.json.gz'))
-    .map((f) => [f, gunzipSync(gitBytes(`${tag}:data/build/${f}`)).toString('utf8')] as const)
+    .map((f) => [`data/build/${f}`, gunzipSync(gitBytes(`${tag}:data/build/${f}`)).toString('utf8')] as const)
     .filter(([, text]) => isUnitTable(text)),
 );
-const tablesNow = new Map(
-  [...tables.keys()]
-    .filter((f) => existsSync(`${root}data/build/${f}`))
-    .map((f) => [f, gunzipSync(readFileSync(`${root}data/build/${f}`)).toString('utf8')] as const),
+const layers = [...tables.values()].map(unitTableLayer).filter((path): path is string => path !== null);
+const immutable = new Map([
+  ...tables,
+  ...layers.map((path) => [path, gunzipSync(gitBytes(`${tag}:${path}`)).toString('utf8')] as const),
+]);
+const immutableNow = new Map(
+  [...immutable.keys()]
+    .filter((path) => existsSync(`${root}${path}`))
+    .map((path) => [path, gunzipSync(readFileSync(`${root}${path}`)).toString('utf8')] as const),
 );
-const tableViolations = immutabilityViolations(tables, tablesNow);
+const tableViolations = immutabilityViolations(immutable, immutableNow);
 for (const { file, problem } of tableViolations) {
   console.error(
     problem === 'deleted'
-      ? `data/build/${file}: deleted, but this unit table was published in ${tag}`
-      : `data/build/${file}: unit table changed since ${tag}; write the rebuild to a new numbered file and keep this one`,
+      ? `${file}: deleted, but it was published in ${tag} (a unit table or its layer)`
+      : `${file}: changed since ${tag}; write the rebuild to a new numbered file and keep this one`,
   );
 }
 
 if (violations.length || tableViolations.length) process.exit(1);
 const count = [...released.keys()].filter((f) => f !== LIBRARY_FILE).length;
 console.log(`packs/: the ${count} packs published in ${tag} are unchanged`);
-console.log(`data/build/: the ${tables.size} unit tables published in ${tag} are unchanged`);
+console.log(
+  `data/build/: the ${tables.size} unit tables and ${layers.length} layers published in ${tag} are unchanged`,
+);

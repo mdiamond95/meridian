@@ -10,6 +10,7 @@ from functools import cache
 import pytest
 
 import ridings
+import unittables
 from columns import decode_column
 from common import BUILD, MESH_VERSION
 
@@ -81,8 +82,8 @@ def test_1867_jurisdictions():
 
 @built
 def test_every_riding_has_a_jurisdiction_for_every_date():
-    atlas = json.loads(ridings.ATLAS_PATH.read_text(encoding="utf-8"))
-    starts = [start for start, _ in ridings.intervals(atlas)]
+    atlas = json.loads(unittables.ATLAS_PATH.read_text(encoding="utf-8"))
+    starts = [start for start, _ in unittables.intervals(atlas)]
     for row in table()["rows"]:
         for date in starts:
             on(row, date)
@@ -139,7 +140,7 @@ def span(start, end, unit, share=1.0, **extra):
 
 
 def test_merge_spans_joins_agreeing_neighbours_and_keeps_the_smallest_share():
-    merged = ridings.merge_spans(
+    merged = unittables.merge_spans(
         [
             span("1867-07-01", "1870-07-15", "ruperts_land", 0.9),
             span("1870-07-15", "1889-08-12", "ontario", 0.6),
@@ -154,7 +155,7 @@ def test_merge_spans_joins_agreeing_neighbours_and_keeps_the_smallest_share():
 
 
 def test_merge_spans_does_not_join_a_fallback_to_a_measured_span():
-    merged = ridings.merge_spans(
+    merged = unittables.merge_spans(
         [span("1867-07-01", "1870-07-15", "quebec"), span("1870-07-15", None, "quebec", 0.0, fallback=True)]
     )
     assert len(merged) == 2
@@ -173,7 +174,7 @@ def test_arc_neighbours_reads_shared_arcs_in_either_direction():
             }
         }
     }
-    assert ridings.arc_neighbours(topo, "r", "fed") == {1: [2, 3], 2: [1], 3: [1], 4: []}
+    assert unittables.arc_neighbours(topo, "r", "fed") == {1: [2, 3], 2: [1], 3: [1], 4: []}
 
 
 def test_intervals_start_at_confederation_and_run_on():
@@ -184,11 +185,11 @@ def test_intervals_start_at_confederation_and_run_on():
             {"truth": "defacto", "validFrom": "1867-07-01", "validTo": "1868-01-01"},
         ],
     }
-    assert ridings.intervals(atlas) == [
+    assert unittables.intervals(atlas) == [
         ("1867-07-01", "1870-07-15"),
         ("1870-07-15", "1999-04-01"),
         ("1999-04-01", None),
     ]
     atlas["units"].append({"truth": "dejure", "validFrom": "1880-01-01", "validTo": None})
     with pytest.raises(ValueError, match="not events"):
-        ridings.intervals(atlas)
+        unittables.intervals(atlas)

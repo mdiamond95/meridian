@@ -3,6 +3,17 @@
   "$ref": "#/$defs/UnitTable",
   "$defs": {
     "UnitTable": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/RidingTable"
+        },
+        {
+          "$ref": "#/$defs/HexTable"
+        }
+      ],
+      "title": "Meridian UnitTable"
+    },
+    "RidingTable": {
       "type": "object",
       "properties": {
         "format": {
@@ -15,8 +26,8 @@
         },
         "unit": {
           "type": "string",
-          "pattern": "^[a-z][a-z0-9_]*$",
-          "description": "The geography, e.g. \"fed_2023\"; key on (unit, id)"
+          "const": "fed_2023",
+          "description": "Federal electoral districts, 2023 Representation Order"
         },
         "meta": {
           "$ref": "#/$defs/UnitTableMeta"
@@ -74,8 +85,7 @@
         "lookups",
         "rows"
       ],
-      "additionalProperties": false,
-      "title": "Meridian UnitTable"
+      "additionalProperties": false
     },
     "UnitTableMeta": {
       "type": "object",
@@ -441,6 +451,381 @@
         "status",
         "sovereign",
         "share"
+      ],
+      "additionalProperties": false
+    },
+    "HexTable": {
+      "type": "object",
+      "properties": {
+        "format": {
+          "type": "string",
+          "const": "meridian.unitTable"
+        },
+        "version": {
+          "type": "number",
+          "const": 1
+        },
+        "unit": {
+          "type": "string",
+          "const": "h3_r4",
+          "description": "H3 resolution-4 hexagons"
+        },
+        "meta": {
+          "$ref": "#/$defs/HexTableMeta"
+        },
+        "gdpCaveat": {
+          "type": "string",
+          "const": "GDP is an estimate: provincial GDP by industry shared over mesh cells by census labour force (allocation_v1), not a measurement of what a hexagon produces."
+        },
+        "lookups": {
+          "type": "object",
+          "properties": {
+            "urbanClass": {
+              "type": "object",
+              "propertyNames": {
+                "type": "string",
+                "minLength": 1
+              },
+              "additionalProperties": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "industryDominant": {
+              "type": "object",
+              "propertyNames": {
+                "type": "string",
+                "minLength": 1
+              },
+              "additionalProperties": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "ecozone": {
+              "type": "object",
+              "propertyNames": {
+                "type": "string",
+                "minLength": 1
+              },
+              "additionalProperties": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "csdType": {
+              "type": "object",
+              "propertyNames": {
+                "type": "string",
+                "minLength": 1
+              },
+              "additionalProperties": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          },
+          "required": [
+            "urbanClass",
+            "industryDominant",
+            "ecozone",
+            "csdType"
+          ],
+          "additionalProperties": false
+        },
+        "rows": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/HexRow"
+          },
+          "description": "Sorted by id (H3 index order)"
+        }
+      },
+      "required": [
+        "format",
+        "version",
+        "unit",
+        "meta",
+        "gdpCaveat",
+        "lookups",
+        "rows"
+      ],
+      "additionalProperties": false
+    },
+    "HexTableMeta": {
+      "type": "object",
+      "properties": {
+        "unitName": {
+          "type": "string",
+          "minLength": 1
+        },
+        "censusYear": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+        },
+        "gdpMethod": {
+          "type": "string",
+          "const": "allocation_v1"
+        },
+        "gdpReferenceYear": {
+          "type": "string",
+          "pattern": "^\\d{4}$"
+        },
+        "gdpPrices": {
+          "type": "string",
+          "minLength": 1
+        },
+        "atlasVersion": {
+          "type": "string",
+          "pattern": "^v\\d+$"
+        },
+        "jurisdictionsFrom": {
+          "$ref": "#/$defs/IsoDate"
+        },
+        "sources": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "source": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Source id in docs/data-sources.md"
+              },
+              "text": {
+                "type": "string",
+                "minLength": 1
+              },
+              "licence": {
+                "type": "string",
+                "minLength": 1
+              },
+              "url": {
+                "type": "string",
+                "format": "uri"
+              }
+            },
+            "required": [
+              "source",
+              "text",
+              "licence",
+              "url"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "h3Resolution": {
+          "type": "number",
+          "const": 4
+        },
+        "meshVersion": {
+          "type": "string",
+          "pattern": "^v\\d+$"
+        },
+        "layer": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The repository path of the land-clipped TopoJSON layer"
+        },
+        "landEdgeMetres": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "Land along a common edge that makes a land link"
+        }
+      },
+      "required": [
+        "unitName",
+        "censusYear",
+        "gdpMethod",
+        "gdpReferenceYear",
+        "gdpPrices",
+        "atlasVersion",
+        "jurisdictionsFrom",
+        "sources",
+        "h3Resolution",
+        "meshVersion",
+        "layer",
+        "landEdgeMetres"
+      ],
+      "additionalProperties": false
+    },
+    "HexRow": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^84[0-9a-f]{13}$",
+          "description": "The H3 index of a resolution-4 cell, lower-case hex"
+        },
+        "centroid": {
+          "type": "array",
+          "prefixItems": [
+            {
+              "type": "number",
+              "minimum": -180,
+              "maximum": 180
+            },
+            {
+              "type": "number",
+              "minimum": -90,
+              "maximum": 90
+            }
+          ],
+          "items": false,
+          "minItems": 2,
+          "maxItems": 2,
+          "description": "[lng, lat], H3 centre"
+        },
+        "province": {
+          "type": "string",
+          "enum": [
+            "NL",
+            "PE",
+            "NS",
+            "NB",
+            "QC",
+            "ON",
+            "MB",
+            "SK",
+            "AB",
+            "BC",
+            "YT",
+            "NT",
+            "NU"
+          ],
+          "description": "The province or territory holding most of its land"
+        },
+        "cells": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "maximum": 9007199254740991,
+          "description": "Mesh cells (resolution 5) whose parent it is"
+        },
+        "population": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991,
+          "description": "2021 census"
+        },
+        "areaKm2": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Land area: the hexagon clipped to the shoreline; 0 for open water (Great Lakes)"
+        },
+        "score": {
+          "$ref": "#/$defs/UnitScore"
+        },
+        "shares": {
+          "$ref": "#/$defs/UnitShares"
+        },
+        "urbanClass": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991,
+          "description": "Key into lookups.urbanClass"
+        },
+        "industryDominant": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991,
+          "description": "Two-digit NAICS sector, 0 when nobody lives there"
+        },
+        "ecozone": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991,
+          "description": "Key into lookups.ecozone"
+        },
+        "places": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/HexPlace"
+          },
+          "description": "Every places.v1 place whose point is in the hexagon, population descending"
+        },
+        "neighbours": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^84[0-9a-f]{13}$"
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "land",
+                  "water"
+                ],
+                "description": "land: some of the common edge is on land"
+              }
+            },
+            "required": [
+              "id",
+              "kind"
+            ],
+            "additionalProperties": false
+          },
+          "description": "Hexagons in the table sharing an edge, ascending by id"
+        },
+        "jurisdictions": {
+          "minItems": 1,
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/UnitJurisdiction"
+          },
+          "description": "Contiguous spans from meta.jurisdictionsFrom to today"
+        }
+      },
+      "required": [
+        "id",
+        "centroid",
+        "province",
+        "cells",
+        "population",
+        "areaKm2",
+        "score",
+        "shares",
+        "urbanClass",
+        "industryDominant",
+        "ecozone",
+        "places",
+        "neighbours",
+        "jurisdictions"
+      ],
+      "additionalProperties": false
+    },
+    "HexPlace": {
+      "type": "object",
+      "properties": {
+        "csd": {
+          "type": "string",
+          "pattern": "^\\d{7}$",
+          "description": "StatCan CSDUID, as in places.v1"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "population": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "maximum": 9007199254740991,
+          "description": "The whole CSD, 2021 census"
+        },
+        "csdType": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Statistics Canada's CSD type code, key into lookups.csdType"
+        }
+      },
+      "required": [
+        "csd",
+        "name",
+        "population",
+        "csdType"
       ],
       "additionalProperties": false
     }

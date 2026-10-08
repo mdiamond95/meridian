@@ -70,9 +70,26 @@ def test_codes_nest():
         assert cell["csd"].startswith(cell["cd"])
 
 
+def consumer_files() -> set:
+    """Unit tables and the layers they name (docs/interop.md, "Unit tables"): fetched by other projects
+    by raw URL, never by the app, so outside the app's budget."""
+    out = set()
+    for path in BUILD.glob("*.json.gz"):
+        with gzip.open(path, "rt", encoding="utf-8") as fh:
+            head = fh.read(200)
+        if '"format":"meridian.unitTable"' in head:
+            out.add(path)
+            layer = load(path)["meta"].get("layer")
+            if layer:
+                out.add(BUILD.parent.parent / layer)
+    return out
+
+
 def test_artefacts_fit_the_size_budget():
-    """Phase 1 gate: everything in data/build/ under 8 MB."""
-    total = sum(p.stat().st_size for p in BUILD.rglob("*") if p.is_file())
+    """Phase 1 gate: the data the app loads, everything in data/build/ but the consumer-only unit
+    tables and their layers (1.0.4), under 8 MB."""
+    skip = consumer_files()
+    total = sum(p.stat().st_size for p in BUILD.rglob("*") if p.is_file() and p not in skip)
     assert total < 8_000_000, f"{total:,} bytes"
 
 

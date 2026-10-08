@@ -88,3 +88,9 @@ export function isUnitTable(text: string): boolean {
     return false;
   }
 }
+
+/** The repository path of the layer a unit table names in `meta.layer` (h3_r4, 1.0.4), else null. */
+export function unitTableLayer(text: string): string | null {
+  const layer = (JSON.parse(text) as { meta?: { layer?: unknown } }).meta?.layer;
+  return typeof layer === 'string' && /^data\/build\/[\w./-]+\.gz$/.test(layer) ? layer : null;
+}

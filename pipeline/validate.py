@@ -102,30 +102,39 @@ def semantic_errors(doc: Any) -> list[str]:
 
 
 def unit_table_errors(doc: dict) -> list[str]:
-    """app/src/schema/unitTable.ts's superRefine: sorted ids, symmetric ascending neighbours, places by
-    population descending, contiguous jurisdiction spans from meta.jurisdictionsFrom to today."""
+    """app/src/schema/unitTable.ts's checkRows: sorted ids, symmetric ascending neighbours (of the same
+    kind, for h3_r4), lookup keys, places by population descending, contiguous jurisdiction spans
+    from meta.jurisdictionsFrom to today."""
     errors: list[str] = []
     rows = doc["rows"]
+    nid = lambda n: n["id"] if isinstance(n, dict) else n  # noqa: E731
     ids = {r["id"] for r in rows}
-    neighbours = {r["id"]: set(r["neighbours"]) for r in rows}
+    links = {r["id"]: {nid(n): n for n in r["neighbours"]} for r in rows}
     for i, row in enumerate(rows):
         at = f"rows[{i}]"
         if i and rows[i - 1]["id"] >= row["id"]:
             errors.append(f"{at}.id: rows not strictly sorted by id")
-        for name in ("urbanClass", "industryDominant"):
-            if str(row[name]) not in doc["lookups"][name]:
+        for name in ("urbanClass", "industryDominant", "ecozone"):
+            if name in row and str(row[name]) not in doc["lookups"][name]:
                 errors.append(f"{at}.{name}: not in lookups")
-        ns = row["neighbours"]
+        ns = [nid(n) for n in row["neighbours"]]
         if any(b <= a for a, b in zip(ns, ns[1:], strict=False)):
             errors.append(f"{at}.neighbours: not strictly ascending")
-        for n in ns:
-            if n == row["id"] or n not in ids:
-                errors.append(f"{at}.neighbours: {n} is itself or not a row")
-            elif row["id"] not in neighbours[n]:
-                errors.append(f"{at}.neighbours: {n} does not list {row['id']}")
+        for n in row["neighbours"]:
+            k = nid(n)
+            back = links.get(k, {}).get(row["id"])
+            if k == row["id"] or k not in ids:
+                errors.append(f"{at}.neighbours: {k} is itself or not a row")
+            elif back is None:
+                errors.append(f"{at}.neighbours: {k} does not list {row['id']}")
+            elif isinstance(n, dict) and back["kind"] != n["kind"]:
+                errors.append(f"{at}.neighbours: {k} lists {row['id']} with another kind")
         order = [(-p["population"], p["csd"]) for p in row["places"]]
         if any(b <= a for a, b in zip(order, order[1:], strict=False)):
             errors.append(f"{at}.places: not sorted by population descending, then csd")
+        for p in row["places"]:
+            if "csdType" in p and p["csdType"] not in doc["lookups"]["csdType"]:
+                errors.append(f"{at}.places: csdType {p['csdType']} not in lookups")
         spans = row["jurisdictions"]
         if spans[0]["from"] != doc["meta"]["jurisdictionsFrom"]:
             errors.append(f"{at}.jurisdictions[0]: must start at meta.jurisdictionsFrom")

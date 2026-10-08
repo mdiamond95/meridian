@@ -7,12 +7,12 @@ artefacts. It runs once per data refresh, not in the browser.
 
 ```sh
 make download     # fetch every source in docs/data-sources.md into data/raw/ (idempotent)
-make build        # mesh → attrs → layers → atlas → ridings, then write data/build/SHA256SUMS and validate
+make build        # mesh → attrs → layers → atlas → ridings → hexes, then write data/build/SHA256SUMS and validate
 make verify       # rebuild into a temp dir and confirm byte-identical output
 make test         # pytest: contracts, units, and the Phase 1 and 2 gate checks
 ```
 
-From the repo root, `make download`, `make build`, `make atlas`, `make ridings` and `make verify` forward here.
+From the repo root, `make download`, `make build`, `make atlas`, `make ridings`, `make hexes` and `make verify` forward here.
 
 `make build` needs everything that `make download` fetched. Two sources are special:
 
@@ -43,6 +43,8 @@ From the repo root, `make download`, `make build`, `make atlas`, `make ridings` 
 | `data/build/cells.v1.topojson.gz` | `polygons.py` (`cells`, `splitter_inputs.py`) | `docs/schemas/topojson.schema.json` |
 | `data/build/snap.v1.json.gz` | `polygons.py` (`snap`, `splitter_inputs.py`) | `docs/schemas/snap.schema.json` |
 | `data/build/ridings.v1.json.gz` | `ridings.py` | `docs/schemas/unitTable.schema.json` |
+| `data/build/hexes.r4.v1.json.gz` | `hexes.py` | `docs/schemas/unitTable.schema.json` |
+| `data/build/layers/hexes.r4.v1.topojson.gz` | `hexes.py` | `docs/schemas/topojson.schema.json` |
 
 `pipeline/artefacts.yaml` is the plan: `make dry-run` prints it, and `make validate` checks every
 file in `data/build/` against its schema. The methods for each attribute column are in the
@@ -58,7 +60,17 @@ ridings layer and the atlas from `data/build/`, so it runs last.
 
 **A released table never changes** (docs/interop.md, versioning rule 7, checked by
 `npm run packs:check -w app`). If a refresh (GDP each May, say) changes it, write the rebuild to
-`ridings.v1.2.json.gz` and keep the released file and its recipe rebuildable.
+`ridings.v1.2.json.gz` and keep the released file and its recipe rebuildable. The same goes for the
+hex table and its layer.
+
+## The hex table
+
+`make hexes` (after `ridings`) writes `data/build/hexes.r4.v1.json.gz`, a unit table with one row per
+H3 resolution-4 hexagon that holds a mesh cell (6,011), and `data/build/layers/hexes.r4.v1.topojson.gz`,
+each hexagon clipped to land. The unit is coarser than the mesh, so the census values are aggregated
+from the mesh cells as a pack region aggregates them; land, provinces, neighbours and jurisdictions
+come from the CSDs and the atlas. The methods are in the `hexes.py` docstring; the code shared with
+`ridings.py` is in `unittables.py`. Both files are immutable once released, like the riding table.
 
 ## The historical atlas
 
@@ -156,8 +168,9 @@ Each source's release cadence is in `docs/data-sources.md`.
 3. Run `make verify`, alone, with the editor's extra windows closed (`docs/perf.md`).
 4. Only the artefacts built from that input should change. For GDP, that is
    `attrs.v1.json.gz`: `mesh.v1` and `cells.v1` must be byte-identical. If the mesh changed, stop:
-   this is a new mesh version (B). GDP also feeds `ridings.v1.json.gz`, which is immutable once
-   released: write the new table to the next numbered name (`ridings.v1.2.json.gz`) instead.
+   this is a new mesh version (B). GDP also feeds `ridings.v1.json.gz` and `hexes.r4.v1.json.gz`, which
+   are immutable once released: write each new table to the next numbered name
+   (`ridings.v1.2.json.gz`, `hexes.r4.v1.2.json.gz`) instead.
 5. In the app:
    - Run `npm run presets -w app`. Assignments do not change unless a lens reads the refreshed
      column. The dossiers, scores and set analysis in the packs do.
@@ -177,7 +190,9 @@ Each source's release cadence is in `docs/data-sources.md`.
 **2. Version**
 - Set `MESH_VERSION = "v2"` in `common.py`.
 - Every mesh-keyed output is renamed: `mesh.v2.json.gz`, `attrs.v2.json.gz`,
-  `cells.v2.topojson.gz`, `places.v2.json.gz` and `snap.v2.json.gz`.
+  `cells.v2.topojson.gz`, `places.v2.json.gz`, `snap.v2.json.gz`, and the hex table and its layer
+  (`hexes.r4.v2.json.gz`, `layers/hexes.r4.v2.topojson.gz`), whose rows follow the mesh. The riding
+  table is not mesh-keyed.
 - The atlas, contact and Indigenous artefacts are not mesh-keyed. They keep `v1` unless their own
   contract changes; `indigenous` reads census language data through `attrs`, not directly.
 - Add the new outputs to `artefacts.yaml`.

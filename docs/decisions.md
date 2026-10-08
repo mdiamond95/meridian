@@ -1212,3 +1212,123 @@ Privy Council decision.
 - **Memory:** the first run peaked at 2.2 GB in the jurisdiction overlay, above the ~1.7 GB headroom
   `docs/perf.md` gives this machine. Overlays now run in chunks of 20,000 and keep only areas where no
   geometry is needed. Peak RSS is 1,714 MB, about attrs' 1,740, and the output is byte-identical.
+
+## 2026-10-08 — Release 1.0.4: a hex unit table for consumers
+
+The brief (Mark): House of Cards is trying a hex board in place of the ridings, which run from 7 km² to
+2 million km². The trial unit is the H3 resolution-4 hexagon. Meridian publishes a second unit table,
+`h3_r4`, and the hexagons clipped to land, to draw.
+
+### Built from cells, this time
+- **The unit is coarser than the mesh,** with up to seven resolution-5 cells to a hexagon, so
+  `pipeline/hexes.py` aggregates the mesh cells, as the brief said. It aggregates them **exactly as a
+  pack region does** (`app/src/dossier/stats.ts`): population and GDP are summed, and the shares and
+  industry shares are weighted by cell population. A hexagon therefore scores what a region made of
+  its cells would. This is the pack's approximation of a labour-force share, not the riding table's
+  direct measure (1.0.3), because attrs keeps only each cell's shares, not its labour counts.
+  - A hexagon with nobody in it has every share 0 and `industryDominant` 0, which the lookup labels
+    "no data", as `stats.ts` treats an empty region.
+- **`urbanClass` and `ecozone`** apply attrs' own rules one level up. Urban class is the class holding
+  most of the hexagon's people, cell by cell, else rural or remote by density over land. Ecozone is
+  the one covering most of the cells' area.
+- **Land, province, neighbours and jurisdictions do not come from cells.** They come from the 2021
+  cartographic CSDs and the atlas, as for the ridings. Land is the hexagon intersected with the CSDs,
+  and `province` is the province holding most of that land, as briefed.
+  - Mark's 5,000+ counts used the majority of cells. One hexagon differs: `842b909…` (22,011 people,
+    on Lake Timiskaming: Temiskaming Shores and Ville-Marie) has most of its land in Ontario and most
+    of its cells in Quebec. The table has
+    QC 85 and ON 96 where a cell count gives 86 and 95. Every other province matches.
+- **The code shared with `ridings.py` moved to `pipeline/unittables.py`:** the tiled overlays, the
+  TopoJSON decoder, arc adjacency and the jurisdiction spans. `ridings.v1.json.gz` was rebuilt after
+  the move and is byte-identical (`60f048f4…`).
+
+### Open water
+- **21 rows have no land:** hexagons in Lakes Superior, Huron, Erie and Ontario. They are in the mesh
+  because its inclusion rule counts the Atlas of Canada's inland water as land, so they are rows under
+  the brief's definition (every parent of a mesh cell). They were kept, not dropped:
+  - `areaKm2` is 0;
+  - `province` is that of most of their cells (Ontario);
+  - the layer has a null geometry for each, so it keeps one geometry per id;
+  - with no land they overlap no unit, so every jurisdiction span is the nearest unit with
+    `fallback: true`, as briefed for no overlap. All 21 resolve to Ontario.
+- **Which lakes are water is the CSDs' choice, as for the ridings.** The brief asked for land "as
+  ridings.v1 measures it" and for the layer to use "the same shoreline and large lakes". The
+  cartographic CSDs leave out the sea, Hudson Bay, the Great Lakes and Lake of the Woods. They include
+  Lake Winnipeg, Lake Manitoba, Great Bear and Great Slave Lakes, Lake Athabasca, Lake Nipigon and
+  Lac Saint-Jean, so those count as land in both tables and in the layer. The image shows it.
+  - **Decision for Mark:** removing the large inland lakes would need a water source (the Atlas of
+    Canada 1:1M polygons) and would change `areaKm2` against the ridings' definition. It can only go
+    into new files.
+
+### Fallbacks
+23 rows carry a fallback span: the 21 lakes, and two more.
+- **`842b0a7…`, the southern tip of Cape Sable Island** (9 km² of the island, 725 people, by Clark's
+  Harbour): the atlas's simplified coast (about 750 m, islands under 2 km² dropped) misses that piece,
+  so the nearest unit, Nova Scotia, is used for every span.
+- **`840eeab…`, Charlton Island in James Bay:** one span only, 1927–1999. The atlas's drawings for
+  that period do not cover the island, and the nearest unit is the District of Keewatin, which is the
+  right answer.
+  - The atlas also puts the island in Quebec from 1898 to 1927. That looks like the 1898 Quebec
+    drawing taking the James Bay islands, which stayed in the North-West Territories. It is an atlas
+    question, not changed here.
+
+### Neighbours
+- **The rule, as briefed:** hexagons sharing an H3 edge are linked. The link is `"land"` when at least
+  1 m of the common edge lies on land (the CSDs), else `"water"`.
+  - The edge is H3's own boundary between the two cells, projected as the hexagons are, and it is
+    measured against the CSD polygons, not against each hexagon's clipped land.
+  - The threshold is a floor against rounding only: no edge carries between 0 and 1 m.
+- **17,023 links:** 16,599 land, 424 water, all symmetric. Every 5,000+ hexagon has a land neighbour.
+- **The rule measures the edge, not the crossing.** A hexagon is about 45 km across. The Strait of
+  Belle Isle is about 15 km wide, so the hexagons over it hold both shores, their common edges lie on
+  land, and Newfoundland is linked to Labrador by land.
+  - The Northumberland Strait gives seven land links and nine water links between Prince Edward Island
+    and the mainland.
+  - Vancouver Island reaches the mainland by land through the Gulf Islands: the edge between the North
+    Cowichan hexagon and the Gibsons–Bowen Island hexagon lies on island land.
+  - So all three of the brief's water examples are joined to the mainland by at least one land link.
+  - Not tuned; `docs/interop.md` says it outright.
+  - **Decision for Mark:** if the board needs straits to read as water, the rule has to look inside
+    the hexagon, for example by requiring the land on each side of the edge to be connected within
+    each hexagon. That is a new `kind` rule, so it would go into a new file.
+
+### Places and CSD types
+- **The boundary file carries `CSDTYPE`** (it was already in the fetch's `outFields`), so the brief's
+  stop condition did not apply. It has 56 codes.
+- **The labels are Statistics Canada's.** They come from Table 4.4 of 92-500-G (2020), the reference
+  guide to the 2021 boundary files. Three codes in our file (GR, TAL, TWL) are missing there, so their
+  labels come from Table 4.2 of 92-500-G (2025). The 2021 dictionary page itself refuses this network
+  (403).
+  - The build fails on any code without a label.
+  - The source's own oddities are kept, for example North Battleford typed `CN`, "Crown colony".
+- **Places go to the hexagon H3 puts their point in,** an exact test on the grid's own boundaries. One
+  place falls in a hexagon with no mesh cell and goes to its mesh cell's hexagon instead.
+- **"City, town, village or the like"** was counted with the codes C, CY, CV, CÉ, V, T, TV, VL, VC, VK,
+  VN, NV, NVL, SV, RV, HAM, NH, CC, CG, SET and SÉ: 349 of the 439 5,000+ hexagons have one.
+  - Adding the generic municipal types (RGM, MRM, MU, M, MÉ, DM, SM, IM, RMU) gives 391. Halifax is
+    RGM, and Clarington and Chatham-Kent are MU.
+  - Most of the rest are the fringes of cities whose CSD point lies in the next hexagon; 15 have no
+    place at all.
+
+### Contract and immutability
+- **The schema is now a union on `unit`.** `fed_2023` keeps its 1.0.3 row shape exactly, and
+  `ridings.v1` validates unchanged. `h3_r4` has its own rows, meta and lookups, and its own GDP caveat
+  text, worded for cells and hexagons.
+  - A reader validating against the 1.0.3 schema rejects a hex table; `docs/interop.md` says so, as
+    the Migrations note did for the `provinces` scope.
+  - The shared invariants (sorted ids, symmetric neighbours of the same kind, lookup keys, sorted
+    places, contiguous spans) are one function in Zod, mirrored in `validate.py`.
+- **The layer is immutable with its table.** The table names it in `meta.layer`. `npm run packs:check`
+  reads that field from every unit table at the previous release and compares the named file too, so
+  a future table with a layer needs no list.
+
+### The 8 MB budget
+- **The Phase 1 size gate failed** with the hex files in: `data/build/` came to 9.05 MB against 8 MB.
+  It was 7.99 MB at `v1.0.3`, and the two hex files add 1.06 MB.
+- **The budget is for the data the app loads,** and the app bundles only the artefacts it references:
+  `mesh`, `attrs`, the layers and the rest are in `dist`, while the riding and hex tables are not.
+  Other projects fetch those by raw URL.
+- **So the test now leaves out the unit tables and the layers they name,** found by their `format`,
+  rather than raising the number. The app's data is 7.90 MB, with about 100 KB of headroom.
+  - **Decision for Mark:** the gate was set in Phase 1. If it should count every file, it needs a new
+    number. Either way, the next app-loaded artefact will need room.
