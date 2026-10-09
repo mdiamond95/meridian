@@ -2,7 +2,13 @@
 import { readFileSync } from 'node:fs';
 import { gunzipSync } from 'node:zlib';
 import { describe, expect, it } from 'vitest';
-import { UnitTableSchema, type HexTable, type RidingTable, type UnitTable } from './unitTable';
+import {
+  UnitTableSchema,
+  type CityHexTable,
+  type HexTable,
+  type RidingTable,
+  type UnitTable,
+} from './unitTable';
 
 /** The committed unit tables parse with the Zod contract, which pytest checks through the export too. */
 const read = <T>(name: string) =>
@@ -11,6 +17,8 @@ const read = <T>(name: string) =>
   ) as T;
 const ridings = read<RidingTable>('ridings.v1.json.gz');
 const hexes = read<HexTable>('hexes.r4.v1.json.gz');
+const board = read<HexTable>('hexes.r4.v1.2.json.gz');
+const cities = read<CityHexTable>('hexes.r5.v1.json.gz');
 const issues = (doc: UnitTable) => UnitTableSchema.safeParse(doc).error?.issues.map((i) => i.message) ?? [];
 
 describe('UnitTable fed_2023', () => {
@@ -67,6 +75,48 @@ describe('UnitTable h3_r4', () => {
   it('is not a riding table: the unit decides the row shape', () => {
     const doc = structuredClone(hexes) as unknown as RidingTable;
     (doc as { unit: string }).unit = 'fed_2023';
+    expect(UnitTableSchema.safeParse(doc).success).toBe(false);
+  });
+});
+
+describe('UnitTable h3_r4, 1.0.5 (hexes.r4.v1.2)', () => {
+  it('parses, with every person in a row with land', () => {
+    expect(issues(board)).toEqual([]);
+    expect(board.rows.reduce((sum, r) => sum + r.population, 0)).toBe(36_991_981);
+    expect(board.rows.every((r) => r.areaKm2 > 0 && r.landPoint !== undefined)).toBe(true);
+    expect(board.meta.neighbourRule).toBe('principalLand');
+  });
+
+  it("refuses a settled year that is not its source's", () => {
+    const doc = structuredClone(board);
+    const row = doc.rows.find((r) => r.settledYear != null);
+    if (!row?.settledYear) throw new Error('no dated row');
+    row.settledYear += 1;
+    expect(issues(doc)).toEqual([expect.stringMatching(/settledYear and settledSource disagree/)]);
+  });
+});
+
+describe('UnitTable h3_r5 (hexes.r5.v1)', () => {
+  it('parses, with neighbours outside the table', () => {
+    expect(issues(cities)).toEqual([]);
+    const ids = new Set(cities.rows.map((r) => r.id));
+    expect(cities.rows.some((r) => r.neighbours.some((n) => !ids.has(n.id)))).toBe(true);
+  });
+
+  it('refuses a neighbour in the table that does not list it back', () => {
+    const doc = structuredClone(cities);
+    const ids = new Set(doc.rows.map((r) => r.id));
+    const row = doc.rows.find((r) => r.neighbours.some((n) => ids.has(n.id)));
+    if (!row) throw new Error('no link inside the table');
+    const other = doc.rows.find((r) => r.id === row.neighbours.find((n) => ids.has(n.id))?.id);
+    if (!other) throw new Error('no neighbour row');
+    other.neighbours = other.neighbours.filter((n) => n.id !== row.id);
+    expect(issues(doc)).toEqual([expect.stringMatching(/does not list/)]);
+  });
+
+  it('is not a resolution-4 table', () => {
+    const doc = structuredClone(cities) as unknown as HexTable;
+    (doc as { unit: string }).unit = 'h3_r4';
     expect(UnitTableSchema.safeParse(doc).success).toBe(false);
   });
 });

@@ -164,3 +164,27 @@ artefacts:
     outputs:
       - { path: data/build/hexes.r4.v1.json.gz, schema: docs/schemas/unitTable.schema.json }
       - { path: data/build/layers/hexes.r4.v1.topojson.gz, schema: docs/schemas/topojson.schema.json }
+
+  # The 1.0.5 hex board: hexes.r4.v1 regenerated with the large lakes as water, the principal-land
+  # neighbour rule and settlement dates (written beside it, rule 7), and the city hexes, the
+  # resolution-5 mesh cells of the hexagons of 100,000 people or more. Immutable once released.
+  - id: hexboard
+    phase: 8
+    step: pipeline/hexboard.py
+    description: H3 resolution-4 hexagons with lakes as water and settlement dates (h3_r4, v1.2), city hexes at resolution 5 (h3_r5), and their land-clipped layers
+    inputs:
+      - statcan_csd_2021
+      - statcan_da_2021
+      - statcan_cma_2021
+      - statcan_profile_da_2021
+      - statcan_profile_csd_2021
+      - statcan_gdp_36100711
+      - aafc_ecozones
+      - nrcan_atlas_waterbodies_1m
+      - nrcan_atlas_islands_1m
+      - wikidata_csd_dates
+    outputs:
+      - { path: data/build/hexes.r4.v1.2.json.gz, schema: docs/schemas/unitTable.schema.json }
+      - { path: data/build/layers/hexes.r4.v1.2.topojson.gz, schema: docs/schemas/topojson.schema.json }
+      - { path: data/build/hexes.r5.v1.json.gz, schema: docs/schemas/unitTable.schema.json }
+      - { path: data/build/layers/hexes.r5.v1.topojson.gz, schema: docs/schemas/topojson.schema.json }

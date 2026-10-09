@@ -7,12 +7,12 @@ artefacts. It runs once per data refresh, not in the browser.
 
 ```sh
 make download     # fetch every source in docs/data-sources.md into data/raw/ (idempotent)
-make build        # mesh → attrs → layers → atlas → ridings → hexes, then write data/build/SHA256SUMS and validate
+make build        # mesh → attrs → layers → atlas → ridings → hexes → hexboard, then write data/build/SHA256SUMS and validate
 make verify       # rebuild into a temp dir and confirm byte-identical output
 make test         # pytest: contracts, units, and the Phase 1 and 2 gate checks
 ```
 
-From the repo root, `make download`, `make build`, `make atlas`, `make ridings`, `make hexes` and `make verify` forward here.
+From the repo root, `make download`, `make build`, `make atlas`, `make ridings`, `make hexes`, `make hexboard` and `make verify` forward here.
 
 `make build` needs everything that `make download` fetched. Two sources are special:
 
@@ -25,6 +25,8 @@ From the repo root, `make download`, `make build`, `make atlas`, `make ridings`,
 - **`wikidata_indigenous_communities`** (`sparql:` fetcher): the query is
   `atlas/indigenous_communities.rq`. The manifest records the query file's path, not its text, so
   after editing the query run `make download ARGS="--only wikidata_indigenous_communities --refresh"`.
+- **`wikidata_csd_dates`** (`sparql:` fetcher, 1.0.5): the query is `csd_dates.rq`; refresh it the
+  same way. A refresh changes the dates in the hex board, so it can only go into new files.
 - **Native Land Digital** is declined permanently and has no source row or fetch path
   (docs/decisions.md, 2026-09-16).
 
@@ -45,6 +47,8 @@ From the repo root, `make download`, `make build`, `make atlas`, `make ridings`,
 | `data/build/ridings.v1.json.gz` | `ridings.py` | `docs/schemas/unitTable.schema.json` |
 | `data/build/hexes.r4.v1.json.gz` | `hexes.py` | `docs/schemas/unitTable.schema.json` |
 | `data/build/layers/hexes.r4.v1.topojson.gz` | `hexes.py` | `docs/schemas/topojson.schema.json` |
+| `data/build/hexes.r4.v1.2.json.gz`, `data/build/hexes.r5.v1.json.gz` | `hexboard.py` | `docs/schemas/unitTable.schema.json` |
+| `data/build/layers/hexes.r4.v1.2.topojson.gz`, `data/build/layers/hexes.r5.v1.topojson.gz` | `hexboard.py` | `docs/schemas/topojson.schema.json` |
 
 `pipeline/artefacts.yaml` is the plan: `make dry-run` prints it, and `make validate` checks every
 file in `data/build/` against its schema. The methods for each attribute column are in the
@@ -71,6 +75,20 @@ each hexagon clipped to land. The unit is coarser than the mesh, so the census v
 from the mesh cells as a pack region aggregates them; land, provinces, neighbours and jurisdictions
 come from the CSDs and the atlas. The methods are in the `hexes.py` docstring; the code shared with
 `ridings.py` is in `unittables.py`. Both files are immutable once released, like the riding table.
+
+## The hex board (1.0.5)
+
+`make hexboard` (after `hexes`) writes `data/build/hexes.r4.v1.2.json.gz`, the hex table regenerated
+beside the released `hexes.r4.v1` (versioning rule 7), and `data/build/hexes.r5.v1.json.gz`, the city
+hexes, with their land-clipped layers. Three things are new:
+- **Large lakes are water.** `landlinks.py` takes the Atlas of Canada 1:1M lakes of 1,000 km² or more
+  out of the CSDs where the CSDs count them as land, less the Atlas's islands.
+- **The neighbour rule reads straits as water.** `landlinks.py` closes each cell's land by 600 m and
+  links two cells only where the landmasses they stand for meet.
+- **Settlement dates** come from Wikidata through `settled.py`.
+
+The methods are in the `hexboard.py`, `landlinks.py` and `settled.py` docstrings, and the contract is
+in `docs/interop.md`, "The 1.0.5 hex board". It takes about 12 minutes and peaks at about 1.8 GB.
 
 ## The historical atlas
 

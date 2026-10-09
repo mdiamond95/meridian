@@ -3,6 +3,27 @@
 One entry per release tag. Each phase was merged to `main` after `pre-phase<N>` was tagged. The
 detail is in `docs/log/` (what happened in each session) and `docs/decisions.md` (why).
 
+## v1.0.5 — 2026-10-09
+
+- **Water that reads as water** (`data/build/hexes.r4.v1.2.json.gz` and its layer). This is the hex
+  table regenerated beside the released one, with the same hexagon ids.
+  - The 57 large lakes are water. Lake Winnipeg, Lake Manitoba, Winnipegosis, Great Slave, Great Bear,
+    Athabasca, Reindeer, Nipigon and Lac Saint-Jean are no longer land; the Great Lakes and Lake of
+    the Woods already were. Hexagons that are only lake are gone.
+  - A neighbour link is land only where the land the two hexagons stand for meets. Newfoundland,
+    Prince Edward Island, Vancouver Island, Anticosti, Haida Gwaii and the Magdalens are reached only
+    across water. Cape Breton, Montréal, Laval and Manitoulin are still joined to the mainland.
+  - Each hexagon has a point on its land, for placing a counter.
+- **City hexes** (`data/build/hexes.r5.v1.json.gz` and its layer). The hexagons of 100,000 people or
+  more are split into their 7 smaller cells, so Toronto is no longer one hexagon. A game chooses which
+  to split, and each city hex knows its neighbours outside the split.
+- **Settlement dates.** Each hexagon has the year of the earliest dated founding or incorporation among
+  its places, from Wikidata, with the place and the statement it comes from. The bigger hexagons also
+  have the year their main place became a city. Amalgamations are not foundings: where Wikidata cannot
+  tell one from the other, the year is left empty rather than guessed.
+- **`docs/interop.md`** describes both tables, the lakes, the new neighbour rule and the dates. The
+  released hex table and its layer are unchanged.
+
 ## v1.0.4 — 2026-10-08
 
 - **A hex table for a hex board** (`data/build/hexes.r4.v1.json.gz`). One row for each of the 6,011

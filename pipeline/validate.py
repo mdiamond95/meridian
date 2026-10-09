@@ -103,9 +103,11 @@ def semantic_errors(doc: Any) -> list[str]:
 
 def unit_table_errors(doc: dict) -> list[str]:
     """app/src/schema/unitTable.ts's checkRows: sorted ids, symmetric ascending neighbours (of the same
-    kind, for h3_r4), lookup keys, places by population descending, contiguous jurisdiction spans
-    from meta.jurisdictionsFrom to today."""
+    kind, for the hexagons; an h3_r5 row may list cells outside the table), lookup keys, places by
+    population descending, contiguous jurisdiction spans from meta.jurisdictionsFrom to today, and
+    each settled or city year the year of its source."""
     errors: list[str] = []
+    outside = doc["unit"] == "h3_r5"
     rows = doc["rows"]
     nid = lambda n: n["id"] if isinstance(n, dict) else n  # noqa: E731
     ids = {r["id"] for r in rows}
@@ -123,8 +125,10 @@ def unit_table_errors(doc: dict) -> list[str]:
         for n in row["neighbours"]:
             k = nid(n)
             back = links.get(k, {}).get(row["id"])
-            if k == row["id"] or k not in ids:
+            if k == row["id"] or (k not in ids and not outside):
                 errors.append(f"{at}.neighbours: {k} is itself or not a row")
+            elif k not in ids:
+                continue
             elif back is None:
                 errors.append(f"{at}.neighbours: {k} does not list {row['id']}")
             elif isinstance(n, dict) and back["kind"] != n["kind"]:
@@ -135,6 +139,12 @@ def unit_table_errors(doc: dict) -> list[str]:
         for p in row["places"]:
             if "csdType" in p and p["csdType"] not in doc["lookups"]["csdType"]:
                 errors.append(f"{at}.places: csdType {p['csdType']} not in lookups")
+        for what in ("settled", "city"):
+            if f"{what}Year" not in row:
+                continue
+            year, source = row[f"{what}Year"], row.get(f"{what}Source")
+            if (year is None) != (source is None) or (source and int(source["date"][:4]) != year):
+                errors.append(f"{at}.{what}Year: {what}Year and {what}Source disagree")
         spans = row["jurisdictions"]
         if spans[0]["from"] != doc["meta"]["jurisdictionsFrom"]:
             errors.append(f"{at}.jurisdictions[0]: must start at meta.jurisdictionsFrom")

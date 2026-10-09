@@ -1,0 +1,79 @@
+# Founding, incorporation and city dates for census subdivisions, by Statistics Canada geographic
+# code. Meridian source `wikidata_csd_dates` (docs/data-sources.md); Wikidata is CC0. `make download`
+# sends this file to https://query.wikidata.org/sparql and pins the sorted result by hash. Read by
+# pipeline/settled.py, which applies the rules (docs/interop.md, "Settlement dates").
+#
+# One row per fact, `kind` saying which:
+#   label                 the item's English label.
+#   inception             an inception (P571) of the item, with its precision (9 year, 10 month, 11 day).
+#   instance              an "instance of" (P31) statement of the item that has a start time (P580):
+#                         the class and the start.
+#   predecessor           a predecessor on record: an item the place's item replaces (P1365), or one
+#                         that names the place's item as what replaced it (P1366). `via` is the
+#                         predecessor, `label` its English label.
+#   predecessorInception  an inception of a predecessor (`via`).
+#   predecessorInstance   a dated "instance of" statement of a predecessor (`via`).
+#   class                 for every class in a dated "instance of" statement above, whether it is a
+#                         subclass of city (Q515), `label` "city", or of city or town (Q7930989) or
+#                         town (Q3957), `label` "cityOrTown". A class may have both rows.
+# The code is read from every non-deprecated P3012 statement, not wdt:P3012: Toronto's preferred
+# code is its census division's (3520), and its subdivision's (3520005) has normal rank.
+# Deprecated statements are skipped throughout.
+SELECT ?code ?item ?kind ?via ?class ?time ?precision ?label WHERE {
+  {
+    ?item p:P3012 ?codeStatement .
+    ?codeStatement ps:P3012 ?code ; wikibase:rank ?codeRank .
+    FILTER(STRLEN(?code) = 7 && ?codeRank != wikibase:DeprecatedRank)
+    ?item rdfs:label ?label . FILTER(LANG(?label) = "en")
+    BIND("label" AS ?kind)
+  } UNION {
+    ?item p:P3012 ?codeStatement .
+    ?codeStatement ps:P3012 ?code ; wikibase:rank ?codeRank .
+    FILTER(STRLEN(?code) = 7 && ?codeRank != wikibase:DeprecatedRank)
+    ?item p:P571 ?st . ?st wikibase:rank ?rank . FILTER(?rank != wikibase:DeprecatedRank)
+    ?st psv:P571 [ wikibase:timeValue ?time ; wikibase:timePrecision ?precision ] .
+    BIND("inception" AS ?kind)
+  } UNION {
+    ?item p:P3012 ?codeStatement .
+    ?codeStatement ps:P3012 ?code ; wikibase:rank ?codeRank .
+    FILTER(STRLEN(?code) = 7 && ?codeRank != wikibase:DeprecatedRank)
+    ?item p:P31 ?st . ?st wikibase:rank ?rank . FILTER(?rank != wikibase:DeprecatedRank)
+    ?st ps:P31 ?class ; pqv:P580 [ wikibase:timeValue ?time ; wikibase:timePrecision ?precision ] .
+    BIND("instance" AS ?kind)
+  } UNION {
+    ?item p:P3012 ?codeStatement .
+    ?codeStatement ps:P3012 ?code ; wikibase:rank ?codeRank .
+    FILTER(STRLEN(?code) = 7 && ?codeRank != wikibase:DeprecatedRank)
+    { ?item wdt:P1365 ?via } UNION { ?via wdt:P1366 ?item }
+    OPTIONAL { ?via rdfs:label ?label . FILTER(LANG(?label) = "en") }
+    BIND("predecessor" AS ?kind)
+  } UNION {
+    ?item p:P3012 ?codeStatement .
+    ?codeStatement ps:P3012 ?code ; wikibase:rank ?codeRank .
+    FILTER(STRLEN(?code) = 7 && ?codeRank != wikibase:DeprecatedRank)
+    { ?item wdt:P1365 ?via } UNION { ?via wdt:P1366 ?item }
+    ?via p:P571 ?st . ?st wikibase:rank ?rank . FILTER(?rank != wikibase:DeprecatedRank)
+    ?st psv:P571 [ wikibase:timeValue ?time ; wikibase:timePrecision ?precision ] .
+    BIND("predecessorInception" AS ?kind)
+  } UNION {
+    ?item p:P3012 ?codeStatement .
+    ?codeStatement ps:P3012 ?code ; wikibase:rank ?codeRank .
+    FILTER(STRLEN(?code) = 7 && ?codeRank != wikibase:DeprecatedRank)
+    { ?item wdt:P1365 ?via } UNION { ?via wdt:P1366 ?item }
+    ?via p:P31 ?st . ?st wikibase:rank ?rank . FILTER(?rank != wikibase:DeprecatedRank)
+    ?st ps:P31 ?class ; pqv:P580 [ wikibase:timeValue ?time ; wikibase:timePrecision ?precision ] .
+    BIND("predecessorInstance" AS ?kind)
+  } UNION {
+    {
+      SELECT DISTINCT ?class WHERE {
+        ?dated p:P3012/ps:P3012 ?anyCode . FILTER(STRLEN(?anyCode) = 7)
+        { ?dated p:P31 ?classStatement }
+        UNION { { ?dated wdt:P1365 ?older } UNION { ?older wdt:P1366 ?dated } ?older p:P31 ?classStatement }
+        ?classStatement ps:P31 ?class ; pq:P580 ?start .
+      }
+    }
+    VALUES (?parent ?label) { (wd:Q515 "city") (wd:Q7930989 "cityOrTown") (wd:Q3957 "cityOrTown") }
+    ?class wdt:P279* ?parent .
+    BIND("class" AS ?kind)
+  }
+}
