@@ -1332,3 +1332,164 @@ The brief (Mark): House of Cards is trying a hex board in place of the ridings, 
   rather than raising the number. The app's data is 7.90 MB, with about 100 KB of headroom.
   - **Decision for Mark:** the gate was set in Phase 1. If it should count every file, it needs a new
     number. Either way, the next app-loaded artefact will need room.
+
+## 2026-10-09 — Release 1.0.5: city hexes, water that reads as water, and settlement dates
+
+The brief (Mark): House of Cards tried `hexes.r4.v1` as its board and is keeping hexagons. Three
+things came out of the trial:
+- one resolution-4 hexagon holds all of Toronto;
+- straits and big lakes read as land;
+- "settled" came from the 2021 census, so Kitimat is on an 1867 board.
+
+Released files are immutable, so everything is new: `hexes.r4.v1.2` and its layer (the next n for
+`hexes.r4.v1`, rule 7), and `hexes.r5.v1` and its layer, the city hexes. `pre-1.0.5` was tagged on
+`87b59ee` first.
+
+### Large lakes
+- **Source: the Atlas of Canada 1:1M** (NRCan, OGL – Canada), the family the mesh's coverage already
+  comes from. A large lake is a named, permanent waterbody (`TYPE` 1) of 1,000 km² or more whose name
+  is not a river's.
+  - Lac Saint-Jean is 1,048 km² there, so 1,000 km² is about the smallest round threshold that
+    includes it. Lake Nipissing (938) and Lake Simcoe (769) fall below.
+  - Reservoirs count: Smallwood, Caniapiscau, Manicouagan and the La Grande chain are lakes on a
+    2021 map. **Decision for Mark** if a historical board should treat them as land.
+  - Rivers are excluded by name, which leaves out the Mackenzie (3,264 km²), Yukon, Peace and Slave.
+    The unnamed polygon of 1,168 km² near Montréal is the St Lawrence and is also excluded.
+- **57 lakes; 44 taken out of the land.** The cartographic CSDs already leave out 13 of them, each
+  less than 40% held: the Great Lakes with Georgian Bay and the North Channel, Lake of the Woods,
+  Rainy Lake, Lake Champlain, Lake St. Clair, Lake Melville and Eskimo Lakes. They are water already,
+  at a finer shoreline than the Atlas's, so they are left alone. The other 44 lie wholly inside the
+  CSDs and are taken out. `meta.lakes` lists all 57.
+  - This is why Lake of the Woods is among the water but has `landKm2` 0.
+- **The Atlas's lake polygons have no holes; its islands are a layer of their own** (`AC_1M_Islands`,
+  a third new source). The first build subtracted bare lake polygons and erased every island in
+  them. It stopped on its own check: 37 parents left with no land held 1,855 people, among them the
+  west end of Manitoulin (Burpee and Mills), Cockburn Island and Pelee Island. So the water is the
+  lake less the islands, and the Great Lakes are no longer subtracted at all.
+  - Only islands mostly inside the lake are put back. The islands layer includes Baffin Island, which
+    holds Nettilling and Amadjuak Lakes with no holes for them, and subtracting every island that
+    touches a lake cancelled both.
+- **Result: 161,241 km² of land became water; 25 parents have no land and are not rows.** They are
+  the 21 Great Lakes rows of v1 and four in Great Slave Lake and Lake Winnipeg. Nobody lives in them,
+  and population still sums to 36,991,981.
+
+### The neighbour rule
+- **What the brief asked for:** land when the two hexagons' land is joined by land, or parted by less
+  than about 2 km of water, at their common edge. The rule must look inside the hexagon.
+- **What it became:**
+  1. Land is closed by a gap: water narrower than the gap is filled.
+  2. A *landmass* is a connected piece of closed land.
+  3. A hexagon's *principal land* is its part of the landmass holding most of its land, and the
+     hexagon stands for it.
+  4. A link is land when the two principal lands meet along the common edge.
+  So a hexagon holding both shores of the Strait of Belle Isle stands for one of them.
+- **The landmass is read in the hexagon and the six around it.** The first version read it inside
+  the hexagon only, and split two islands:
+  - **Prince Edward Island**: the Summerside hexagon's land is two pieces joined through the next
+    hexagon, so O'Leary's link to it was water.
+  - **Central Saanich–Sidney**: Salt Spring Island outweighed the Saanich Peninsula inside the
+    hexagon, and its tie to Vancouver Island (Sansum Narrows) lies outside it.
+  Reading the neighbourhood joins pieces that meet nearby, and still never joins two landmasses
+  across a strait.
+- **Memory.** The first neighbourhood version closed the seven hexagons' land at once. That closing
+  spiked in the Arctic, and the host terminated the step (SIGTERM, docs/perf.md). Each cell's closed
+  land is now computed once at its own size and cached, and the pieces of neighbouring cells are
+  joined where they meet along a common edge. That is the same connectivity, since the closing is
+  identical on both sides of an edge. The step peaks at about 1.8 GB.
+- **The gap is 600 m, not 2 km.** I measured the widest water on the best way between each named
+  pair (the minimax over the island chains, on the land above):
+
+  | Pair | Widest water on the way | Brief |
+  |---|---|---|
+  | Vancouver Island – mainland (Seymour Narrows, Discovery Islands) | 709 m | water |
+  | Manitoulin – mainland (Little Current) | 471 m | land |
+  | Québec City – Lévis | 622 m | — |
+  | Montréal, Laval – north and south shores | ≤ 166 m | land |
+  | Cape Breton – mainland (the causeway is land in the CSDs) | 0 m | land |
+  | North shore – south shore east of Île d'Orléans | 4,732 m | water |
+  | Prince Edward Island – New Brunswick | 12,695 m | water |
+  | Newfoundland – Labrador | 17,125 m | water |
+
+  - At 2 km, the Discovery Islands join Vancouver Island to the mainland. The brief's named cases
+    therefore allow only a gap between 471 and 709 m. 600 m is the middle of that window.
+  - Its side effect is that Québec City and Lévis are apart, so the St Lawrence is water from the
+    Québec Bridge down.
+  - **Decision for Mark:** keep 600 m; or take 2 km and accept Vancouver Island on the mainland; or
+    keep 2 km and drop islands below some size as stepping stones. The last would be a new rule, and
+    it would have to keep Laval and Montréal as stepping stones.
+- **Result:** 15,984 land and 944 water links, against 16,599 and 424 in v1.
+  - 594 links went from land to water and 2 from water to land, where closed land now crosses an
+    edge v1 read as water. 95 more went with the rows that have no land.
+  - Most of the changes are in the Arctic archipelago (NU 269, NT 97) and on the BC coast (71).
+    `docs/log/2026-10-09-links.md` lists every one.
+  - Among the 5,000+ rows there are six land-connected groups: the mainland, Newfoundland, Vancouver
+    Island, Prince Edward Island, the Magdalens and Iqaluit (Baffin Island's other rows are under
+    5,000). Every 5,000+ row has a land neighbour.
+- **A GEOS failure, caught by a check.** For two all-land hexagons, the intersection of the
+  hexagon with land that all but equalled its buffer came back as a sliver, with no error. Their
+  principal land, and so their links and land points, were wrong. An all-land hexagon is now taken
+  whole, without the intersection. The build also checks every cell's land, read around it, against
+  the CSD overlay, and stops on a mismatch. No cell differs.
+- **`landPoint`** is new on every row. It is a point on the principal land, taken 200 m, 1 km or 3
+  km inside the cell, whichever H3's own test first agrees with. The polygons here have straight
+  edges in EPSG:3347 and H3's do not. It shows where the
+  rule reads the hexagon from, and it is where a game puts a counter on a coastal hexagon whose H3
+  centre is at sea.
+
+### City hexes
+- **Rows:** every mesh cell with land whose resolution-4 parent holds 100,000 people or more, all of a
+  parent's cells together. That is 62 parents and 407 cells. Eight cells with no land (Lake Ontario,
+  off St. Catharines and Oshawa–Whitby) are not rows, as for the resolution-4 table; nobody lives in
+  them.
+- **The 16 parents over 500,000 have 71 cells of 25,000 or more**, as Mark counted.
+- **Values are the cell's own attrs.** A parent's population is its cells' sum, as in the
+  resolution-4 table.
+- **Places follow the parent.** A split parent's places are exactly its city hexes' places: each goes
+  to the cell holding its point, or to the parent's nearest cell where the children do not reach.
+- **Neighbours:** every adjacent mesh cell, in the table or not, with its parent, so a consumer can
+  join a city hex to an unsplit parent. A cell with no land is a water link.
+- **An H3 parent and its seven children do not share an outline.** The children's union pokes out
+  of the parent by about 7% of its area and leaves notches of the same size; 140 km² for Toronto's
+  parent. A board mixing split and unsplit parents overlaps and gaps there. `docs/interop.md` says so.
+  Publishing all 38,000 cells to draw every parent from cells is not in this brief.
+
+### Settlement dates
+- **Query:** every item with a 7-digit P3012 code, read from all non-deprecated statements, not
+  `wdt:`. Toronto's preferred code is its census division's, 3520. The query returns:
+  - inceptions;
+  - dated "instance of" statements;
+  - predecessors on record (P1365 on the item, P1366 pointing at it), with their own dates;
+  - which dated classes are subclasses of city, town, or city or town in Wikidata.
+  It is `pipeline/csd_dates.rq`, pinned as `wikidata_csd_dates`. A subselect version timed out, so
+  each branch matches the code itself.
+  - 4,803 of the 4,830 places have an item. The 27 without one are small reserves and villages.
+- **The rule:** the earliest of a place's and its predecessors' dates, as `docs/interop.md` states.
+  An earlier predecessor wins by being earlier: Saguenay (2002) is dated by La Baie (1838), Lévis
+  (2002) by its own 1861, Gatineau by 1800.
+- **The trap, and what cannot be told.** Wikidata's inception of a Canadian municipality is the date of
+  its present corporation.
+  - Chatham-Kent (1998), Cape Breton (1995), Clarington (1974), Mississauga (1968), Cambridge (1973),
+    Sorel-Tracy (2000) and Val-d'Or (2002) have no predecessor on record. Their only date is the
+    merger.
+  - Thompson (1956), Elliot Lake (1955), Labrador City (1959) and Chibougamau (1952) are new towns
+    with the same kind of record.
+  - No class tells them apart: Mississauga, Chatham-Kent and Thompson are all plain "city".
+  - So a date of 1950 or later is withheld, and so is any date of a place whose predecessors are
+    undated. The year is null, never a guess. The report lists every 5,000+ row where this bit.
+  - **Decision for Mark:** keep the 1950 line, or read the list and name new towns to admit. Admitting
+    them would be a reviewed exception list, not a rule.
+- **Halifax Regional Municipality** carries 1749 as its inception, and 1996 only on its "regional
+  municipality" statement, which is not a city or town class. It comes out 1749.
+- **Kitimat has no inception in Wikidata.** Its row's date comes from another place in it, or is null.
+- **City years are sparse.** Only 14 places in all of places.v1 have a dated city statement on
+  themselves or a predecessor, so most 100,000+ rows have `cityYear` null. They are listed in the log.
+- **Errors are Wikidata's.** Windsor, Ontario is "city since 1749" there, which is the French
+  settlement, not the 1892 charter. It is kept and flagged, not corrected.
+
+### Contract
+- `h3_r4` gains optional fields and `h3_r5` joins the union, so a 1.0.4-schema reader rejects both new
+  tables. `checkRows` and `validate.py` allow an `h3_r5` neighbour outside the table, and check that
+  each year is its source's.
+- `areaKm2` may be 0 on a city hex: one Lake Ontario cell has a sliver of shore under 0.005 km².
+- `hexes.py` was refactored so `hexboard.py` shares its aggregation. `hexes.r4.v1` and its layer
+  rebuild byte-identical.

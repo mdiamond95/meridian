@@ -70,6 +70,18 @@
         "licenceUrl": "https://open.canada.ca/en/open-government-licence-canada"
       },
       {
+        "id": "nrcan_atlas_waterbodies_1m",
+        "name": "NRCan Atlas of Canada 1:1M National Frameworks Data, Hydrology: waterbodies (lakes, reservoirs and wide rivers, with English and French names)",
+        "licence": "Open Government Licence – Canada",
+        "licenceUrl": "https://open.canada.ca/en/open-government-licence-canada"
+      },
+      {
+        "id": "nrcan_atlas_islands_1m",
+        "name": "NRCan Atlas of Canada 1:1M National Frameworks Data, Coasts: islands",
+        "licence": "Open Government Licence – Canada",
+        "licenceUrl": "https://open.canada.ca/en/open-government-licence-canada"
+      },
+      {
         "id": "cirnac_historic_treaties",
         "name": "CIRNAC/ISC Historic Treaties (pre-1975), Internet Archive copy of the official file captured 2025-08-07",
         "licence": "Open Government Licence – Canada",
@@ -336,6 +348,18 @@
       {
         "id": "wikidata_indigenous_communities",
         "name": "Wikidata: First Nations, Inuit communities and Alberta Métis Settlements with coordinates and English names, for map labels",
+        "licence": "Creative Commons CC0 1.0 (public domain dedication)",
+        "licenceUrl": "https://creativecommons.org/publicdomain/zero/1.0/"
+      }
+    ]
+  },
+  {
+    "attribution": "Founding, incorporation and city dates from Wikidata (CC0).",
+    "use": "built",
+    "sources": [
+      {
+        "id": "wikidata_csd_dates",
+        "name": "Wikidata: inception, dated \"instance of\" statements and predecessors on record for every item carrying a 7-digit Statistics Canada geographic code (P3012), the dates behind the hex table's settledYear and cityYear",
         "licence": "Creative Commons CC0 1.0 (public domain dedication)",
         "licenceUrl": "https://creativecommons.org/publicdomain/zero/1.0/"
       }

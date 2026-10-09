@@ -175,13 +175,20 @@ the other 128, mostly urban, are smaller than one. So Meridian publishes a table
 riding, built by `pipeline/ridings.py` from the same census and boundary sources as the cells, never
 from the cells. For a hex board it also publishes H3 resolution-4 hexagons (about 1,770 km², 45 km
 across, roughly a county). Those are coarser than the mesh, so `pipeline/hexes.py` builds them from the
-mesh cells, as a region pack does.
+mesh cells, as a region pack does. Release 1.0.5 regenerates them with the large lakes as water, a
+neighbour rule that reads straits as water, and settlement dates, and adds the city hexes: the mesh's
+own resolution-5 cells (about 250 km², 17 km across) for the hexagons of 100,000 people or more
+(`pipeline/hexboard.py`; "The 1.0.5 hex board", below).
 
 | File | `unit` | Rows | From |
 |---|---|---|---|
 | `data/build/ridings.v1.json.gz` | `fed_2023`: federal electoral districts, 2023 Representation Order | 343, in FED number order | `v1.0.3` |
 | `data/build/hexes.r4.v1.json.gz` | `h3_r4`: H3 resolution-4 hexagons that hold at least one mesh cell | 6,011, in H3 index order | `v1.0.4` |
 | `data/build/layers/hexes.r4.v1.topojson.gz` | the `h3_r4` hexagons clipped to land, to draw | one geometry per row | `v1.0.4` |
+| `data/build/hexes.r4.v1.2.json.gz` | `h3_r4`, regenerated: the hexagons with land, the large lakes being water, the 1.0.5 neighbour rule and settlement dates | 5,986, in H3 index order | `v1.0.5` |
+| `data/build/layers/hexes.r4.v1.2.topojson.gz` | its hexagons clipped to land | one geometry per row | `v1.0.5` |
+| `data/build/hexes.r5.v1.json.gz` | `h3_r5`: city hexes, the resolution-5 mesh cells with land of the hexagons of 100,000 people or more | 407, in H3 index order | `v1.0.5` |
+| `data/build/layers/hexes.r5.v1.topojson.gz` | the city hexes clipped to land | one geometry per row | `v1.0.5` |
 
 A unit table is gzipped JSON, validated by `docs/schemas/unitTable.schema.json` (generated from
 `app/src/schema/unitTable.ts`; the Zod schema is the source of truth). Fetch it from the same raw URLs
@@ -192,8 +199,8 @@ as plain bytes): `meridian.getUnitTable` in the helper above does both.
 
 The consumer rules above, as they apply to a table:
 
-1. **Pin a release tag** (`v1.0.3` or later for the ridings, `v1.0.4` or later for the hexagons),
-   never `main`. A published table, and the layer it names, never changes (versioning rule 7).
+1. **Pin a release tag** (`v1.0.3` or later for the ridings, `v1.0.4` or later for the hexagons,
+   `v1.0.5` or later for `hexes.r4.v1.2` and the city hexes), never `main`. A published table, and the layer it names, never changes (versioning rule 7).
 2. **Key on `unit` and `id`.** A row is identified by the pair, `("fed_2023", 35075)` or
    `("h3_r4", "840e491ffffffff")`, not by its name (ridings are renamed by Act of Parliament) or its
    position. A new representation order is a new `unit` in a new file; it never reuses this one's ids.
@@ -250,8 +257,8 @@ The consumer rules above, as they apply to a table:
 | `rows[].neighbours` | `{id, kind}` for each hexagon in the table that shares an H3 edge with it, ascending by id; symmetric, with the same `kind` both ways. The rule is below |
 | `rows[].jurisdictions` | as for the ridings, over the hexagon's land. A hexagon with no land overlaps no unit, so every span is the nearest unit with `fallback: true` |
 
-**The neighbour rule.** Two hexagons in the table are neighbours when they share an edge of the H3
-grid. The link's `kind` is `"land"` when at least `meta.landEdgeMetres` (1 m) of that common edge
+**The neighbour rule** (`hexes.r4.v1`; the 1.0.5 files have their own, below). Two hexagons in the
+table are neighbours when they share an edge of the H3 grid. The link's `kind` is `"land"` when at least `meta.landEdgeMetres` (1 m) of that common edge
 lies on land, and `"water"` otherwise. The edge is H3's boundary between the two cells, as a straight
 line between its vertices in Statistics Canada Lambert (EPSG:3347). Land is the 2021 cartographic
 census subdivisions, the same land as `areaKm2`. In practice no edge carries between 0 and 1 m of
@@ -262,7 +269,8 @@ over it hold both the island and Labrador, so their common edges lie on land and
 linked to Labrador by land. The same holds in seven places on the Northumberland Strait, against nine
 water links between Prince Edward Island and the mainland, and in the Gulf Islands, which carry a land
 link from Vancouver Island to the mainland. A game that needs a strait to be water should treat those
-links as it chooses; the table records what lies on the edge.
+links as it chooses; the table records what lies on the edge. `hexes.r4.v1.2` (1.0.5) reads straits
+as water.
 
 **The clipped layer.** `data/build/layers/hexes.r4.v1.topojson.gz` has one object, `hexes`, with one
 geometry per row in row order and the row's `id` as its only property. Each geometry is the hexagon's
@@ -298,6 +306,210 @@ update to the current schema. A reader of `ridings.v1.json.gz` alone is unaffect
 **Jurisdictions are the atlas's, not the census's.** They come from the same atlas as the app's
 timeline (`atlas.v1`), drawn to about 750 m with islands under 2 km² dropped, which is why a riding's
 share is an area overlap and not a point test. Populations and scores are 2021's whatever the date.
+
+### The 1.0.5 hex board
+
+House of Cards tried `hexes.r4.v1` as a board and kept hexagons. Release 1.0.5 answers the trial in
+two new tables, each with its layer, under the contract above:
+
+- **`hexes.r4.v1.2`** (`h3_r4`) regenerates `hexes.r4.v1`, written beside it (versioning rule 7). Its
+  big lakes are water. Its neighbour rule reads a strait as water. Its rows carry settlement dates.
+  The ids are the same H3 indexes, so a consumer's stored ids carry over.
+- **`hexes.r5.v1`** (`h3_r5`) holds the city hexes. One resolution-4 hexagon holds all of Toronto, so a
+  board can split the crowded hexagons into the mesh's resolution-5 cells.
+
+**`hexes.r4.v1.2`.** Every field means what it means in `hexes.r4.v1`, over the new land, except:
+
+| Field | Meaning |
+|---|---|
+| `rows` | the hexagons with land, 5,986. The 25 of `hexes.r4.v1` left with none once the large lakes are water are not rows: the 21 open-water rows in the Great Lakes, and 4 in Great Slave Lake and Lake Winnipeg. Nobody lives in them, and population still sums to 36,991,981 |
+| `meta` | also `neighbourRule` (`"principalLand"`), `landGapMetres` (600), `lakeMinKm2` (1000), `lakes` (below), `cityPopulation` (100000) and `datesWithheldFrom` (1950). `landEdgeMetres` is 1, as before. `sources` adds the Atlas of Canada waterbodies and islands and the Wikidata dates |
+| `rows[].areaKm2` and the layer | land, less the large lakes |
+| `rows[].landPoint` | `[lng, lat]`, a point on the hexagon's principal land (below): where to put a counter, and the land its links are read from |
+| `rows[].neighbours` | `{id, kind}` for each hexagon in the table sharing an H3 edge with it, under the 1.0.5 rule below; symmetric, with the same `kind` both ways |
+| `rows[].settledYear`, `settledPlace`, `settledSource` | "Settlement dates", below |
+| `rows[].cityYear`, `cityPlace`, `citySource` | on rows of `meta.cityPopulation` (100,000) people or more only; "Settlement dates", below |
+
+**The large lakes.** A large lake is a named, permanent waterbody of 1,000 km² or more in the Atlas of
+Canada 1:1M (NRCan, Open Government Licence – Canada) that is not a river. All 57 are water in
+`hexes.r4.v1.2` and the city hexes. The cartographic census subdivisions already leave out
+13 of them, at a finer shoreline than the Atlas's, so those keep the CSDs' shore: Lakes Superior,
+Michigan, Huron, Erie and Ontario, Georgian Bay, the North Channel, Lake of the Woods, Lake Melville,
+Eskimo Lakes, Lake St. Clair, Lake Champlain and Rainy Lake. The other 44 lie inside the census
+subdivisions, which count them as land. Those are taken out of the land, less the Atlas's islands
+that lie mostly inside them: its lake polygons have no holes, and the islands are a layer of their
+own. The test is whether the CSDs hold half of the lake's area or more; every lake is either under
+40% held or wholly held. `meta.lakes` lists all 57 with `km2` (the whole lake),
+`csdKm2` (how much of it the CSDs hold) and `landKm2` (what was taken out of the hexagons' land).
+
+<!-- lakes:start -->
+| Lake | km² | held by the CSDs, km² | taken out of the land, km² |
+|---|---|---|---|
+| Lake Superior / Lac Supérieur | 86,416 | 1,001 | — |
+| Lake Michigan | 61,520 | 0.0 | — |
+| Lake Huron / Lac Huron | 43,276 | 677 | — |
+| Great Bear Lake / Grand lac de l'Ours | 29,402 | 29,402 | 28,898 |
+| Lake Erie / Lac Érié | 27,378 | 63.4 | — |
+| Great Slave Lake / Grand lac des Esclaves | 27,243 | 27,243 | 25,368 |
+| Lake Winnipeg / Lac Winnipeg | 23,841 | 23,841 | 23,200 |
+| Lake Ontario / Lac Ontario | 19,897 | 276 | — |
+| Georgian Bay / Baie Georgienne | 14,894 | 888 | — |
+| Lake Athabasca / Lac Athabasca | 7,504 | 7,504 | 7,403 |
+| North Channel | 7,353 | 2,753 | — |
+| Reindeer Lake | 6,420 | 6,420 | 5,270 |
+| Smallwood Reservoir | 5,968 | 5,968 | 5,313 |
+| Nettilling Lake | 5,373 | 5,373 | 4,845 |
+| Lake Winnipegosis / Lac Winnipegosis | 5,270 | 5,270 | 5,053 |
+| Réservoir de Caniapiscau | 4,913 | 4,913 | 4,315 |
+| Lake Nipigon / Lac Nipigon | 4,841 | 4,841 | 4,434 |
+| Lake Manitoba / Lac Manitoba | 4,578 | 4,578 | 4,554 |
+| Lake of the Woods / Lac des Bois | 4,382 | 878 | — |
+| Réservoir Manicouagan | 3,837 | 3,837 | 1,723 |
+| Réservoir Robert-Bourassa | 3,686 | 3,686 | 3,014 |
+| Dubawnt Lake | 3,598 | 3,598 | 3,399 |
+| Amadjuak Lake | 2,921 | 2,921 | 2,870 |
+| Réservoir La Grande 3 | 2,742 | 2,742 | 2,415 |
+| Cedar Lake | 2,532 | 2,532 | 2,432 |
+| Lake Melville | 2,457 | 104 | — |
+| Lac Mistassini | 2,283 | 2,283 | 2,127 |
+| Southern Indian Lake | 2,270 | 2,270 | 1,973 |
+| Wollaston Lake | 2,128 | 2,128 | 1,750 |
+| Eskimo Lakes | 1,852 | 281 | — |
+| Nueltin Lake | 1,851 | 1,851 | 1,658 |
+| Baker Lake | 1,788 | 1,788 | 1,682 |
+| Réservoir Gouin | 1,758 | 1,758 | 1,408 |
+| Lac Seul | 1,729 | 1,729 | 1,434 |
+| Lac la Martre | 1,687 | 1,687 | 1,604 |
+| Williston Lake | 1,579 | 1,579 | 1,579 |
+| Playgreen Lake | 1,483 | 1,483 | 1,422 |
+| Cree Lake | 1,412 | 1,412 | 1,179 |
+| Lac la Ronge | 1,388 | 1,388 | 1,301 |
+| Yathkyed Lake | 1,361 | 1,361 | 1,249 |
+| Lac Wiyâshâkimî | 1,348 | 1,348 | 1,235 |
+| Kasba Lake | 1,306 | 1,306 | 1,267 |
+| Lake St. Clair / Lac Sainte-Claire | 1,291 | 27.6 | — |
+| Lake Claire | 1,279 | 1,279 | 1,267 |
+| Réservoir Laforge 1 | 1,251 | 1,251 | 1,098 |
+| Island Lake | 1,170 | 1,170 | 997 |
+| Lac Bienville | 1,169 | 1,169 | 974 |
+| Gods Lake | 1,097 | 1,097 | 1,011 |
+| Lake Champlain / Lac Champlain | 1,095 | 0.6 | — |
+| Lesser Slave Lake | 1,089 | 1,089 | 1,088 |
+| Contwoyto Lake | 1,061 | 1,061 | 1,034 |
+| Lac Saint-Jean | 1,048 | 1,048 | 1,047 |
+| Rainy Lake / Lac à la Pluie | 1,016 | 270 | — |
+| MacKay Lake | 1,012 | 1,012 | 926 |
+| Réservoir Opinaca | 1,011 | 1,011 | 899 |
+| Napaktulik Lake | 1,011 | 1,011 | 961 |
+| Aberdeen Lake | 1,009 | 1,009 | 1,006 |
+<!-- lakes:end -->
+
+**The neighbour rule (1.0.5).** Two hexagons in the table are neighbours when they share an edge of
+the H3 grid. The link's `kind` is `"land"` when their principal lands meet along at least
+`meta.landEdgeMetres` (1 m) of that edge, and `"water"` otherwise. Exactly:
+
+1. *Land* is the 2021 cartographic census subdivisions less the large lakes, as `areaKm2` measures it.
+2. *Closed land* fills water narrower than `meta.landGapMetres`, 600 m. It is a morphological closing
+   by 300 m: the land grown by 300 m, then shrunk by 300 m. Land parted by less than 600 m of water
+   is joined; land parted by more is not.
+3. A *landmass* is a connected piece of closed land, read in the hexagon and the six hexagons around
+   it.
+4. A hexagon's *principal land* is its part of the landmass holding the most of its land. The
+   hexagon stands for that landmass, and `landPoint` is on it. The hexagon's other land, such as the
+   far shore of a strait, is drawn and counted in `areaKm2` and the scores, but carries no link.
+5. Two hexagons' principal lands meet where both reach their common H3 edge, read as `hexes.r4.v1`
+   reads the edge (a straight line between its vertices in EPSG:3347).
+
+The rule looks inside the hexagon. A hexagon holding both shores of the Strait of Belle Isle stands
+for one of them, so it does not join Newfoundland to Labrador. Reading the landmass in the six
+hexagons around keeps one shore whole where a hexagon's edge cuts an isthmus. Prince Edward Island at
+Summerside is one landmass even though the land joining it runs through the next hexagon.
+
+**Why 600 m and not 2 km.** The brief asked for "about 2 km" and named cases. The named cases fix the
+gap more tightly than that. The widest water on the shortest way from Vancouver Island to the mainland
+is 709 m, at Seymour Narrows and the Discovery Islands. The widest water on Manitoulin's way to the
+mainland by Little Current is 471 m. Any gap above 709 m joins Vancouver Island to the mainland, and
+any below 471 m parts Manitoulin from it. 600 m lies between the two. It also parts Québec City from
+Lévis (622 m at the Québec Bridge), so the St Lawrence is water from there down. Montréal and Laval
+reach both shores across at most 166 m. Cape Breton's causeway is land in the census subdivisions.
+These widths are measured on the land of rule 1.
+
+`hexes.r4.v1.2` has 15,984 land and 944 water links, where `hexes.r4.v1` had 16,599 and 424. Of the
+links in both tables, 596 changed kind: 594 from land to water, most of them in the Arctic
+archipelago and on the BC coast, and 2 from water to land, where closed land now crosses an edge
+`hexes.r4.v1` read as water. Another 95 went with the rows that have no land. The list is in
+`docs/log/2026-10-09-links.md`.
+
+**`hexes.r5.v1`, the city hexes** (`h3_r5`). The rows are the mesh's resolution-5 cells with land,
+for every resolution-4 hexagon of `meta.cityPopulation` (100,000) people or more. That is 62
+parents and 407 cells. A parent's cells are all there, thinly peopled ones too. The
+8 cells with no land are not rows; they are in Lake Ontario and nobody lives in them.
+Which parents to split is the consumer's choice: split any of them, or none.
+
+| Field | Meaning |
+|---|---|
+| `meta` | as for `hexes.r4.v1.2`, with `h3Resolution` 5, `layer` and `parentTable` (`data/build/hexes.r4.v1.2.json.gz`); no `lakes` (the same lakes) and no dates |
+| `rows[].id` | the H3 index of the cell, 15 lower-case hex digits; rows in H3 index order |
+| `rows[].parent` | its resolution-4 parent, a row of `meta.parentTable` |
+| `rows[].centroid`, `province`, `areaKm2`, `landPoint`, `ecozone`, `jurisdictions` | as for the resolution-4 rows, over the cell. `areaKm2` can round to 0 for a sliver of shore |
+| `rows[].population`, `score`, `shares`, `urbanClass`, `industryDominant` | the cell's own mesh attributes, which a parent sums: a parent's population is its cells' |
+| `rows[].places` | the parent's places, each in the city hex holding its point. A place where the parent's cells do not reach goes to the nearest of them. A parent's places are exactly its city hexes' |
+| `rows[].neighbours` | `{id, parent, kind}` for every mesh cell sharing an H3 edge with it, in the table or not, ascending by id. `kind` follows the 1.0.5 rule at resolution 5; a cell with no land is a water link. Symmetric between rows |
+
+**A board with some parents split.** Draw a split parent from its city hexes and the others from
+`hexes.r4.v1.2`. Link two city hexes by their own neighbour entry. Link a city hex to an unsplit
+parent by the entry for a cell of that parent: use its `kind`, and where several cells of one parent
+border the city hex, take land if any entry is land. Two unsplit parents link as in `hexes.r4.v1.2`.
+One caveat: an H3 parent and its seven children do not have the same outline. The children's union is
+a jagged hexagon that pokes out of the parent on three sides and leaves notches on the other three,
+by about 7% of the parent's area each way (140 km² for Toronto's parent). Along a split parent's
+border with an unsplit one, the two drawings overlap there and leave small gaps. A consumer that
+needs the outlines to agree everywhere can draw every parent from its mesh cells: the cells'
+outlines, unclipped, are `cells.v1.topojson.gz`, and their H3 ids are in `mesh.v1.json.gz`.
+
+**Settlement dates.** Every places.v1 place is looked up in Wikidata by its Statistics Canada
+geographic code (P3012, read from every non-deprecated statement). The query is
+`pipeline/csd_dates.rq`; the result is pinned by hash like the pipeline's other Wikidata source; the
+rules are `pipeline/settled.py`. Nothing is estimated.
+
+1. A place's *dates* are the inceptions (P571) of its item, and its "instance of" (P31) statements
+   that have a start time (P580) and whose class is a city or town. A class counts when it is a
+   subclass of city (Q515), town (Q3957) or city or town (Q7930989) in Wikidata itself. The same dates
+   of every *predecessor on record* count too: an item the place's item replaces (P1365), or one
+   naming it as what replaced it (P1366). A date less precise than a year is not used.
+2. A place's settled date is the earliest of them. Its city date is the earliest city one, a subclass
+   of Q515 only. "Provincial or territorial capital city" is a subclass of city in Wikidata, but its
+   start is the day a place became a capital, so it is not used.
+3. **Amalgamations.** Wikidata's inception of a Canadian municipality is the date of its present
+   corporation. For a merged one that is the merger: Halifax Regional Municipality's status dates
+   from 1996 and Chatham-Kent from 1998. An earlier predecessor on record wins by being earlier:
+   Saguenay (2002) is dated by La Baie (1838). Where the data cannot tell a merger from a founding,
+   the place has no date:
+   - **the earliest date is 1950 or later** (`meta.datesWithheldFrom`). From then on, mergers
+     (Chatham-Kent 1998, Cape Breton 1995, Clarington 1974, Mississauga 1968) and new towns
+     (Thompson 1956, Elliot Lake 1955) carry the same kind of inception, and nothing in the data
+     tells them apart;
+   - **a predecessor is on record but none of them is dated**: the place's own date may be the merger.
+4. A row's `settledYear` is the earliest settled date of its places. `settledPlace` is that place
+   (`{csd, name}`; on the same date, the more populous place). `settledSource` is the statement:
+   `{item, label, property, class?, date, predecessorOf?}`. `property` is `P571` or `P31`, `date` is
+   as precise as Wikidata gives it, and `predecessorOf` names the place's own item when the statement
+   is a predecessor's. All three are null when no place in the row is dated.
+5. On rows of 100,000 people or more, `cityYear` is the city date of the row's principal place, its
+   most populous one; `cityPlace` and `citySource` are as above. `cityYear` is null when the row has
+   no place, or its principal place has no city date.
+
+The dates are Wikidata's, statements and errors alike. Windsor, Ontario is "city since 1749" there,
+which is the French settlement, not the 1892 charter. Coverage: 298 of the 439 rows of 5,000 people
+or more have a `settledYear` (68%), and 7 of the 62 rows of 100,000 or more a `cityYear`. The list
+Mark reads before any consumer uses the dates is in `docs/log/2026-10-09.md`. A null is a null, not
+"unsettled": a consumer that needs a year for every hexagon has to decide what an undated one means.
+
+**1.0.5 widens the contract again.** The new `h3_r4` fields are optional (versioning rule 1), and
+`hexes.r4.v1` validates unchanged. `h3_r5` is a third member of the union on `unit`. The exported
+schema is closed (`additionalProperties: false`), so a reader that validates against the 1.0.4
+`unitTable.schema.json` rejects both 1.0.5 tables and should update. A reader of `ridings.v1` or
+`hexes.r4.v1` alone is unaffected.
 
 ### Worked example: House of Cards
 

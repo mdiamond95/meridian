@@ -155,8 +155,8 @@ def neighbour_kinds(ids: list[str], csds: gpd.GeoDataFrame) -> dict[tuple[str, s
     }
 
 
-def layer(ids: list[str], land: pd.DataFrame) -> int:
-    """Each hexagon's land, dissolved from its CSD pieces, as one mapshaper topology."""
+def layer(ids: list[str], land: pd.DataFrame, out: Path = HEX_LAYER) -> int:
+    """Each hexagon's land, dissolved from its CSD pieces, as one mapshaper topology at `out`."""
     from polygons import export, polygonal, simplify
 
     pieces = land.groupby("a", sort=True)["geometry"].apply(
@@ -167,16 +167,125 @@ def layer(ids: list[str], land: pd.DataFrame) -> int:
         path = Path(tmp) / "hexes.geojson"
         export(gdf, path, ["id"], "id")
         del gdf, pieces
-        simplify({"hexes": path}, HEX_LAYER, LAYER_INTERVAL_M)
+        simplify({"hexes": path}, out, LAYER_INTERVAL_M)
     # One geometry per id, in id order: a hexagon with no land is a null geometry, as a river the
     # coast clips away is in the rivers layer.
-    topo = load_gz(HEX_LAYER)
+    topo = load_gz(out)
     drawn = {g["properties"]["id"]: g for g in topo["objects"]["hexes"]["geometries"] if g.get("arcs")}
     topo["objects"]["hexes"]["geometries"] = [
         drawn.get(h, {"type": None, "properties": {"id": h}}) for h in ids
     ]
-    write_bytes(HEX_LAYER, gzip_bytes(dumps(topo) + b"\n"))
+    write_bytes(out, gzip_bytes(dumps(topo) + b"\n"))
     return len(drawn)
+
+
+class Aggregates:
+    """The mesh cells' attrs summed or population-weighted per group, as a pack region aggregates them
+    (app/src/dossier/stats.ts)."""
+
+    def __init__(self, cells: list[dict], col: dict[str, np.ndarray], group: np.ndarray, n: int):
+        people = col["population"]
+        self.people = people
+        self.population = np.bincount(group, weights=people, minlength=n).round().astype(np.int64)
+        self.gdp = np.bincount(group, weights=col["gdp_estimate"], minlength=n)
+        self.counts = np.bincount(group, minlength=n)
+        self.shares = {key: weighted(col[name], people, group, n) for key, name in SHARES.items()}
+        self.industry = np.column_stack(
+            [weighted(col[f"industry_share_{s}"], people, group, n) for s in NAICS_SECTORS]
+        )
+        self.extractive = [NAICS_SECTORS.index(s) for s in EXTRACTIVE]
+
+        # Ecozone: the most mesh-cell area, ties to the smaller id.
+        areas = np.array([c["area"] for c in cells])
+        eco = pd.DataFrame({"h": group, "k": col["ecozone_id"].astype(int), "a": areas})
+        eco = eco.groupby(["h", "k"], as_index=False)["a"].sum()
+        eco = eco.sort_values(["h", "a", "k"], ascending=[True, False, True], kind="stable")
+        eco = eco.drop_duplicates("h")
+        self.ecozone = eco.set_index("h")["k"].reindex(range(n)).fillna(0).astype(int).to_numpy()
+        self.col, self.group, self.n = col, group, n
+
+    def urban(self, land_km2: np.ndarray) -> np.ndarray:
+        """The cell class (CMA 3, CA 2) holding most of the group's people, else rural 1 or remote 0 by
+        density over land."""
+        col, group, n = self.col, self.group, self.n
+        k = np.where(col["urban_class"] >= 2, col["urban_class"], 0).astype(int)
+        urb = pd.DataFrame({"h": group, "k": k, "w": self.people})
+        urb = urb.groupby(["h", "k"], as_index=False)["w"].sum()
+        urb = urb.sort_values(["h", "w", "k"], ascending=[True, False, False], kind="stable")
+        urb = urb.drop_duplicates("h")
+        top = urb.set_index("h")
+        urban = np.zeros(n, dtype=np.int64)
+        population = self.population
+        for i in range(n):
+            cls = int(top["k"][i]) if top["w"][i] > 0 else 0
+            dense = land_km2[i] > 0 and population[i] / land_km2[i] >= RURAL_DENSITY
+            urban[i] = cls if cls else (1 if dense else 0)
+        return urban
+
+    def stats(self, i: int, land_km2: np.ndarray, urban: np.ndarray) -> dict:
+        """population, areaKm2, score, shares, urbanClass, industryDominant and ecozone of group i."""
+        industry = self.industry[i]
+        top_sector = int(np.argmax(industry))
+        return {
+            "population": int(self.population[i]),
+            "areaKm2": round(float(land_km2[i]), 2),
+            "score": {
+                "population": int(self.population[i]),
+                "gdp": int(round(self.gdp[i])),
+                "resource_index": round(float(industry[self.extractive].sum()), 3),
+                "exposure": round(float(industry[top_sector]), 3),
+            },
+            "shares": {key: round(float(v[i]), 4) for key, v in self.shares.items()},
+            "urbanClass": int(urban[i]),
+            "industryDominant": int(NAICS_SECTORS[top_sector][:2]) if industry.sum() > 0 else 0,
+            "ecozone": int(self.ecozone[i]),
+        }
+
+
+def province_by_land(land: pd.DataFrame, csds: gpd.GeoDataFrame) -> dict:
+    """Per unit (land's "a"), the province holding most of its land; ties to the smaller code."""
+    by_province = land.assign(p=land["b"].map(csds.set_index("csd")["province"]))
+    by_province = by_province.groupby(["a", "p"], as_index=False)["area"].sum()
+    by_province = by_province.sort_values(["a", "area", "p"], ascending=[True, False, True], kind="stable")
+    return by_province.drop_duplicates("a").set_index("a")["p"].to_dict()
+
+
+def csd_types(csds: gpd.GeoDataFrame) -> dict[str, str]:
+    csd_type = csds.set_index("csd")["CSDTYPE"].to_dict()
+    unknown = sorted(set(csd_type.values()) - set(CSD_TYPES))
+    if unknown:
+        raise ValueError(f"CSD types with no label in CSD_TYPES: {unknown}")
+    return csd_type
+
+
+def place_entry(p: dict, csd_type: dict[str, str]) -> dict:
+    return {"csd": p["csd"], "name": p["name"], "population": p["population"], "csdType": csd_type[p["csd"]]}
+
+
+def sorted_places(places: list[dict]) -> list[dict]:
+    return sorted(places, key=lambda p: (-p["population"], p["csd"]))
+
+
+def lookups(attrs: dict) -> dict:
+    return {
+        "urbanClass": {str(k): v for k, v in URBAN_CLASSES.items()},
+        "industryDominant": {"0": "no data"} | {s[:2]: NAICS_LABELS[s] for s in NAICS_SECTORS},
+        "ecozone": attrs["lookups"]["ecozone_id"],
+        "csdType": dict(sorted(CSD_TYPES.items())),
+    }
+
+
+def census_meta(mesh: dict, attrs: dict) -> dict:
+    """meshVersion, censusYear, the GDP method, the atlas and jurisdictionsFrom, in the tables' order."""
+    return {
+        "meshVersion": mesh["version"],
+        "censusYear": attrs["meta"]["census_year"],
+        "gdpMethod": attrs["meta"]["gdp_method"],
+        "gdpReferenceYear": attrs["meta"]["gdp_reference_year"],
+        "gdpPrices": attrs["meta"]["gdp_prices"],
+        "atlasVersion": json.loads(ATLAS_PATH.read_text(encoding="utf-8"))["version"],
+        "jurisdictionsFrom": START,
+    }
 
 
 def build() -> dict:
@@ -191,22 +300,7 @@ def build() -> dict:
     log(f"{len(cells):,} mesh cells in {n:,} resolution-{RESOLUTION} hexagons")
 
     col = {name: decode_column(c).astype(np.float64) for name, c in attrs["columns"].items()}
-    people = col["population"]
-    population = np.bincount(group, weights=people, minlength=n).round().astype(np.int64)
-    gdp = np.bincount(group, weights=col["gdp_estimate"], minlength=n)
-    counts = np.bincount(group, minlength=n)
-    shares = {key: weighted(col[name], people, group, n) for key, name in SHARES.items()}
-    industry = np.column_stack(
-        [weighted(col[f"industry_share_{s}"], people, group, n) for s in NAICS_SECTORS]
-    )
-    extractive = [NAICS_SECTORS.index(s) for s in EXTRACTIVE]
-
-    # Ecozone: the most mesh-cell area, ties to the smaller id.
-    areas = np.array([c["area"] for c in cells])
-    eco = pd.DataFrame({"h": group, "k": col["ecozone_id"].astype(int), "a": areas})
-    eco = eco.groupby(["h", "k"], as_index=False)["a"].sum()
-    eco = eco.sort_values(["h", "a", "k"], ascending=[True, False, True], kind="stable").drop_duplicates("h")
-    ecozone = eco.set_index("h")["k"].reindex(range(n)).fillna(0).astype(int).to_numpy()
+    agg = Aggregates(cells, col, group, n)
 
     log("land: hexagons × cartographic CSDs")
     polys = cell_polygons(ids)
@@ -215,10 +309,7 @@ def build() -> dict:
     csds["province"] = csds["PRUID"].map(PROVINCES)
     land = intersect_pieces(hexes, "hex", csds, "csd")
     land_m2 = land.groupby("a", sort=True)["area"].sum().reindex(ids).fillna(0.0).to_numpy()
-    by_province = land.assign(p=land["b"].map(csds.set_index("csd")["province"]))
-    by_province = by_province.groupby(["a", "p"], as_index=False)["area"].sum()
-    by_province = by_province.sort_values(["a", "area", "p"], ascending=[True, False, True], kind="stable")
-    province_of = by_province.drop_duplicates("a").set_index("a")["p"].to_dict()
+    province_of = province_by_land(land, csds)
     # Open water in the mesh (the Great Lakes: mesh.py counts the Atlas of Canada's inland water as
     # land) has no CSD land: such a hexagon takes the province of most of its cells.
     no_land = [h for h in ids if h not in province_of]
@@ -228,23 +319,9 @@ def build() -> dict:
     for h in no_land:
         province_of[h] = min(cell_provinces[h].items(), key=lambda kv: (-kv[1], kv[0]))[0]
     log(f"{len(no_land)} hexagons with no land (open water): {no_land}")
-    csd_type = csds.set_index("csd")["CSDTYPE"].to_dict()
-    unknown = sorted(set(csd_type.values()) - set(CSD_TYPES))
-    if unknown:
-        raise ValueError(f"CSD types with no label in CSD_TYPES: {unknown}")
+    csd_type = csd_types(csds)
     land_km2 = land_m2 / 1e6
-
-    # Urban class: the cell class holding most of the hexagon's people, else density.
-    k = np.where(col["urban_class"] >= 2, col["urban_class"], 0).astype(int)
-    urb = pd.DataFrame({"h": group, "k": k, "w": people}).groupby(["h", "k"], as_index=False)["w"].sum()
-    urb = urb.sort_values(["h", "w", "k"], ascending=[True, False, False], kind="stable").drop_duplicates("h")
-    top = urb.set_index("h")
-    urban = np.zeros(n, dtype=np.int64)
-    for i in range(n):
-        cls = int(top["k"][i]) if top["w"][i] > 0 else 0
-        urban[i] = (
-            cls if cls else (1 if land_km2[i] > 0 and population[i] / land_km2[i] >= RURAL_DENSITY else 0)
-        )
+    urban = agg.urban(land_km2)
 
     log("neighbours")
     kinds = neighbour_kinds(ids, csds)
@@ -265,13 +342,7 @@ def build() -> dict:
         if hexagon not in pos:
             hexagon = parents[p["cell"]]
             moved += 1
-        entry = {
-            "csd": p["csd"],
-            "name": p["name"],
-            "population": p["population"],
-            "csdType": csd_type[p["csd"]],
-        }
-        places_of[hexagon].append(entry)
+        places_of[hexagon].append(place_entry(p, csd_type))
     log(f"{len(places):,} places; {moved} in a hexagon outside the table, given their mesh cell's")
 
     log("jurisdictions")
@@ -288,26 +359,14 @@ def build() -> dict:
     rows = []
     for i, h in enumerate(ids):
         lat, lng = h3.cell_to_latlng(h)
-        top_sector = int(np.argmax(industry[i]))
         rows.append(
             {
                 "id": h,
                 "centroid": [round(lng, 5), round(lat, 5)],
                 "province": province_of[h],
-                "cells": int(counts[i]),
-                "population": int(population[i]),
-                "areaKm2": round(float(land_km2[i]), 2),
-                "score": {
-                    "population": int(population[i]),
-                    "gdp": int(round(gdp[i])),
-                    "resource_index": round(float(industry[i, extractive].sum()), 3),
-                    "exposure": round(float(industry[i, top_sector]), 3),
-                },
-                "shares": {key: round(float(v[i]), 4) for key, v in shares.items()},
-                "urbanClass": int(urban[i]),
-                "industryDominant": int(NAICS_SECTORS[top_sector][:2]) if industry[i].sum() > 0 else 0,
-                "ecozone": int(ecozone[i]),
-                "places": sorted(places_of[h], key=lambda p: (-p["population"], p["csd"])),
+                "cells": int(agg.counts[i]),
+                **agg.stats(i, land_km2, urban),
+                "places": sorted_places(places_of[h]),
                 "neighbours": sorted(neighbours[h], key=lambda nb: nb["id"]),
                 "jurisdictions": spans[i],
             }
@@ -315,6 +374,7 @@ def build() -> dict:
 
     from polygons import attribution_rows
 
+    census = census_meta(mesh, attrs)
     return {
         "format": "meridian.unitTable",
         "version": TABLE_VERSION,
@@ -322,24 +382,13 @@ def build() -> dict:
         "meta": {
             "unitName": "H3 resolution-4 hexagons with at least one mesh cell",
             "h3Resolution": RESOLUTION,
-            "meshVersion": mesh["version"],
-            "censusYear": attrs["meta"]["census_year"],
-            "gdpMethod": attrs["meta"]["gdp_method"],
-            "gdpReferenceYear": attrs["meta"]["gdp_reference_year"],
-            "gdpPrices": attrs["meta"]["gdp_prices"],
-            "atlasVersion": json.loads(ATLAS_PATH.read_text(encoding="utf-8"))["version"],
-            "jurisdictionsFrom": START,
+            **census,
             "layer": LAYER_URL_PATH,
             "landEdgeMetres": LAND_EDGE_M,
             "sources": attribution_rows(SOURCES),
         },
         "gdpCaveat": GDP_CAVEAT,
-        "lookups": {
-            "urbanClass": {str(k): v for k, v in URBAN_CLASSES.items()},
-            "industryDominant": {"0": "no data"} | {s[:2]: NAICS_LABELS[s] for s in NAICS_SECTORS},
-            "ecozone": attrs["lookups"]["ecozone_id"],
-            "csdType": dict(sorted(CSD_TYPES.items())),
-        },
+        "lookups": lookups(attrs),
         "rows": rows,
     }
 

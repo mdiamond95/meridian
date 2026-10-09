@@ -1,5 +1,5 @@
 # Meridian pipeline. Run from pipeline/ or via the root Makefile.
-.PHONY: install dry-run lint test validate examples download mesh attrs layers atlas ridings hexes build verify fixture spot-check
+.PHONY: install dry-run lint test validate examples download mesh attrs layers atlas ridings hexes hexboard build verify fixture spot-check
 
 install:
 	uv sync --frozen
@@ -41,8 +41,11 @@ ridings:
 hexes:
 	uv run --frozen python hexes.py
 
+hexboard:
+	uv run --frozen python hexboard.py
+
 # One command from raw inputs to validated, hashed artefacts.
-build: mesh attrs layers atlas ridings hexes
+build: mesh attrs layers atlas ridings hexes hexboard
 	uv run --frozen python checksums.py write
 	uv run --frozen python validate.py
 
